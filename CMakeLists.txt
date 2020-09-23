@@ -4,7 +4,7 @@ project(muSYCL
   VERSION 0.0.1
   LANGUAGES CXX)
 
-include(FindTriSYCL)
+include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
 
 #set_project_properties(muSYCL PROPERTIES CXX_STANDARD 20)
