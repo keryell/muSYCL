@@ -7,9 +7,12 @@ project(muSYCL
 include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
 
+find_library(LIBRARY_RTMIDI NAMES rtmidi REQUIRED)
+
 #set_project_properties(muSYCL PROPERTIES CXX_STANDARD 20)
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
+add_subdirectory(experiment)
