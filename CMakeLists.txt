@@ -7,6 +7,8 @@ project(muSYCL
 include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
 
+find_library(LIBRARY_RTAUDIO NAMES rtaudio REQUIRED)
+
 find_library(LIBRARY_RTMIDI NAMES rtmidi REQUIRED)
 
 #set_project_properties(muSYCL PROPERTIES CXX_STANDARD 20)
