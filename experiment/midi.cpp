@@ -54,7 +54,9 @@ int main() {
   }
   std::cout << std::endl;
 
-  midi_in.openPort(1);
+  // Open the first port after MIDI through
+  check_error([&] { midi_in.openPort(1); });
+
   // Don't ignore sysex, timing, or active sensing messages
   midi_in.ignoreTypes(false, false, false);
 
@@ -72,6 +74,6 @@ int main() {
     // Sleep for 10 milliseconds ... platform-dependent.
     std::this_thread::sleep_for(10ms);
   }
-  std::cout << "Done!" << std::endl;
+  std::cout << "\nDone!" << std::endl;
   return 0;
 }
