@@ -28,6 +28,16 @@ auto check_error = [] (auto&& function) {
 };
 
 int main() {
+  /* Only from RtMidi 4.0.0...
+
+  std::cout << "RtMidi version " << RtMidi::getVersion()
+            << "\nAPI availables:" << std::endl;
+  std::vector<RtMidi::Api> apis;
+  RtMidi::getCompiledApi(apis);
+  for (auto a : apis)
+    std::cout << '\t' << RtMidi::getApiName(a) << std::endl;
+  */
+
   // Create a MIDI input using Jack and a fancy client name
   auto midi_in = check_error([] { return RtMidiIn { RtMidi::UNIX_JACK,
                                                     "muSYCLtest" }; });
