@@ -28,8 +28,9 @@ auto check_error = [] (auto&& function) {
 };
 
 int main() {
-  // RtMidiIn constructor
-  auto midi_in = check_error([] { return RtMidiIn {}; });
+  // Create a MIDI input using Jack and a fancy client name
+  auto midi_in = check_error([] { return RtMidiIn { RtMidi::UNIX_JACK,
+                                                    "muSYCLtest" }; });
 
   // Check inputs
   auto n_in_ports = midi_in.getPortCount();
@@ -41,7 +42,7 @@ int main() {
     std::cout << "  Input Port #" << i << ": " << port_name << '\n';
   }
 
-  // RtMidiOut constructor
+  // Create a MIDI output
   auto midi_out = check_error([] { return RtMidiOut {}; });
 
   // Check outputs.
@@ -54,8 +55,8 @@ int main() {
   }
   std::cout << std::endl;
 
-  // Open the first port after MIDI through
-  check_error([&] { midi_in.openPort(1); });
+  // Open the first port and give it a fancy name
+  check_error([&] { midi_in.openPort(0, "testMIDIinput"); });
 
   // Don't ignore sysex, timing, or active sensing messages
   midi_in.ignoreTypes(false, false, false);
