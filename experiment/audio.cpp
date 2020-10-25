@@ -4,6 +4,12 @@
 #include <iostream>
 #include <vector>
 
+/// The configuration part to adapt to the context
+// Jack
+auto constexpr audio_api = RtAudio::UNIX_JACK;
+// ALSA
+//auto constexpr audio_api = RtAudio::LINUX_ALSA;
+
 auto check_error = [] (auto&& function) {
   try {
     return function();
@@ -14,6 +20,8 @@ auto check_error = [] (auto&& function) {
   }
 };
 
+auto seuil = -1.0;
+
 // 1 channel sawtooth wave generator.
 int callback(void *output_buffer, void *input_buffer,
              unsigned int frame_size, double stream_time,
@@ -23,11 +31,15 @@ int callback(void *output_buffer, void *input_buffer,
   if (status)
     std::cerr << "Stream underflow detected!" << std::endl;
   for (auto i = 0; i < frame_size; ++i) {
-      buffer[i] = last_value;
+      buffer[i] = last_value > seuil;
       last_value += 0.01;
       if (last_value >= 1.0)
         last_value -= 2.0;
   }
+  seuil += 0.001;
+  if (seuil >= 0.95)
+    seuil -= 1.9;
+
   return 0;
 }
 
@@ -66,7 +78,7 @@ int main() {
     }
   }
 
-  auto audio = check_error([] { return RtAudio {/* RtAudio::UNIX_JACK */ }; });
+  auto audio = check_error([] { return RtAudio { audio_api }; });
   auto device = audio.getDefaultOutputDevice();
   RtAudio::StreamParameters parameters;
   parameters.deviceId = device;
