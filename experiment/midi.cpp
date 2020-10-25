@@ -8,6 +8,14 @@
 #include <thread>
 #include <vector>
 
+/// The configuration part to adapt to the context
+// Jack
+auto constexpr midi_api = RtMidi::UNIX_JACK;
+auto constexpr midi_in_port = 0;
+// ALSA
+//auto constexpr midi_api = RtMidi::LINUX_ALSA;
+//auto constexpr midi_in_port = 1;
+
 // To use time unit literals directly
 using namespace std::chrono_literals;
 
@@ -39,7 +47,7 @@ int main() {
   */
 
   // Create a MIDI input using Jack and a fancy client name
-  auto midi_in = check_error([] { return RtMidiIn { RtMidi::UNIX_JACK,
+  auto midi_in = check_error([] { return RtMidiIn { midi_api,
                                                     "muSYCLtest" }; });
 
   // Check inputs
@@ -66,7 +74,7 @@ int main() {
   std::cout << std::endl;
 
   // Open the first port and give it a fancy name
-  check_error([&] { midi_in.openPort(0, "testMIDIinput"); });
+  check_error([&] { midi_in.openPort(midi_in_port, "testMIDIinput"); });
 
   // Don't ignore sysex, timing, or active sensing messages
   midi_in.ignoreTypes(false, false, false);
