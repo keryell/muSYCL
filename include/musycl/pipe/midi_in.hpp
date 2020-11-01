@@ -1,3 +1,6 @@
+#ifndef MUSYCL_PIPE_MIDI_IN_HPP
+#define MUSYCL_PIPE_MIDI_IN_HPP
+
 /** \file SYCL abstraction for a MIDI input pipe
 
     Based on RtMidi library.
@@ -15,36 +18,12 @@
 
 #include "rtmidi/RtMidi.h"
 
+#include "musycl/midi.hpp"
+
 namespace musycl {
 
 // To use time unit literals directly
 using namespace std::chrono_literals;
-
-namespace midi {
-
-/// A "note on" MIDI message
-class on {
-public :
-  std::int8_t channel;
-  std::int8_t note;
-  std::int8_t velocity;
-};
-
-
-/// A "note off" MIDI message
-class off {
-public :
-  std::int8_t channel;
-  std::int8_t note;
-  std::int8_t velocity;
-};
-
-
-/** A MIDI message can be one of different types, including the
-    monostate for empty message at initialization */
-using msg = std::variant<std::monostate, midi::on, midi::off>;
-
-}
 
 /** A MIDI input interface exposed as a SYCL pipe.
 
@@ -77,9 +56,9 @@ class midi_in {
   };
 
   /// Process the incomming MIDI messages
-  static void process_midi_in(double time_stamp,
-                       std::vector<std::uint8_t>* p_midi_message,
-                       void*) {
+  static inline void process_midi_in(double time_stamp,
+                                     std::vector<std::uint8_t>* p_midi_message,
+                                     void*) {
     auto &midi_message = *p_midi_message;
     auto n_bytes = midi_message.size();
     for (int i = 0; i < n_bytes; ++i)
@@ -139,3 +118,4 @@ public:
 
 }
 
+#endif // MUSYCL_PIPE_MIDI_IN_HPP
