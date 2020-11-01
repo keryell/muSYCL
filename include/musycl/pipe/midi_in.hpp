@@ -1,0 +1,141 @@
+/** \file SYCL abstraction for a MIDI input pipe
+
+    Based on RtMidi library.
+*/
+
+#include <chrono>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
+#include <variant>
+#include <vector>
+
+#include <boost/fiber/buffered_channel.hpp>
+
+#include "rtmidi/RtMidi.h"
+
+namespace musycl {
+
+// To use time unit literals directly
+using namespace std::chrono_literals;
+
+namespace midi {
+
+/// A "note on" MIDI message
+class on {
+public :
+  std::int8_t channel;
+  std::int8_t note;
+  std::int8_t velocity;
+};
+
+
+/// A "note off" MIDI message
+class off {
+public :
+  std::int8_t channel;
+  std::int8_t note;
+  std::int8_t velocity;
+};
+
+
+/** A MIDI message can be one of different types, including the
+    monostate for empty message at initialization */
+using msg = std::variant<std::monostate, midi::on, midi::off>;
+
+}
+
+/** A MIDI input interface exposed as a SYCL pipe.
+
+    In SYCL the type is used to synthesize the connection between
+    kernels, so there can be only 1 instance of a MIDI input
+    interface. */
+class midi_in {
+  /// Capacity of the MIDI message pipe
+  static auto constexpr pipe_min_capacity = 64;
+
+  /** The handler to control the MIDI input interface
+
+      Use a pointer because RtMidiIn uses some dynamic polymorphism
+      and it crashes otherwise */
+  static inline std::unique_ptr<RtMidiIn> interface;
+
+  /// A FIFO used to implement the pipe of MIDI messages
+  static inline boost::fibers::buffered_channel<midi::msg>
+  channel { pipe_min_capacity };
+
+  /// Check for RtMidi errors
+  static auto constexpr check_error = [] (auto&& function) {
+    try {
+      return function();
+    }
+    catch (const RtMidiError &error) {
+      error.printMessage();
+      std::exit(EXIT_FAILURE);
+    }
+  };
+
+  /// Process the incomming MIDI messages
+  static void process_midi_in(double time_stamp,
+                       std::vector<std::uint8_t>* p_midi_message,
+                       void*) {
+    auto &midi_message = *p_midi_message;
+    auto n_bytes = midi_message.size();
+    for (int i = 0; i < n_bytes; ++i)
+      std::cout << "Byte " << i << " = "
+                << static_cast<int>(midi_message[i]) << ", ";
+    std::cout << "time stamp = " << time_stamp << std::endl;
+
+    /// Interesting MIDI messages have 3 bytes
+    if (n_bytes == 3) {
+      if (midi_message[0] == 144 && midi_message[2] != 0)
+        // Start the note
+        channel.push(midi::on { 0, midi_message[1], midi_message[2] });
+      else if (midi_message[0] == 128
+               || (midi_message[0] == 144 && midi_message[2] == 0))
+        // Stop the note
+        channel.push(midi::off { 0, midi_message[1], midi_message[2] });
+    }
+  }
+
+public:
+
+  void open(const std::string& application_name,
+            const std::string& port_name,
+            RtMidi::Api backend,
+            unsigned int port_number) {
+    // Create a MIDI input with a fancy client name
+    interface = check_error([&] {
+      return std::make_unique<RtMidiIn>(backend, application_name);
+    });
+
+    // Open the first port and give it a fancy name
+    check_error([&] { interface->openPort(port_number, port_name); });
+
+
+    // Don't ignore sysex, timing, or active sensing messages
+    check_error([&] { interface->ignoreTypes(false, false, false); });
+
+    // Drain the message queue to avoid leftover MIDI messages
+    std::vector<std::uint8_t> message;
+    do {
+      // There is a race condition in RtMidi where the messages are
+      // not seen if these is not some sleep here
+      std::this_thread::sleep_for(1ms);
+      check_error([&] { interface->getMessage(&message); });
+    } while (!message.empty());
+
+    // Handle MIDI messages with this callback function
+    check_error([&] { interface->setCallback(process_midi_in, nullptr); });
+  }
+
+
+  /// The sycl::pipe::read-like interface to read a MIDI message
+  static midi::msg read() {
+    return channel.value_pop();
+  }
+};
+
+}
+

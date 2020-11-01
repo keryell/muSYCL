@@ -7,6 +7,9 @@ project(muSYCL
 include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
 
+# All targets inherit from include dir
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
 find_library(LIBRARY_RTAUDIO NAMES rtaudio REQUIRED)
 
 find_library(LIBRARY_RTMIDI NAMES rtmidi REQUIRED)

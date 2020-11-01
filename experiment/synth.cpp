@@ -30,7 +30,7 @@ std::atomic saw_level = 0.;
 std::atomic dt = 0.;
 
 
-/// Process the incomming MIDI messages
+/// Check for errors
 auto check_error = [] (auto&& function) {
   try {
     return function();
@@ -124,7 +124,7 @@ int main() {
   } while (!message.empty());
 
   // Handle MIDI messages with this callback function
-  midi_in.setCallback(&midi_in_callback, nullptr);
+  midi_in.setCallback(midi_in_callback, nullptr);
 
   auto audio = check_error([] { return RtAudio { audio_api }; });
   auto device = audio.getDefaultOutputDevice();
