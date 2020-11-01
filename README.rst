@@ -8,6 +8,6 @@ In the top directory of the repository::
 
   mkdir build
   # Configure the project with the triSYCL repository somewhere
-  cmake .. -DCMAKE_MODULE_PATH=.../triSYCL/cmake
+  CXX=clang++-11 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake
   # Build the project
   cmake --build . --parallel `nproc`

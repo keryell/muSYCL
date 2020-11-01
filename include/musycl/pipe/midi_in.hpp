@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
@@ -113,6 +114,12 @@ public:
   /// The sycl::pipe::read-like interface to read a MIDI message
   static midi::msg read() {
     return channel.value_pop();
+  }
+
+
+  /// The non-blocking sycl::pipe::read-like interface to read a MIDI message
+  static bool try_read(midi::msg& m) {
+    return channel.try_pop(m) == boost::fibers::channel_op_status::success;
   }
 };
 
