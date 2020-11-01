@@ -9,23 +9,19 @@
 
 namespace musycl::midi {
 
-/// A "note on" MIDI message
-class on {
+/// A "note" MIDI message implementation detail
+class note {
 public :
   std::int8_t channel;
   std::int8_t note;
   std::int8_t velocity;
 };
 
+/// A "note on" MIDI message is just a kind of note
+class on : public note {};
 
-/// A "note off" MIDI message
-class off {
-public :
-  std::int8_t channel;
-  std::int8_t note;
-  std::int8_t velocity;
-};
-
+/// A "note off" MIDI message is just a kind of note
+class off : public note {};
 
 /** A MIDI message can be one of different types, including the
     monostate for empty message at initialization */
