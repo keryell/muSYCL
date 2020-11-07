@@ -2,6 +2,7 @@
 #define MUSYCL_MUSYCL_HPP
 
 #include "pipe/audio.hpp"
+#include "dco.hpp"
 #include "pipe/midi_in.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP
