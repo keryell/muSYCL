@@ -67,16 +67,7 @@ class midi_in {
                 << static_cast<int>(midi_message[i]) << ", ";
     std::cout << "time stamp = " << time_stamp << std::endl;
 
-    /// Interesting MIDI messages have 3 bytes
-    if (n_bytes == 3) {
-      if (midi_message[0] == 144 && midi_message[2] != 0)
-        // Start the note
-        channel.push(midi::on { 0, midi_message[1], midi_message[2] });
-      else if (midi_message[0] == 128
-               || (midi_message[0] == 144 && midi_message[2] == 0))
-        // Stop the note
-        channel.push(midi::off { 0, midi_message[1], midi_message[2] });
-    }
+    channel.push(musycl::midi::parse(midi_message));
   }
 
 public:

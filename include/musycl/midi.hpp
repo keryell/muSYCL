@@ -51,6 +51,22 @@ class off : public note_base {
     monostate for empty message at initialization */
 using msg = std::variant<std::monostate, midi::on, midi::off>;
 
+/// Parse a MIDI byte message into a specific MIDI instruction
+msg parse(const std::vector<std::uint8_t>& midi_message) {
+  msg m;
+  /// Interesting MIDI messages have 3 bytes
+  if (midi_message.size() == 3) {
+    if (midi_message[0] == 144 && midi_message[2] != 0)
+      // Start the note
+      m = midi::on { 0, midi_message[1], midi_message[2] };
+    else if (midi_message[0] == 128
+             || (midi_message[0] == 144 && midi_message[2] == 0))
+      // Stop the note
+      m = midi::off { 0, midi_message[1], midi_message[2] };
+  }
+  return m;
+}
+
 }
 
 #endif // MUSYCL_MIDI_HPP
