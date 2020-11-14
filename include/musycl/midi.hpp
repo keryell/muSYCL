@@ -60,8 +60,14 @@ using msg = std::variant<std::monostate, midi::on, midi::off>;
 
 
 /// Get the 4 MSB bits of the MIDI status byte that give the command kind
-static inline std::int8_t high_status(std::uint8_t first_byte) {
-  return first_byte>>4;
+static inline std::int8_t status_high(std::uint8_t first_byte) {
+  return first_byte >> 4;
+}
+
+
+/// Get the channel number of the MIDI status byte
+static inline std::int8_t channel(std::uint8_t first_byte) {
+  return first_byte & 0b1111;
 }
 
 
@@ -69,17 +75,19 @@ static inline std::int8_t high_status(std::uint8_t first_byte) {
 msg parse(const std::vector<std::uint8_t>& midi_message) {
   msg m;
   if (!midi_message.empty()) {
-    auto hs = high_status(midi_message[0]);
+    auto sh = status_high(midi_message[0]);
     /// Interesting MIDI messages have 3 bytes
     if (midi_message.size() == 3) {
-      if (hs == 9 && midi_message[2] != 0)
-        // Start the note
-        m = midi::on { 0, midi_message[1], midi_message[2] };
-      else if (hs == 8 //< Note-off status
+      if (sh == 9 && midi_message[2] != 0)
+        // Start the note on the given channel if the velocity is non 0
+        m = midi::on
+          { channel(midi_message[0]), midi_message[1], midi_message[2] };
+      else if (sh == 8 //< Note-off status
                // But a note-on with a 0-velocity means also a note-off
-               || (hs == 9 && midi_message[2] == 0))
-        // Stop the note
-        m = midi::off { 0, midi_message[1], midi_message[2] };
+               || (sh == 9 && midi_message[2] == 0))
+        // Stop the note on the given channel
+        m = midi::off
+          { channel(midi_message[0]), midi_message[1], midi_message[2] };
     }
   }
   return m;

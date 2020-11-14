@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -63,8 +64,10 @@ class midi_in {
     auto &midi_message = *p_midi_message;
     auto n_bytes = midi_message.size();
     for (int i = 0; i < n_bytes; ++i)
-      std::cout << "Byte " << i << " = "
-                << static_cast<int>(midi_message[i]) << ", ";
+      std::cout << "Byte " << i << " = 0x"
+                << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(midi_message[i]) << ", "
+                << std::resetiosflags(std::cout.flags());
     std::cout << "time stamp = " << time_stamp << std::endl;
 
     channel.push(musycl::midi::parse(midi_message));
