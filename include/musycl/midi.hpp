@@ -16,6 +16,9 @@
 
 namespace musycl::midi {
 
+/// MIDI has 128 notes, from 
+auto constexpr note_number = 128;
+
 /// A "note" MIDI message implementation detail
 class note_base {
 public :
