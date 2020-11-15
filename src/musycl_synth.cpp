@@ -41,8 +41,8 @@ int main() {
   // - ALSA
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
-  // The oscillators generating signal, 1 per possible note (pessimistic...)
-  std::array<musycl::dco, musycl::midi::note_number> osc;
+  // The oscillators generating signal, 1 per running note
+  std::map<musycl::midi::note_type, musycl::dco> osc;
 
   // MIDI message to be received
   musycl::midi::msg m;
@@ -67,10 +67,10 @@ int main() {
     // The output audio frame accumulator
     musycl::audio::frame audio = {};
     // For each oscillator
-    for (auto &o : osc) {
-      auto f = o.audio();
+    for (auto&& [note, o] : osc) {
+      auto out = o.audio();
       // Accumulate its audio output into the main output
-      for (auto && [e, a] : ranges::views::zip(f, audio))
+      for (auto&& [e, a] : ranges::views::zip(out, audio))
         a += e;
     }
     // Then send the computed audio frame to the output

@@ -16,8 +16,18 @@
 
 namespace musycl::midi {
 
-/// MIDI has 128 notes, from 
+/// MIDI has 128 notes
 auto constexpr note_number = 128;
+
+/// Type for MIDI channel values
+using channel_type = std::int8_t;
+
+/// Type for MIDI note values
+using note_type = std::int8_t;
+
+/// Type for MIDI velocity values
+using velocity_type = std::int8_t;
+
 
 /// A "note" MIDI message implementation detail
 class note_base {
@@ -26,22 +36,22 @@ public :
      arithmetic on values */
 
   /// The channel number between 0 and 15
-  std::int8_t channel;
+  channel_type channel;
 
   /// The note number between 0 and 127, C3 note is 60
-  std::int8_t note;
+  note_type note;
 
   /// The note velocity between 0 and 127
-  std::int8_t velocity;
+  velocity_type velocity;
 
   note_base() = default;
 
   /// A specific constructor to handle unsigned to signed narrowing
   template <typename Channel, typename Note, typename Velocity>
   note_base(Channel&& c, Note&& n, Velocity&& v)
-    : channel { static_cast<int8_t>(c) }
-    , note { static_cast<int8_t>(n) }
-    , velocity { static_cast<int8_t>(v) }
+    : channel { static_cast<channel_type>(c) }
+    , note { static_cast<note_type>(n) }
+    , velocity { static_cast<velocity_type>(v) }
   {}
 };
 
