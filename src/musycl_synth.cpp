@@ -3,6 +3,7 @@
     Rely on some triSYCL extensions (kernel I/O) and muSYCL extensions
     (MIDI and audio input/output)
 */
+#include <cmath>
 
 #include <SYCL/sycl.hpp>
 #include <SYCL/vendor/trisycl/pipe/cout.hpp>
@@ -50,6 +51,12 @@ int main() {
   // Master volume of the output in [ 0, 1 ]
   float master_volume = 1;
 
+  // Feedback in IIR output filter of the output in [ 0, 1 ]
+  float iir_feedback = 0;
+
+  // Single tap for IIR output filter of the output
+  float iir_tap = 0;
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
@@ -68,14 +75,25 @@ int main() {
           [&] (musycl::midi::control_change& cc) {
             ts::pipe::cout::stream() << "MIDI cc "
                                      << (int)cc.number << std::endl;
-            if (cc.number == 85)
+            // Attack/CH1 on Arturia Keylab 49 Essential
+            if (cc.number == 73) {
+              // The IIR filter trigger close to 1, so use a function to focus
+              // there
+              auto c = [] (auto x) { return std::pow(x, 0.005f); };
+              auto ref = c(0.5f);
+              // Keep the curve only from [0.5, 1] and renormalize in [0, 1]
+              iir_feedback = (c(cc.value_1()*.5f + 0.5f) - ref)/(1 - ref);
+              std::cout << "IIR " << iir_feedback << std::endl;
+            }
+            // Master volume on Arturia Keylab 49 Essential
+            else if (cc.number == 85)
               master_volume = cc.value_1();
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
 
     // The output audio frame accumulator
-    musycl::audio::frame audio = {};
+    musycl::audio::frame audio {};
     // For each oscillator
     for (auto&& [note, o] : osc) {
       auto out = o.audio();
@@ -85,10 +103,13 @@ int main() {
     }
 
     // Normalize the audio by number of playing voices to avoid saturation
-    for (auto& a : audio)
+    for (auto& a : audio) {
+      // 1 single-tap IIR filter
+      a = a*(1 - iir_feedback) + iir_tap*iir_feedback;
+      iir_tap = a;
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + osc.size());
-
+    }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
   }

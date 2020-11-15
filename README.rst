@@ -14,12 +14,15 @@ This requires a modern C++20 compiler, the Range-v3 library and for
 the musical side the RtMidi and AudioRt libraries, typically using
 JACK on Linux.
 
+It relies also on some extensions from
+https://github.com/triSYCL/triSYCL
+
 To install these packages on Debian or Ubuntu, try::
 
   sudo install clang-11 librange-v3-dev librtmidi-dev librtaudio-dev \
   jackd2 qjackctl
 
-
+and clone triSYCL somewhere.
 
 In the top directory of the repository::
 
