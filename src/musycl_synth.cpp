@@ -47,6 +47,9 @@ int main() {
   // MIDI message to be received
   musycl::midi::msg m;
 
+  // Master volume of the output in [ 0, 1 ]
+  float master_volume = 1;
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
@@ -61,6 +64,12 @@ int main() {
                                      << (int)off.note << std::endl;
             osc[off.note].stop(off);
             osc.erase(off.note);
+          },
+          [&] (musycl::midi::control_change& cc) {
+            ts::pipe::cout::stream() << "MIDI cc "
+                                     << (int)cc.number << std::endl;
+            if (cc.number == 85)
+              master_volume = cc.value_1();
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
@@ -78,7 +87,7 @@ int main() {
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio)
       // Add a constant factor to avoid too much fading between 1 and 2 voices
-      a /= (4 + osc.size());
+      a *= master_volume/(4 + osc.size());
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);

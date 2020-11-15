@@ -74,9 +74,46 @@ class off : public note_base {
   using note_base::note_base;
 };
 
+/// The MIDI "control change" message
+class control_change {
+public :
+  /* Use signed integers because it is less disturbing when doing
+     arithmetic on values */
+
+  /// The channel number between 0 and 15
+  channel_type channel;
+
+  /// Type for MIDI control change number
+  using number_type = std::int8_t;
+
+  /// The number control change
+  number_type number;
+
+  /// Type for MIDI control change value
+  using value_type = std::int8_t;
+
+  /// The value associated to this control change
+  value_type value;
+
+  /// A specific constructor to handle unsigned to signed narrowing
+  template <typename Channel, typename Number, typename Value>
+  control_change(Channel&& c, Number&& n, Value&& v)
+    : channel { static_cast<channel_type>(c) }
+    , number { static_cast<number_type>(n) }
+    , value { static_cast<value_type>(v) }
+  {}
+
+
+  /// The value normalized in [ 0, 1 ]
+  float value_1() const {
+    return value/127.f;
+  }
+};
+
 /** A MIDI message can be one of different types, including the
     monostate for empty message at initialization */
-using msg = std::variant<std::monostate, midi::on, midi::off>;
+using msg = std::variant<std::monostate, midi::on, midi::off,
+                         midi::control_change>;
 
 
 /// Get the 4 MSB bits of the MIDI status byte that give the command kind
@@ -107,6 +144,10 @@ msg parse(const std::vector<std::uint8_t>& midi_message) {
                || (sh == 9 && midi_message[2] == 0))
         // Stop the note on the given channel
         m = midi::off
+          { channel(midi_message[0]), midi_message[1], midi_message[2] };
+      else if (sh == 0xb)
+        // This is a control change message
+        m = midi::control_change
           { channel(midi_message[0]), midi_message[1], midi_message[2] };
     }
   }
