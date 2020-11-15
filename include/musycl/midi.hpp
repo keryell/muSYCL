@@ -46,6 +46,7 @@ public :
 
   note_base() = default;
 
+
   /// A specific constructor to handle unsigned to signed narrowing
   template <typename Channel, typename Note, typename Velocity>
   note_base(Channel&& c, Note&& n, Velocity&& v)
@@ -53,6 +54,12 @@ public :
     , note { static_cast<note_type>(n) }
     , velocity { static_cast<velocity_type>(v) }
   {}
+
+
+  /// The velocity normalized in [ 0, 1 ]
+  float velocity_1() const {
+    return velocity/127.f;
+  }
 };
 
 /// A "note on" MIDI message is just a kind of note

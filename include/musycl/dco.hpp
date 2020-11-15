@@ -20,6 +20,9 @@ class dco {
   /// The phase increment per clock to generate the right frequency
   float dt {};
 
+  /// Initial velocity of the note
+  float velocity;
+
 public:
 
   /// Start a note
@@ -28,6 +31,8 @@ public:
     // A3 note being MIDI note 69
     auto frequency = 440*std::pow(2., (on.note - 69)/12.);
     dt = frequency/48000;
+    velocity = on.velocity_1();
+    std::cout << velocity << std::endl;
     running = true;
   }
 
@@ -41,8 +46,9 @@ public:
     musycl::audio::frame f;
     if (running) {
       for (auto &e : f) {
-        // Generate a square waveform
-        e = phase > 0.5;
+        // Generate a square waveform with an amplitude directly
+        // proportional to the velocity
+        e = (2*(phase > 0.5) - 1)*velocity;
         phase += dt;
         // The phase is cyclic modulo 1
         if (phase > 1)
