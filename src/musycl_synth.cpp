@@ -77,7 +77,8 @@ int main() {
 
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio)
-      a /= osc.size();
+      // Add a constant factor to avoid too much fading between 1 and 2 voices
+      a /= (4 + osc.size());
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
