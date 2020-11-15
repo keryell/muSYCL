@@ -60,6 +60,7 @@ int main() {
             ts::pipe::cout::stream() << "MIDI off "
                                      << (int)off.note << std::endl;
             osc[off.note].stop(off);
+            osc.erase(off.note);
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
