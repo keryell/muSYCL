@@ -127,6 +127,13 @@ public:
   /// The sycl::pipe::write-like interface to write a MIDI message
   template <typename MusyclAudioSample>
   static inline void write(MusyclAudioSample&& s) {
+    // Check that the output lands in the authorized values
+    auto [min, max] = ranges::minmax(s);
+    if (min < -1)
+      std::cerr << "Min saturation detected: " << min;
+    if (max > 1)
+      std::cerr << "Max saturation detected: " << max;
+
     output_frames.push(std::forward<MusyclAudioSample>(s));
   }
 };

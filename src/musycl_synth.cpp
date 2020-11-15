@@ -73,6 +73,11 @@ int main() {
       for (auto&& [e, a] : ranges::views::zip(out, audio))
         a += e;
     }
+
+    // Normalize the audio by number of playing voices to avoid saturation
+    for (auto& a : audio)
+      a /= osc.size();
+
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
   }
