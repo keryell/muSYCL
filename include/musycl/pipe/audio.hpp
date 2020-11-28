@@ -70,7 +70,8 @@ private:
   };
 
 
-/// Callback function used by RtAudio to read/write audio samples
+/** Callback function used by RtAudio to read/write audio samples
+*/
 static inline int
 audio_callback(void *output_buffer, void *input_buffer,
                unsigned int rtaudio_frame_size, double time_stamp,

@@ -3,6 +3,7 @@
 
 #include "pipe/audio.hpp"
 #include "dco.hpp"
+#include "lfo.hpp"
 #include "pipe/midi_in.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP

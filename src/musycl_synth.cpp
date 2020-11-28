@@ -57,6 +57,10 @@ int main() {
   // Single tap for IIR output filter of the output
   float iir_tap = 0;
 
+  // Create an LFO and start it
+  musycl::lfo lfo;
+  lfo.set_frequency(2).run();
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
@@ -108,10 +112,11 @@ int main() {
       a = a*(1 - iir_feedback) + iir_tap*iir_feedback;
       iir_tap = a;
       // Add a constant factor to avoid too much fading between 1 and 2 voices
-      a *= master_volume/(4 + osc.size());
+      a *= master_volume/(4 + osc.size())*lfo.out(0, 1);
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
+    lfo.tick_clock();
   }
   return 0;
 }
