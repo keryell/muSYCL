@@ -51,11 +51,8 @@ int main() {
   // Master volume of the output in [ 0, 1 ]
   float master_volume = 1;
 
-  // Feedback in IIR output filter of the output in [ 0, 1 ]
-  float iir_feedback = 0;
-
-  // Single tap for IIR output filter of the output
-  float iir_tap = 0;
+  // A low pass filter for the output
+  musycl::low_pass_filter low_pass_filter;
 
   // Create an LFO and start it
   musycl::lfo lfo;
@@ -86,8 +83,8 @@ int main() {
               auto c = [] (auto x) { return std::pow(x, 0.005f); };
               auto ref = c(0.5f);
               // Keep the curve only from [0.5, 1] and renormalize in [0, 1]
-              iir_feedback = (c(cc.value_1()*.5f + 0.5f) - ref)/(1 - ref);
-              std::cout << "IIR " << iir_feedback << std::endl;
+              low_pass_filter.set_smoothing_factor
+                (1 - (c(cc.value_1()*.5f + 0.5f) - ref)/(1 - ref));
             }
             // Master volume on Arturia Keylab 49 Essential
             else if (cc.number == 85)
@@ -108,9 +105,7 @@ int main() {
 
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
-      // 1 single-tap IIR filter
-      a = a*(1 - iir_feedback) + iir_tap*iir_feedback;
-      iir_tap = a;
+      a = low_pass_filter.filter(a);
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + osc.size())*lfo.out(0, 1);
     }
