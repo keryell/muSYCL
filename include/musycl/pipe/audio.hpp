@@ -22,6 +22,8 @@
 
 #include "rtaudio/RtAudio.h"
 
+#include "musycl/config.hpp"
+
 namespace musycl {
 
 // To use time unit literals directly
@@ -38,9 +40,6 @@ public:
 
   /// Audio value type, with data in [ -1, +1 ]
   using value_type = double;
-
-  /// Number of elements in an audio frame
-  static constexpr auto frame_size = 256;
 
   /// The type of an audio frame
   /// \todo Use a movable type?
@@ -107,19 +106,34 @@ public:
     RtAudio::StreamOptions options;
     options.streamName = stream_name;
     auto sample_rate = interface->getDeviceInfo(device).preferredSampleRate;
+    if (sample_rate != sample_frequency) {
+      std::cerr << "Warning: the preferred sample rate " << sample_rate
+                << " of the audio interface is not the same as the one "
+        "configured in musycl/config.hpp so the quality might be reduced."
+                << std::endl;
+      // Forcing the sampling frequency anyway
+      sample_rate = sample_frequency;
+    }
     unsigned int actual_frame_size = frame_size;
 
     check_error([&] {
       interface->openStream(&parameters, nullptr, RTAUDIO_FLOAT64, sample_rate,
-                       &actual_frame_size, audio_callback, nullptr, &options,
-                       [] (RtAudioError::Type type,
-                           const std::string &error_text) {
-                         std::cerr << error_text << std::endl;
-                       });
+                            &actual_frame_size, audio_callback, nullptr, &options,
+                            [] (RtAudioError::Type type,
+                                const std::string &error_text) {
+                              std::cerr << error_text << std::endl;
+                            });
     });
-    std::cout << "Sample rate: " << sample_rate
-              << "\nSamples per frame: " << actual_frame_size
-              << "\nRequested samples per frame: " << frame_size << std::endl;
+    if (sample_rate != sample_frequency
+        && actual_frame_size != frame_size) {
+      std::cerr << "Actual sample rate: " << sample_rate
+                << "Requested sample rate: " << sample_frequency
+                << "\nActual samples per frame: " << actual_frame_size
+                << "\nRequested samples per frame: " << frame_size
+                << '.' << std::endl
+                << "Please update musycl/config.hpp accordingly." << std::endl;
+      std::terminate();
+    }
     // Start the audio streaming
     check_error([&] { interface->startStream(); });
   }

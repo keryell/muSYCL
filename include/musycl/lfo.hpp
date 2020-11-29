@@ -4,8 +4,11 @@
 */
 
 #ifndef MUSYCL_LFO_HPP
+#define MUSYCL_LFO_HPP
 
 #include <cmath>
+
+#include "config.hpp"
 
 namespace musycl {
 
@@ -18,7 +21,7 @@ class lfo {
   float phase = 0;
 
   /// The phase increment per clock to generate the right frequency
-  float dt {};
+  float dphase {};
 
   /// Current LFO value
   float value = 0;
@@ -40,7 +43,7 @@ public:
       \return the LFO itself to enable command chaining
   */
   auto& set_frequency(float frequency) {
-    dt = frequency*256/48000;
+    dphase = frequency*frame_size/sample_frequency;
     return *this;
   }
 
@@ -67,7 +70,7 @@ public:
       // Generate a square waveform
       value = 2*(phase > 0.5) - 1;
       // The phase is cyclic modulo 1
-      phase = std::fmod(phase + dt, 1.0f);
+      phase = std::fmod(phase + dphase, 1.0f);
     }
     return *this;
   }

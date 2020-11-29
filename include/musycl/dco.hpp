@@ -4,7 +4,12 @@
 */
 
 #ifndef MUSYCL_DCO_HPP
+#define MUSYCL_DCO_HPP
 
+#include <range/v3/all.hpp>
+
+#include "config.hpp"
+#include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
 
 namespace musycl {
@@ -18,7 +23,7 @@ class dco {
   float phase = 0;
 
   /// The phase increment per clock to generate the right frequency
-  float dt {};
+  float dphase {};
 
   /// Initial velocity of the note
   float velocity;
@@ -30,7 +35,7 @@ public:
     // The frequency for a 12-tone equal temperament scale with 440 Hz
     // A3 note being MIDI note 69
     auto frequency = 440*std::pow(2., (on.note - 69)/12.);
-    dt = frequency/48000;
+    dphase = frequency/sample_frequency;
     velocity = on.velocity_1();
     std::cout << velocity << std::endl;
     running = true;
@@ -49,7 +54,7 @@ public:
         // Generate a square waveform with an amplitude directly
         // proportional to the velocity
         e = (2*(phase > 0.5) - 1)*velocity;
-        phase += dt;
+        phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)
           phase -= 1;

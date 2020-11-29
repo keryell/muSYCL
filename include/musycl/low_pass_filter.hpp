@@ -1,6 +1,7 @@
 /// \file A low pass filter based on IIR 1-tap integrator
 
 #ifndef MUSYCL_LOW_PASS_FILTER_HPP
+#define MUSYCL_LOW_PASS_FILTER_HPP
 
 #include <cmath>
 
