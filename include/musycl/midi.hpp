@@ -10,6 +10,7 @@
     https://www.midi.org/specifications/midi1-specifications/m1-v4-2-1-midi-1-0-detailed-specification-96-1-4
 */
 
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <variant>
@@ -113,7 +114,13 @@ public :
 
   /// The value normalized in [ low, high ] as a given type
   constexpr static float get_value_in(value_type v, float low, float high) {
-    return low + v*(high - low)/127;
+    return low + get_value_as<float>(v)*(high - low);
+  }
+
+
+  /// The value normalized in [ low, high ] as a given type
+  constexpr static float get_log_scale_value_in(value_type v, float low, float high) {
+    return low*std::exp(std::log(high/low)*get_value_as<float>(v));
   }
 
 
