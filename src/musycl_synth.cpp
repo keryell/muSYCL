@@ -29,7 +29,7 @@ int main() {
   musycl::midi_in midi_in;
   // Access to the right input on the system
   // - Jack
-  midi_in.open(application_name, "input", RtMidi::UNIX_JACK, 0);
+  midi_in.open(application_name, "input", RtMidi::UNIX_JACK, 1);
   // - ALSA
   // audio.open_out(application_name, RtMidi::LINUX_ALSA, 1);
 
@@ -78,13 +78,10 @@ int main() {
                                      << (int)cc.number << std::endl;
             // Attack/CH1 on Arturia Keylab 49 Essential
             if (cc.number == 73) {
-              // The IIR filter trigger close to 1, so use a function to focus
-              // there
-              auto c = [] (auto x) { return std::pow(x, 0.005f); };
-              auto ref = c(0.5f);
-              // Keep the curve only from [0.5, 1] and renormalize in [0, 1]
-              low_pass_filter.set_smoothing_factor
-                (1 - (c(cc.value_1()*.5f + 0.5f) - ref)/(1 - ref));
+              // Use a frequency logarithmic scale between 1 Hz and
+              // the 4 times the sampling frequency
+              low_pass_filter.set_cutoff_frequency
+                (std::exp((cc.value_1()*std::log(4*musycl::sample_frequency))));
             }
             // Master volume on Arturia Keylab 49 Essential
             else if (cc.number == 85)

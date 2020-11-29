@@ -4,6 +4,7 @@
 #define MUSYCL_LOW_PASS_FILTER_HPP
 
 #include <cmath>
+#include <numbers>
 
 namespace musycl {
 
@@ -21,7 +22,8 @@ class low_pass_filter {
 
 public:
 
-  /** Set the smoothing factor (the IIR feedback ratio)
+  /** Set the smoothing factor (the direct input ratio rather than the
+      IIR feedback)
 
       \input sf is the smoothing factor in [0, 1]. 0 means pass
       through whil 1 means maximum low pass filter, ie 0 output.
@@ -34,6 +36,17 @@ public:
     return *this;
   }
 
+
+  /** Set the cutoff frequency of the filter
+
+      \return the object itself to enable command chaining
+  */
+  auto& set_cutoff_frequency(float cf) {
+    std::cout << "low_pass_filter cutoff frequency = " << cf << std::endl;
+    set_smoothing_factor(2*std::numbers::pi*cf/sample_frequency
+                         /(2*std::numbers::pi*cf/sample_frequency + 1));
+    return *this;
+  }
 
 
   /// Get a filtered output from an input value
