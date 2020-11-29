@@ -111,6 +111,12 @@ public :
   }
 
 
+  /// The value normalized in [ low, high ] as a given type
+  constexpr static float get_value_in(value_type v, float low, float high) {
+    return low + v*(high - low)/127;
+  }
+
+
   /// The value normalized in [ 0, 1 ]
   float value_1() const {
     return get_value_as<float>(value);

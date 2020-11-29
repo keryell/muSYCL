@@ -53,6 +53,11 @@ int main() {
   musycl::lfo lfo;
   lfo.set_frequency(2).run();
 
+  // Use MIDI CC 60 (LFO Rate on Arturia KeyLab 49) to set the LFO frequency
+  musycl::midi_in::cc_action<76>([&] (musycl::midi::control_change::value_type v) {
+    lfo.set_frequency(musycl::midi::control_change::get_value_in(v, 0.1, 20));
+  });
+
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
   musycl::midi_in::cc_variable<85>(master_volume);
 
