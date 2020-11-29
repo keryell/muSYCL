@@ -104,9 +104,16 @@ public :
   {}
 
 
+  /// The value normalized in [ 0, 1 ] as a given type
+  template <typename Value>
+  constexpr static Value get_value_as(value_type v) {
+    return v/Value { 127 };
+  }
+
+
   /// The value normalized in [ 0, 1 ]
   float value_1() const {
-    return value/127.f;
+    return get_value_as<float>(value);
   }
 };
 

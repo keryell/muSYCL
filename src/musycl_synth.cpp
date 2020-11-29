@@ -7,6 +7,7 @@
 
 #include <SYCL/sycl.hpp>
 #include <SYCL/vendor/trisycl/pipe/cout.hpp>
+#include <triSYCL/detail/overloaded.hpp>
 
 #include <musycl/musycl.hpp>
 
@@ -18,18 +19,12 @@ auto constexpr application_name = "musycl_synth";
 
 namespace ts = sycl::vendor::trisycl;
 
-/// Helper type for the visitor to do pattern matching on invokables
-/// https://en.cppreference.com/w/cpp/utility/variant/visit
-template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-// Explicit deduction guide (not needed as of C++20)
-template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
 int main() {
   // The MIDI input interface
   musycl::midi_in midi_in;
   // Access to the right input on the system
   // - Jack
-  midi_in.open(application_name, "input", RtMidi::UNIX_JACK, 1);
+  midi_in.open(application_name, "input", RtMidi::UNIX_JACK, 0);
   // - ALSA
   // audio.open_out(application_name, RtMidi::LINUX_ALSA, 1);
 
@@ -58,11 +53,14 @@ int main() {
   musycl::lfo lfo;
   lfo.set_frequency(2).run();
 
+  // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
+  musycl::midi_in::cc_variable<85>(master_volume);
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
     while (musycl::midi_in::try_read(m))
-      std::visit(overloaded {
+      std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
             osc[on.note].start(on);
@@ -83,9 +81,6 @@ int main() {
               low_pass_filter.set_cutoff_frequency
                 (std::exp((cc.value_1()*std::log(4*musycl::sample_frequency))));
             }
-            // Master volume on Arturia Keylab 49 Essential
-            else if (cc.number == 85)
-              master_volume = cc.value_1();
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
