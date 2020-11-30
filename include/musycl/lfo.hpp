@@ -23,8 +23,14 @@ class lfo {
   /// The phase increment per clock to generate the right frequency
   float dphase {};
 
+  /// Low level for the LFO output
+  float low = -1;
+
+  /// High level for the LFO output
+  float high = 1;
+
   /// Current LFO value
-  float value = 0;
+  float value = low;
 
 public:
 
@@ -34,6 +40,16 @@ public:
   */
   auto& run() {
     running = true;
+    return *this;
+  }
+
+
+  /** Stop the LFO
+
+      \return the LFO itself to enable command chaining
+  */
+  auto& stop() {
+    running = false;
     return *this;
   }
 
@@ -48,12 +64,16 @@ public:
   }
 
 
-  /** Stop the LFO
+  /// Set the LFO low level of the output
+  auto& set_low(float l) {
+    low = l;
+    return *this;
+  }
 
-      \return the LFO itself to enable command chaining
-  */
-  auto& stop() {
-    running = false;
+
+  /// Set the LFO high level of the output
+  auto& set_high(float h) {
+    high = h;
     return *this;
   }
 
@@ -76,13 +96,13 @@ public:
   }
 
 
-  /// Get the current value between -1.0 and +1.0
+  /// Get the current value between registered [low, high]
   float out() {
-    return value;
+    return out(low, high);
   }
 
 
-  /// Get the current value between low and high
+  /// Get the current value between given low and high
   float out(float low, float high) {
     return low + 0.5*(value + 1)*(high - low);
   }

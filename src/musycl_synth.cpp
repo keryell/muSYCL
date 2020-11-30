@@ -51,13 +51,19 @@ int main() {
 
   // Create an LFO and start it
   musycl::lfo lfo;
-  lfo.set_frequency(2).run();
+  lfo.set_frequency(2).set_low(0).run();
 
   // Use MIDI CC 76 (LFO Rate on Arturia KeyLab 49) to set the LFO frequency
   musycl::midi_in::cc_action<76>
     ([&] (musycl::midi::control_change::value_type v) {
       lfo.set_frequency(musycl::midi::control_change::get_log_scale_value_in
                         (v, 0.1, 20));
+    });
+
+  // Use MIDI CC 77 (LFO Amt on Arturia KeyLab 49) to set the LFO low level
+  musycl::midi_in::cc_action<77>
+    ([&] (musycl::midi::control_change::value_type v) {
+      lfo.set_low(musycl::midi::control_change::get_value_as<float>(v));
     });
 
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
@@ -104,7 +110,7 @@ int main() {
 
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
-      a = low_pass_filter.filter(a*lfo.out(0, 1));
+      a = low_pass_filter.filter(a*lfo.out());
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + osc.size());
     }
