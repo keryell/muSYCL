@@ -69,6 +69,12 @@ int main() {
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
   musycl::midi_in::cc_variable<85>(master_volume);
 
+  float rectication_ratio = 0;
+  // Use MIDI CC 75 (CH 2) to set the rectification ratio
+  musycl::midi_in::cc_variable<75>(rectication_ratio);
+
+
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
@@ -110,6 +116,9 @@ int main() {
 
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
+      // Insert a rectifier in the output
+      a = a*(1 - rectication_ratio) + rectication_ratio*std::abs(a);
+      // Insert a low pass filter in the output
       a = low_pass_filter.filter(a*lfo.out());
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + osc.size());
