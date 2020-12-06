@@ -60,6 +60,9 @@ public:
   */
   auto& set_frequency(float frequency) {
     dphase = frequency*frame_size/sample_frequency;
+    std::cout << "LFO frequency = " << frequency << " Hz, period = "
+              << 1/frequency << " s, "
+              << static_cast<int>(frequency*60) << " bpm" << std::endl;
     return *this;
   }
 
@@ -67,6 +70,7 @@ public:
   /// Set the LFO low level of the output
   auto& set_low(float l) {
     low = l;
+    std::cout << "LFO low level = " << low << std::endl;
     return *this;
   }
 
@@ -74,6 +78,7 @@ public:
   /// Set the LFO high level of the output
   auto& set_high(float h) {
     high = h;
+    std::cout << "LFO high level = " << high << std::endl;
     return *this;
   }
 
