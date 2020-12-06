@@ -46,6 +46,11 @@ public:
     running = false;
   }
 
+  /// Return the running status
+  bool is_running() {
+    return running;
+  }
+
   /// Generate an audio sample
   musycl::audio::frame audio() {
     musycl::audio::frame f;
