@@ -38,7 +38,7 @@ int main() {
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
   // The oscillators generating signal, 1 per running note
-  std::map<musycl::midi::note_type, musycl::dco> osc;
+  std::map<musycl::midi::note_type, musycl::dco> sounds;
 
   // MIDI message to be received
   musycl::midi::msg m;
@@ -82,13 +82,12 @@ int main() {
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            osc[on.note].start(on);
+            sounds[on.note].start(on);
           },
           [&] (musycl::midi::off& off) {
             ts::pipe::cout::stream() << "MIDI off "
                                      << (int)off.note << std::endl;
-            osc[off.note].stop(off);
-            osc.erase(off.note);
+            sounds[off.note].stop(off);
           },
           [&] (musycl::midi::control_change& cc) {
             ts::pipe::cout::stream() << "MIDI cc "
@@ -106,12 +105,19 @@ int main() {
 
     // The output audio frame accumulator
     musycl::audio::frame audio {};
-    // For each oscillator
-    for (auto&& [note, o] : osc) {
+    // For each sound generator
+    for (auto it = sounds.begin(); it != sounds.end();) {
+      auto&& [note, o] = *it;
       auto out = o.audio();
       // Accumulate its audio output into the main output
       for (auto&& [e, a] : ranges::views::zip(out, audio))
         a += e;
+      if (o.is_running())
+        // Just look at the next sound
+        ++it;
+      else
+        // Remove the no longer running sound generator and skip over it
+        it = sounds.erase(it);
     }
 
     // Normalize the audio by number of playing voices to avoid saturation
@@ -121,7 +127,7 @@ int main() {
       // Insert a low pass filter in the output
       a = low_pass_filter.filter(a*lfo.out());
       // Add a constant factor to avoid too much fading between 1 and 2 voices
-      a *= master_volume/(4 + osc.size());
+      a *= master_volume/(4 + sounds.size());
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
