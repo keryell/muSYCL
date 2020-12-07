@@ -13,6 +13,13 @@ namespace musycl {
   /// Number of elements in an audio frame
   static constexpr auto frame_size = 256;
 
+  /// Frame frequency
+  static constexpr auto frame_frequency =
+    static_cast<float>(sample_frequency/frame_size);
+
+  /// Frame period
+  static constexpr auto frame_period = 1/frame_frequency;
+
 }
 
 #endif // MUSYCL_CONFIG_HPP

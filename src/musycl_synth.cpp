@@ -74,6 +74,13 @@ int main() {
   musycl::midi_in::cc_variable<75>(rectication_ratio);
 
 
+  // Use an envelope generator
+  musycl::envelope envelope;
+  // Control the envelope with Attack/CH5 to Release/CH8
+  musycl::midi_in::cc_variable<80>(envelope.attack_time);
+  musycl::midi_in::cc_variable<81>(envelope.decay_time);
+  musycl::midi_in::cc_variable<82>(envelope.sustain_level);
+  musycl::midi_in::cc_variable<83>(envelope.release_time);
 
   // The forever time loop
   for(;;) {
@@ -83,11 +90,13 @@ int main() {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
             sounds[on.note].start(on);
+            envelope.start();
           },
           [&] (musycl::midi::off& off) {
             ts::pipe::cout::stream() << "MIDI off "
                                      << (int)off.note << std::endl;
             sounds[off.note].stop(off);
+            envelope.stop();
           },
           [&] (musycl::midi::control_change& cc) {
             ts::pipe::cout::stream() << "MIDI cc "
@@ -103,6 +112,7 @@ int main() {
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
 
+    envelope.tick_clock();
     // The output audio frame accumulator
     musycl::audio::frame audio {};
     // For each sound generator
@@ -127,7 +137,7 @@ int main() {
       // Insert a low pass filter in the output
       a = low_pass_filter.filter(a*lfo.out());
       // Add a constant factor to avoid too much fading between 1 and 2 voices
-      a *= master_volume/(4 + sounds.size());
+      a *= envelope.out()*master_volume/(4 + sounds.size());
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);

@@ -4,6 +4,7 @@
 #include "config.hpp"
 
 #include "dco.hpp"
+#include "envelope.hpp"
 #include "lfo.hpp"
 #include "low_pass_filter.hpp"
 #include "pipe/audio.hpp"
