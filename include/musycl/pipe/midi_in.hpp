@@ -171,7 +171,7 @@ public:
       // If we have a floating point type, scale the value in [0, 1]
       cc_actions.emplace(number, [action = std::forward<Lambda>(action)]
                          (midi::control_change::value_type v) {
-        action(midi::control_change::get_value_as<float>(v));
+        action(midi::control_change::get_value_as<arg_1_type>(v));
       });
     else
       // Just provides the CC value directly to the action
