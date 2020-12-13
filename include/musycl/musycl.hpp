@@ -10,5 +10,6 @@
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
 #include "resonance_filter.hpp"
+#include "sound_generator.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP

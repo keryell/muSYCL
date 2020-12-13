@@ -38,7 +38,7 @@ int main() {
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
   // The oscillators generating signal, 1 per running note
-  std::map<musycl::midi::note_type, musycl::dco> sounds;
+  std::map<musycl::midi::note_type, musycl::sound_generator> sounds;
 
   // MIDI message to be received
   musycl::midi::msg m;
@@ -100,7 +100,7 @@ int main() {
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            sounds[on.note].start(on);
+            sounds.emplace(on.note, musycl::dco {}.start(on));
             envelope.start();
           },
           [&] (musycl::midi::off& off) {

@@ -30,8 +30,13 @@ class dco {
 
 public:
 
-  /// Start a note
-  void start(const musycl::midi::on& on) {
+  /** Start a note
+
+      \param[in] on is the "note on" MIDI event to start with
+
+      \return itself to allow operation chaining
+  */
+  auto& start(const musycl::midi::on& on) {
     // The frequency for a 12-tone equal temperament scale with 440 Hz
     // A3 note being MIDI note 69
     auto frequency = 440*std::pow(2., (on.note - 69)/12.);
@@ -39,17 +44,27 @@ public:
     velocity = on.velocity_1();
     std::cout << velocity << std::endl;
     running = true;
+    return *this;
   }
 
-  /// Stop the current note
-  void stop(const musycl::midi::off& off) {
+
+  /** Stop the current note
+
+      \param[in] off is the "note off" MIDI event to stop with
+
+      \return itself to allow operation chaining
+  */
+  auto& stop(const musycl::midi::off& off) {
     running = false;
+    return *this;
   }
+
 
   /// Return the running status
   bool is_running() {
     return running;
   }
+
 
   /// Generate an audio sample
   musycl::audio::frame audio() {
