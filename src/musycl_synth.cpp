@@ -49,6 +49,17 @@ int main() {
   // A low pass filter for the output
   musycl::low_pass_filter low_pass_filter;
 
+  // A resonance filter for the output
+  musycl::resonance_filter resonance_filter;
+  // Use "Cutoff" on Arturia KeyLab 49 to set the resonance frequency
+  musycl::midi_in::cc_action<74>([&] (musycl::midi::control_change::value_type v) {
+    resonance_filter.set_frequency(musycl::midi::control_change::get_log_scale_value_in
+                        (v, 20, 10000)); });
+  // Use "Resonance" on Arturia KeyLab 49 to set the resonance
+  musycl::midi_in::cc_action<71>([&] (musycl::midi::control_change::value_type v) {
+    resonance_filter.set_resonance(std::log(v + 1.f)/std::log(128.f));
+  });
+
   // Create an LFO and start it
   musycl::lfo lfo;
   lfo.set_frequency(2).set_low(0).run();
@@ -136,6 +147,8 @@ int main() {
       a = a*(1 - rectication_ratio) + rectication_ratio*std::abs(a);
       // Insert a low pass filter in the output
       a = low_pass_filter.filter(a*lfo.out());
+      // Insert a resonance filter in the output
+      a = resonance_filter.filter(a);
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= envelope.out()*master_volume/(4 + sounds.size());
     }

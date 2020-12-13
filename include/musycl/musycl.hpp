@@ -9,5 +9,6 @@
 #include "low_pass_filter.hpp"
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
+#include "resonance_filter.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP
