@@ -99,8 +99,6 @@ public:
       \return the envelope generator itself to enable command chaining
   */
   auto& tick_clock() {
-    std::cout << "State " << state.index() << " Output = " << output << " Time: " << state_time << std::endl;
-
     state_time += frame_period;
     // Loop to handle several FSM transitions in the same time step
     for(;;) {
