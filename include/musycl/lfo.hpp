@@ -90,7 +90,7 @@ public:
 
       \return the LFO itself to enable command chaining
   */
-  auto& tick_clock() {
+  auto& tick_frame_clock() {
     if (running) {
       // Generate a square waveform
       value = 2*(phase > 0.5) - 1;

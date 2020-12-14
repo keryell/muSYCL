@@ -8,6 +8,7 @@
 #include "dco.hpp"
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
+#include "sound_generator/dco_envelope.hpp"
 
 namespace musycl {
 
@@ -15,7 +16,7 @@ class sound_generator {
 
   /** A sound generator is a variant of types which can be used as sound
       generators */
-  using sound_generator_t = std::variant<dco>;
+  using sound_generator_t = std::variant<dco,dco_envelope>;
 
   sound_generator_t sg;
 
@@ -63,6 +64,19 @@ public:
   /// Return the running status
   bool is_running() {
     return std::visit([&] (auto &s) { return s.is_running(); }, sg);
+  }
+
+
+  /** Update something at the frame frequency
+
+      \return object itself to enable command chaining
+  */
+  auto& tick_frame_clock() {
+    std::visit([&] (auto &s) {
+      if constexpr (requires { s.tick_frame_clock(); })
+        s.tick_frame_clock();
+    }, sg);
+    return *this;
   }
 };
 

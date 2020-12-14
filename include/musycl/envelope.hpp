@@ -98,7 +98,7 @@ public:
 
       \return the envelope generator itself to enable command chaining
   */
-  auto& tick_clock() {
+  auto& tick_frame_clock() {
     state_time += frame_period;
     // Loop to handle several FSM transitions in the same time step
     for(;;) {
@@ -159,11 +159,16 @@ public:
   }
 
 
+  /// Return the running status
+  bool is_running() {
+    return !std::holds_alternative<stopped>(state);
+  }
+
+
   /// Get the current value between [0, 1]
   float out() const {
     return output;
   }
-
 };
 
 }
