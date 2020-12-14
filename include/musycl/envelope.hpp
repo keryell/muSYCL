@@ -167,7 +167,7 @@ public:
         state);
 
       if (previous.index() == state.index())
-        // If the state did not change, no need to evaluate another change
+        // If the state did not change, no need to evaluate for another change
         break;
     }
     return *this;

@@ -98,8 +98,8 @@ int main() {
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            sounds.emplace(on.note,
-                           musycl::dco_envelope { env_param }.start(on));
+            sounds.insert_or_assign
+              (on.note, musycl::dco_envelope { env_param }.start(on));
           },
           [&] (musycl::midi::off& off) {
             ts::pipe::cout::stream() << "MIDI off "
