@@ -20,7 +20,7 @@ class dco {
   bool running = false;
 
   /// The phase in the waveform, between 0 and 1
-  float phase = 0;
+  float phase {};
 
   /// The phase increment per clock to generate the right frequency
   float dphase {};
@@ -29,6 +29,9 @@ class dco {
   float velocity;
 
 public:
+
+  /// Output volume of the note
+  float volume { 1 };
 
   /** Start a note
 
@@ -73,7 +76,7 @@ public:
       for (auto &e : f) {
         // Generate a square waveform with an amplitude directly
         // proportional to the velocity
-        e = (2*(phase > 0.5) - 1)*velocity;
+        e = (2*(phase > 0.5) - 1)*velocity*volume;
         phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)
