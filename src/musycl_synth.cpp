@@ -84,13 +84,12 @@ int main() {
   // Use MIDI CC 75 (CH 2) to set the rectification ratio
   musycl::midi_in::cc_variable<75>(rectication_ratio);
 
-#if 0
   // Control the envelope with Attack/CH5 to Release/CH8
-  musycl::midi_in::cc_variable<80>(envelope.attack_time);
-  musycl::midi_in::cc_variable<81>(envelope.decay_time);
-  musycl::midi_in::cc_variable<82>(envelope.sustain_level);
-  musycl::midi_in::cc_variable<83>(envelope.release_time);
-#endif
+  musycl::envelope::param_t env_param;
+  musycl::midi_in::cc_variable<80>(env_param.attack_time);
+  musycl::midi_in::cc_variable<81>(env_param.decay_time);
+  musycl::midi_in::cc_variable<82>(env_param.sustain_level);
+  musycl::midi_in::cc_variable<83>(env_param.release_time);
 
   // The forever time loop
   for(;;) {
@@ -99,7 +98,8 @@ int main() {
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            sounds.emplace(on.note, musycl::dco_envelope {}.start(on));
+            sounds.emplace(on.note,
+                           musycl::dco_envelope { env_param }.start(on));
           },
           [&] (musycl::midi::off& off) {
             ts::pipe::cout::stream() << "MIDI off "

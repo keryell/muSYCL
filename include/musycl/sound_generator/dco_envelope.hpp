@@ -19,6 +19,10 @@ class dco_envelope : public dco {
 
 public:
 
+  /// Initialize the envelope with its parameters
+  dco_envelope(const envelope::param_t& p) : env { p } {}
+
+
   /** Start a note
 
       \param[in] on is the "note on" MIDI event to start with
@@ -28,6 +32,7 @@ public:
   auto& start(const musycl::midi::on& on) {
     env.start();
     dco::start(on);
+    volume = env.out();
     return *this;
   }
 
@@ -41,6 +46,7 @@ public:
   auto& stop(const musycl::midi::off& off) {
     note_off = off;
     env.stop();
+    volume = env.out();
     return *this;
   }
 
@@ -60,6 +66,7 @@ public:
   */
   auto& tick_frame_clock() {
     env.tick_frame_clock();
+    volume = env.out();
     if (!is_running())
       dco::stop(note_off);
     return *this;
