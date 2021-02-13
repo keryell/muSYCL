@@ -1,6 +1,6 @@
 // Empty SYCL program
 
-#include <SYCL/sycl.hpp>
+#include <sycl/sycl.hpp>
 
 int main() {
   return 0;

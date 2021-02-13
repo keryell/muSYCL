@@ -5,8 +5,8 @@
 */
 #include <cmath>
 
-#include <SYCL/sycl.hpp>
-#include <SYCL/vendor/trisycl/pipe/cout.hpp>
+#include <sycl/sycl.hpp>
+#include <sycl/vendor/triSYCL/pipe/cout.hpp>
 #include <triSYCL/detail/overloaded.hpp>
 
 #include <musycl/musycl.hpp>
