@@ -3,6 +3,7 @@
     Rely on some triSYCL extensions (kernel I/O) and muSYCL extensions
     (MIDI and audio input/output)
 */
+#include <array>
 #include <cmath>
 
 #include <sycl/sycl.hpp>
@@ -47,18 +48,26 @@ int main() {
   float master_volume = 1;
 
   // A low pass filter for the output
-  musycl::low_pass_filter low_pass_filter;
+  std::array<musycl::low_pass_filter, musycl::audio::channel_number>
+    low_pass_filter;
 
   // A resonance filter for the output
-  musycl::resonance_filter resonance_filter;
+  std::array<musycl::resonance_filter, musycl::audio::channel_number>
+    resonance_filter;
+
   // Use "Cutoff" on Arturia KeyLab 49 to set the resonance frequency
-  musycl::midi_in::cc_action<74>([&] (musycl::midi::control_change::value_type v) {
-    resonance_filter.set_frequency(musycl::midi::control_change::get_log_scale_value_in
-                        (v, 20, 10000)); });
+  musycl::midi_in::cc_action<74>
+    ([&] (musycl::midi::control_change::value_type v) {
+       for (auto &f : resonance_filter)
+         f.set_frequency
+           (musycl::midi::control_change::get_log_scale_value_in(v, 20, 10000));
+     });
   // Use "Resonance" on Arturia KeyLab 49 to set the resonance
-  musycl::midi_in::cc_action<71>([&] (musycl::midi::control_change::value_type v) {
-    resonance_filter.set_resonance(std::log(v + 1.f)/std::log(128.f));
-  });
+  musycl::midi_in::cc_action<71>
+    ([&] (musycl::midi::control_change::value_type v) {
+       for (auto &f : resonance_filter)
+         f.set_resonance(std::log(v + 1.f)/std::log(128.f));
+     });
 
   // Create an LFO and start it
   musycl::lfo lfo;
@@ -116,8 +125,10 @@ int main() {
             if (cc.number == 73) {
               // Use a frequency logarithmic scale between 1 Hz and
               // the 4 times the sampling frequency
-              low_pass_filter.set_cutoff_frequency
-                (std::exp((cc.value_1()*std::log(4*musycl::sample_frequency))));
+              for (auto& f : low_pass_filter)
+                f.set_cutoff_frequency
+                  (std::exp((cc.value_1()
+                             *std::log(4*musycl::sample_frequency))));
             }
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
@@ -144,11 +155,15 @@ int main() {
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
       // Insert a rectifier in the output
-      a = a*(1 - rectication_ratio) + rectication_ratio*std::abs(a);
-      // Insert a low pass filter in the output
-      a = low_pass_filter.filter(a*lfo.out());
+      a = a*(1 - rectication_ratio) + rectication_ratio*sycl::abs(a);
+      /// Dive into each (stereo) channel of the sample...
+        // Insert a low pass filter in the output
+      for (auto&& [s, f] : ranges::views::zip(a, low_pass_filter))
+        // Insert a low pass filter in the output
+        s = f.filter(s*lfo.out());
       // Insert a resonance filter in the output
-      a = resonance_filter.filter(a);
+      for (auto&& [s, f] : ranges::views::zip(a, resonance_filter))
+        s = f.filter(s);
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + sounds.size());
     }

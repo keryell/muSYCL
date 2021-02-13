@@ -6,15 +6,12 @@
     Based on RtAudio library.
 */
 
-#include <chrono>
+#include <array>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <optional>
 #include <string>
-#include <thread>
-#include <variant>
-#include <vector>
+
+#include <sycl/sycl.hpp>
 
 #include <boost/fiber/buffered_channel.hpp>
 
@@ -41,9 +38,18 @@ public:
   /// Audio value type, with data in [ -1, +1 ]
   using value_type = double;
 
+  /// Stereo mode: use 2 channels
+  static constexpr auto channel_number = 2;
+
+  /** Audio sample type
+
+      In a stereo system, the element .x() or .s0() is the left voice
+      and .y() or .s1() is the right voice */
+  using sample_type = sycl::vec<value_type, channel_number>;
+
   /// The type of an audio frame
   /// \todo Use a movable type?
-  using frame = std::array<value_type, frame_size>;
+  using frame = std::array<sample_type, frame_size>;
 
 private:
 
@@ -81,11 +87,10 @@ audio_callback(void *output_buffer, void *input_buffer,
          && "frame_size needs to be the same as the one used by RtAudio");
   // Copy 1 ready frame to the output
   ranges::copy(output_frames.value_pop(),
-               static_cast<value_type*>(output_buffer));
+               static_cast<sample_type*>(output_buffer));
   // 0 to continue mormal operation
   return 0;
 }
-
 
 public:
 
@@ -98,8 +103,7 @@ public:
 
     RtAudio::StreamParameters parameters;
     parameters.deviceId = device;
-    // Mono output for now
-    parameters.nChannels = 1;
+    parameters.nChannels = channel_number;
     // Use channel(s) starting at 0
     parameters.firstChannel = 0;
 
@@ -143,7 +147,10 @@ public:
   template <typename MusyclAudioSample>
   static inline void write(MusyclAudioSample&& s) {
     // Check that the output lands in the authorized values
-    auto [min, max] = ranges::minmax(s);
+    auto min = ranges::min(ranges::views::transform
+                           (s, [] (auto e) { return ranges::min(e); }));
+    auto max = ranges::max(ranges::views::transform
+                           (s, [] (auto e) { return ranges::max(e); }));
     if (min < -1)
       std::cerr << "Min saturation detected: " << min;
     if (max > 1)
