@@ -15,7 +15,8 @@ namespace musycl {
 class dco_envelope : public dco {
 
   envelope env;
-  musycl::midi::off note_off;
+  midi::off note_off;
+  bool sustain_pedal_in_action;
 
 public:
 
@@ -29,7 +30,7 @@ public:
 
       \return itself to allow operation chaining
   */
-  auto& start(const musycl::midi::on& on) {
+  auto& start(const midi::on& on) {
     env.start();
     dco::start(on);
     volume = env.out();
@@ -43,10 +44,15 @@ public:
 
       \return itself to allow operation chaining
   */
-  auto& stop(const musycl::midi::off& off) {
+  auto& stop(const midi::off& off) {
     note_off = off;
-    env.stop();
-    volume = env.out();
+    // Skip the "note off" event if the sustain pedal is pressed
+    if (sustain::value())
+      sustain_pedal_in_action = true;
+    else {
+      env.stop();
+      volume = env.out();
+    }
     return *this;
   }
 
@@ -65,6 +71,10 @@ public:
       \return the envelope generator itself to enable command chaining
   */
   auto& tick_frame_clock() {
+    if (sustain_pedal_in_action && !sustain::value())
+      // The sustain pedal was in action but is just depressed
+      env.stop();
+
     env.tick_frame_clock();
     volume = env.out();
     if (!is_running())

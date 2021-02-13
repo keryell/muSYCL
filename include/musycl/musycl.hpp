@@ -9,6 +9,7 @@
 #include "low_pass_filter.hpp"
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
+#include "pipe/sustain.hpp"
 #include "resonance_filter.hpp"
 #include "sound_generator.hpp"
 

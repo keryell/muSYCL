@@ -91,6 +91,9 @@ int main() {
   musycl::midi_in::cc_variable<82>(env_param.sustain_level);
   musycl::midi_in::cc_variable<83>(env_param.release_time);
 
+  // Connect the sustain pedal to its MIDI event
+  musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
+
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
