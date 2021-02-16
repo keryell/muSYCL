@@ -63,16 +63,24 @@ public :
   }
 };
 
-/// A "note on" MIDI message is just a kind of note
-class on : public note_base {
-  /// Inherit the note_base constructors
-  using note_base::note_base;
-};
-
 /// A "note off" MIDI message is just a kind of note
 class off : public note_base {
   /// Inherit the note_base constructors
   using note_base::note_base;
+};
+
+
+/// A "note on" MIDI message is just a kind of note
+class on : public note_base {
+  /// Inherit the note_base constructors
+  using note_base::note_base;
+
+public:
+
+  /// Get an note-off message for this note
+  const off& as_off() {
+    return *reinterpret_cast<off*>(this);
+  }
 };
 
 /// The MIDI "control change" message

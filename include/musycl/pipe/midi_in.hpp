@@ -134,6 +134,12 @@ public:
   }
 
 
+  /// Insert a new MIDI message in the input flow
+  static void insert(const midi::msg& m) {
+    channel.push(m);
+  }
+
+
   /// Dispatch the registered actions for a MIDI input event
   static void dispatch_registered_actions(const midi::msg& m) {
     std::visit(trisycl::detail::overloaded {

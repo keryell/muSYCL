@@ -47,6 +47,10 @@ int main() {
   // Master volume of the output in [ 0, 1 ]
   float master_volume = 1;
 
+  // An arpeggiator
+  musycl::arpeggiator arp;
+  arp.set_frequency(8);
+
   // A low pass filter for the output
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
     low_pass_filter;
@@ -106,7 +110,8 @@ int main() {
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
-    while (musycl::midi_in::try_read(m))
+    while (musycl::midi_in::try_read(m)) {
+      arp.midi(m);
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
@@ -133,6 +138,7 @@ int main() {
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
         }, m);
+    }
 
     // The output audio frame accumulator
     musycl::audio::frame audio {};
@@ -169,6 +175,7 @@ int main() {
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
+    arp.tick_frame_clock();
     lfo.tick_frame_clock();
   }
   return 0;

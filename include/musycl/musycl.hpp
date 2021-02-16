@@ -3,6 +3,7 @@
 
 #include "config.hpp"
 
+#include "arpeggiator.hpp"
 #include "dco.hpp"
 #include "envelope.hpp"
 #include "lfo.hpp"
