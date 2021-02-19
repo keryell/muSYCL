@@ -24,10 +24,11 @@ public:
 
   sound_generator() = default;
 
-  /// Construct from an object capable of generating sound
+
+  /// Construct from an object copy capable of generating sound
   template <typename T>
-  sound_generator(T&& s)
-    : sg { std::forward<T>(s) }
+  sound_generator(T s)
+    : sg { s }
   {}
 
 

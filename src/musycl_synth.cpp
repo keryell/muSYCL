@@ -98,11 +98,23 @@ int main() {
   musycl::midi_in::cc_variable<75>(rectication_ratio);
 
   // Control the envelope with Attack/CH5 to Release/CH8
-  musycl::envelope::param_t env_param;
+  musycl::envelope::param_t env_param
+    {.attack_time = 0.1, .decay_time = 0.4, .sustain_level = 0.5,
+     .release_time = 0.5};
   musycl::midi_in::cc_variable<80>(env_param.attack_time);
   musycl::midi_in::cc_variable<81>(env_param.decay_time);
   musycl::midi_in::cc_variable<82>(env_param.sustain_level);
   musycl::midi_in::cc_variable<83>(env_param.release_time);
+  musycl::envelope::param_t env_param_1 { .decay_time = .1,
+                                          .sustain_level = .1};
+
+  // MIDI channel mapping
+  musycl::sound_generator channel_assign[] {
+    musycl::dco_envelope { env_param },
+    musycl::dco_envelope { env_param_1 },
+    musycl::dco {}
+  };
+
 
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
@@ -115,13 +127,21 @@ int main() {
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            sounds.insert_or_assign
-              (on.note, musycl::dco_envelope { env_param }.start(on));
+            if (on.channel < std::size(channel_assign))
+              sounds.insert_or_assign
+                (on.note, channel_assign[on.channel].start(on));
+            else
+              std::cerr << "Note on to unassigned MIDI channel "
+                        << on.channel + 1 << std::endl;
           },
           [&] (musycl::midi::off& off) {
             ts::pipe::cout::stream() << "MIDI off "
                                      << (int)off.note << std::endl;
-            sounds[off.note].stop(off);
+            if (off.channel < std::size(channel_assign))
+              sounds[off.note].stop(off);
+            else
+              std::cerr << "Note off to unassigned MIDI channel "
+                        << off.channel + 1 << std::endl;
           },
           [&] (musycl::midi::control_change& cc) {
             ts::pipe::cout::stream() << "MIDI cc "
