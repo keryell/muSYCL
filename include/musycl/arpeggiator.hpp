@@ -40,11 +40,11 @@ public:
   auto& midi(const musycl::midi::msg& m) {
     std::visit(trisycl::detail::overloaded {
         [&] (const musycl::midi::on& on) {
-          if (on.channel == 0)
+          if (on.channel == 0 && on.note < 60)
             notes.push_back(on);
         },
         [&] (const musycl::midi::off& off) {
-          if (off.channel == 0)
+          if (off.channel == 0 && off.note < 60)
             // Remove the same note without looking at the velocity
             std::erase_if(notes, [&] (const auto& n) {
                                    return n.channel == off.channel
@@ -81,9 +81,9 @@ public:
         if (note_index >= notes.size())
           note_index = 0;
         auto n = notes[note_index];
-        // Replay this note on another channel
-        n.channel = 1;
-        n.note -= 24;
+        // Replay this note on channel 2 except the first one going on 3
+        n.channel = 1 + (note_index == 0);
+        n.note += 12 - 24*(note_index == 0);
         current_note = n;
         musycl::midi_in::insert(n);
         ++note_index;

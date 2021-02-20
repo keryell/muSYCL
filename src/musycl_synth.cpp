@@ -99,7 +99,7 @@ int main() {
 
   // Control the envelope with Attack/CH5 to Release/CH8
   musycl::envelope::param_t env_param
-    {.attack_time = 0.1, .decay_time = 0.4, .sustain_level = 0.5,
+    {.attack_time = 0.1, .decay_time = 0.4, .sustain_level = 0.3,
      .release_time = 0.5};
   musycl::midi_in::cc_variable<80>(env_param.attack_time);
   musycl::midi_in::cc_variable<81>(env_param.decay_time);
