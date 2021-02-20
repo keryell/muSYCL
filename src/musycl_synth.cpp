@@ -49,7 +49,9 @@ int main() {
 
   // An arpeggiator
   musycl::arpeggiator arp;
-  arp.set_frequency(8);
+
+  // The master of time
+  musycl::clock::set_frequency(8);
 
   // A low pass filter for the output
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
@@ -195,7 +197,7 @@ int main() {
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
-    arp.tick_frame_clock();
+    musycl::clock::tick_frame_clock();
     lfo.tick_frame_clock();
   }
   return 0;

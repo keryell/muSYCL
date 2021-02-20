@@ -4,6 +4,7 @@
 #include "config.hpp"
 
 #include "arpeggiator.hpp"
+#include "clock.hpp"
 #include "dco.hpp"
 #include "envelope.hpp"
 #include "lfo.hpp"

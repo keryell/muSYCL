@@ -74,6 +74,7 @@ public:
   */
   auto& tick_frame_clock() {
     std::visit([&] (auto &s) {
+      // If the underlying type has tick_frame_clock(), call it
       if constexpr (requires { s.tick_frame_clock(); })
         s.tick_frame_clock();
     }, sg);
