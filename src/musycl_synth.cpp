@@ -34,7 +34,7 @@ int main() {
 
   /// The configuration part to adapt to the context
   // - Jack
-  audio.open(application_name, "output", "synth", RtAudio::UNIX_JACK);
+  audio.open(application_name, "output", application_name, RtAudio::UNIX_JACK);
   // - ALSA
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
@@ -77,7 +77,7 @@ int main() {
 
   // Create an LFO and start it
   musycl::lfo lfo;
-  lfo.set_frequency(2).set_low(0).run();
+  lfo.set_frequency(2).set_low(0.5).run();
 
   // Use MIDI CC 76 (LFO Rate on Arturia KeyLab 49) to set the LFO frequency
   musycl::midi_in::cc_action<76>

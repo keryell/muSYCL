@@ -22,6 +22,8 @@ class arpeggiator : public clock::follow<arpeggiator> {
   /// Index of the next note to play
   int note_index = 0;
 
+  int beat_index = 0;
+
   /// Current note
   std::optional<musycl::midi::on> current_note;
 
@@ -62,12 +64,16 @@ public:
       // Wrap around if we reached the end
       if (note_index >= notes.size())
         note_index = 0;
-      auto n = notes[note_index];
+       auto n = notes[beat_index == 0 ? 0 : note_index];
       // Replay this note on channel 2 except the first one going on 3
-      n.channel = 1 + (note_index == 0);
-      n.note += 12 - 24*(note_index == 0);
+      n.channel = 1 + (beat_index == 0);
+      n.note += 12 - 24*(beat_index == 0);
       current_note = n;
       musycl::midi_in::insert(n);
+      ++beat_index;
+     if (beat_index > 4)
+        beat_index = 0;
+     else
       ++note_index;
     }
   }
