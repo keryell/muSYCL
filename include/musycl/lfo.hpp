@@ -9,11 +9,12 @@
 #include <cmath>
 
 #include "config.hpp"
+#include "clock.hpp"
 
 namespace musycl {
 
 /// A low frequency oscillator
-class lfo {
+class lfo : public clock::follow<lfo> {
   /// Track if the LFO is generating a signal or just 0
   bool running = false;
 
@@ -90,14 +91,13 @@ public:
 
       \return the LFO itself to enable command chaining
   */
-  auto& tick_frame_clock() {
+  void frame_clock() {
     if (running) {
       // Generate a square waveform
       value = 2*(phase > 0.5) - 1;
       // The phase is cyclic modulo 1
       phase = std::fmod(phase + dphase, 1.0f);
     }
-    return *this;
   }
 
 

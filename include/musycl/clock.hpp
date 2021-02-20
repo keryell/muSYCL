@@ -20,8 +20,20 @@ class clock {
   /// frequency
   static inline float dphase = 0;
 
+  /// Consumers of the frame clock
+  /// \todo using member function pointer 
+  static inline std::map<void *, std::function<void()>> frame_clock_consumers;
+
+  /// Consumers of the beat clock
   static inline std::map<void *, std::function<void()>> beat_consumers;
 
+  /// Distribute the frame clock
+  static void notify_frame_clock() {
+    for (const auto& [obj, fcc] : frame_clock_consumers)
+      fcc();
+  }
+
+  /// Distribute the beat clock
   static void notify_beat() {
     for (const auto& [obj, bc] : beat_consumers)
       bc();
@@ -45,6 +57,7 @@ public:
 
 
   static void tick_frame_clock() {
+    notify_frame_clock();
     phase = phase + dphase;
     if (phase >= 1) {
       phase -= 1;
@@ -61,17 +74,20 @@ public:
 
     /// Register the object to receive the clocks
     follow() {
-      if constexpr (requires { std::declval<T>().beat(); }) {
+      if constexpr (requires { std::declval<T>().frame_clock(); })
+        frame_clock_consumers[this] =
+          [this] { static_cast<T&>(*this).frame_clock(); };
+      if constexpr (requires { std::declval<T>().beat(); })
         beat_consumers[this] = [this] { static_cast<T&>(*this).beat(); };
-      }
     }
 
 
     /// Unregister the object to receive the clocks
     ~follow() {
-      if constexpr (requires { std::declval<T>().beat(); }) {
+      if constexpr (requires { std::declval<T>().frame_clock(); })
+        frame_clock_consumers.erase(this);
+      if constexpr (requires { std::declval<T>().beat(); })
         beat_consumers.erase(this);
-      }
     }
   };
 

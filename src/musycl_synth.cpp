@@ -162,6 +162,9 @@ int main() {
         }, m);
     }
 
+    // Propagate the clocks to the consumers
+    musycl::clock::tick_frame_clock();
+
     // The output audio frame accumulator
     musycl::audio::frame audio {};
     // For each sound generator
@@ -197,8 +200,6 @@ int main() {
     }
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
-    musycl::clock::tick_frame_clock();
-    lfo.tick_frame_clock();
   }
   return 0;
 }
