@@ -61,7 +61,23 @@ public :
   float velocity_1() const {
     return velocity/127.f;
   }
+
 };
+
+
+/// Compute the frequency of a MIDI note with an optional transposition
+float frequency(int n, const float transpose_semi_tone = 0) {
+  /* The frequency for a 12-tone equal temperament scale with 440 Hz
+     A3 note being MIDI note 69 */
+  return 440*std::pow(2.f, (n + transpose_semi_tone - 69)/12);
+}
+
+
+/// Compute the frequency of a MIDI note with an optional transposition
+float frequency(const note_base& n, const float transpose_semi_tone = 0) {
+  return frequency(n.note, transpose_semi_tone);
+}
+
 
 /// A "note off" MIDI message is just a kind of note
 class off : public note_base {

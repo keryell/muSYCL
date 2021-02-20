@@ -9,6 +9,7 @@
 #include <range/v3/all.hpp>
 
 #include "config.hpp"
+#include "midi.hpp"
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
 
@@ -40,12 +41,9 @@ public:
       \return itself to allow operation chaining
   */
   auto& start(const musycl::midi::on& on) {
-    // The frequency for a 12-tone equal temperament scale with 440 Hz
-    // A3 note being MIDI note 69
-    auto frequency = 440*std::pow(2., (on.note - 69)/12.);
-    dphase = frequency/sample_frequency;
+    dphase = frequency(on)/sample_frequency;
     velocity = on.velocity_1();
-    std::cout << velocity << std::endl;
+    std::cout << "Velocity " << velocity << std::endl;
     running = true;
     return *this;
   }
