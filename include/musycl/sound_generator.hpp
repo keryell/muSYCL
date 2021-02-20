@@ -67,19 +67,6 @@ public:
     return std::visit([&] (auto &s) { return s.is_running(); }, sg);
   }
 
-
-  /** Update something at the frame frequency
-
-      \return object itself to enable command chaining
-  */
-  auto& tick_frame_clock() {
-    std::visit([&] (auto &s) {
-      // If the underlying type has tick_frame_clock(), call it
-      if constexpr (requires { s.tick_frame_clock(); })
-        s.tick_frame_clock();
-    }, sg);
-    return *this;
-  }
 };
 
 }

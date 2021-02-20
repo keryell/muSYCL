@@ -69,11 +69,14 @@ public:
   /// To receive a clocks, a class just needs to inherit from this CRTP class
   template <typename T>
   class follow {
+    /** Track whether an object was registered to avoid unregistration
+        at the end of moved objects */
+    bool registered = false;
 
-  public:
 
-    /// Register the object to receive the clocks
-    follow() {
+    /// Connect the object only to the necessary clocking framework
+    void register_actions() {
+      registered = true;
       if constexpr (requires { std::declval<T>().frame_clock(); })
         frame_clock_consumers[this] =
           [this] { static_cast<T&>(*this).frame_clock(); };
@@ -82,13 +85,58 @@ public:
     }
 
 
+    /// Disconnect the object from the clocking framework
+    void unregister_actions() {
+      if (registered) {
+        registered = false;
+        if constexpr (requires { std::declval<T>().frame_clock(); })
+          frame_clock_consumers.erase(this);
+        if constexpr (requires { std::declval<T>().beat(); })
+          beat_consumers.erase(this);
+      }
+    }
+
+  public:
+
+    /// Register the object to receive the clocks
+    follow() {
+      register_actions();
+    }
+
+
+    /// If we make a copy, we need to register the new copy
+    follow(const follow&) {
+      register_actions();
+    }
+
+
+    /** In a copy assignment, the copy is actually already registered
+        and it will continue to work, so do nothing special */
+    follow& operator=(const follow &) = default;
+
+
+    /** If we move an object we need to unregister the old one and
+        register the new one */
+    follow(const follow&& old) {
+      old.unregister_actions();
+      register_actions();
+    }
+
+
+    /** In a move assignment, the copy is actually already registered
+        and it will continue to work, but the moved-from object is no
+        longer in a usable state, so unregister it */
+    follow& operator=(follow && old) {
+      old.unregister_actions();
+    }
+
+
+
     /// Unregister the object to receive the clocks
     ~follow() {
-      if constexpr (requires { std::declval<T>().frame_clock(); })
-        frame_clock_consumers.erase(this);
-      if constexpr (requires { std::declval<T>().beat(); })
-        beat_consumers.erase(this);
+      unregister_actions();
     }
+
   };
 
 };

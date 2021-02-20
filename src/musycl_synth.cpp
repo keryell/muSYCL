@@ -170,7 +170,6 @@ int main() {
     // For each sound generator
     for (auto it = sounds.begin(); it != sounds.end();) {
       auto&& [note, o] = *it;
-      o.tick_frame_clock();
       auto out = o.audio();
       // Accumulate its audio output into the main output
       for (auto&& [e, a] : ranges::views::zip(out, audio))

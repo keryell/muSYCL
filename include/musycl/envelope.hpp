@@ -8,12 +8,15 @@
 
 #include <variant>
 
+#include <triSYCL/detail/overloaded.hpp>
+
 #include "config.hpp"
+#include "clock.hpp"
 
 namespace musycl {
 
 /// A low frequency oscillator
-class envelope {
+class envelope : public clock::follow<envelope> {
 
   // Define the states of the finite state machine (FSM)
 
@@ -109,11 +112,8 @@ public:
   /** Update the envelope at the frame frequency
 
       Since it is an envelope generator, no need to update it at
-      the audio frequency.
-
-      \return the envelope generator itself to enable command chaining
-  */
-  auto& tick_frame_clock() {
+      the audio frequency. */
+  void frame_clock() {
     state_time += frame_period;
     // Loop to handle several FSM transitions in the same time step
     for(;;) {
@@ -170,7 +170,6 @@ public:
         // If the state did not change, no need to evaluate for another change
         break;
     }
-    return *this;
   }
 
 

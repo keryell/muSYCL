@@ -11,12 +11,16 @@
 
 namespace musycl {
 
-/// A digitally controlled oscillator
-class dco_envelope : public dco {
-
+/// A digitally controlled oscillator with an evolving volume envelope
+class dco_envelope : public dco, public clock::follow<dco_envelope> {
+  /// Control the volume evolution of the sound
   envelope env;
-  midi::off note_off;
+
+  /// Track whether sustain pedal is sustaining this sound
   bool sustain_pedal_in_action;
+
+  /// Memorize the note to stop at the end of the sustain pedal action
+  midi::off note_off;
 
 public:
 
@@ -66,21 +70,17 @@ public:
   /** Update the envelope at the frame frequency
 
       Since it is an envelope generator, no need to update it at
-      the audio frequency.
-
-      \return the envelope generator itself to enable command chaining
-  */
-  auto& tick_frame_clock() {
+      the audio frequency. */
+  void frame_clock() {
     if (sustain_pedal_in_action && !sustain::value())
       // The sustain pedal was in action but is just depressed
       env.stop();
 
-    env.tick_frame_clock();
     volume = env.out();
     if (!is_running())
       dco::stop(note_off);
-    return *this;
   }
+
 };
 
 }

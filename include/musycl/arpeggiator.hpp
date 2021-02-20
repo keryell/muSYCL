@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include <triSYCL/detail/overloaded.hpp>
+
 #include "config.hpp"
 
 #include "clock.hpp"
