@@ -32,6 +32,13 @@ public:
   {}
 
 
+  /// Get the underlying sound generator
+  template <typename T>
+  auto& get() {
+    return std::get<T>(sg);
+  }
+
+
   /** Start the sound generator
 
       \param[in] on is the "note on" MIDI event to start with
@@ -69,6 +76,8 @@ public:
 
 };
 
+
 }
+
 
 #endif // MUSYCL_SOUND_GENERATOR_HPP

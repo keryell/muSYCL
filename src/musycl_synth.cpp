@@ -5,6 +5,9 @@
 */
 #include <array>
 #include <cmath>
+#include <iostream>
+#include <map>
+#include <variant>
 
 #include <sycl/sycl.hpp>
 #include <sycl/vendor/triSYCL/pipe/cout.hpp>
@@ -99,24 +102,22 @@ int main() {
   // Use MIDI CC 75 (CH 2) to set the rectification ratio
   musycl::midi_in::cc_variable<75>(rectication_ratio);
 
-  // Control the envelope with Attack/CH5 to Release/CH8
-  musycl::envelope::param_t env_param
-    {.attack_time = 0.1, .decay_time = 0.4, .sustain_level = 0.3,
-     .release_time = 0.5};
-  musycl::midi_in::cc_variable<80>(env_param.attack_time);
-  musycl::midi_in::cc_variable<81>(env_param.decay_time);
-  musycl::midi_in::cc_variable<82>(env_param.sustain_level);
-  musycl::midi_in::cc_variable<83>(env_param.release_time);
-  musycl::envelope::param_t env_param_1 { .decay_time = .1,
-                                          .sustain_level = .1};
-
   // MIDI channel mapping
   musycl::sound_generator channel_assign[] {
-    musycl::dco_envelope { env_param },
-    musycl::dco_envelope { env_param_1 },
+    musycl::dco_envelope { musycl::envelope::param_t {
+        .attack_time = 0.1, .decay_time = 0.4,
+        .sustain_level = 0.3, .release_time = 0.5 } },
+    musycl::dco_envelope { musycl::envelope::param_t {
+        .decay_time = .1, .sustain_level = .1 } },
     musycl::dco {}
   };
 
+  // Control the envelope of CH1 with Attack/CH5 to Release/CH8
+  auto& dco_CH1 = channel_assign[0].get<musycl::dco_envelope>();
+  musycl::midi_in::cc_variable<80>(dco_CH1.env.param.attack_time);
+  musycl::midi_in::cc_variable<81>(dco_CH1.env.param.decay_time);
+  musycl::midi_in::cc_variable<82>(dco_CH1.env.param.sustain_level);
+  musycl::midi_in::cc_variable<83>(dco_CH1.env.param.release_time);
 
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });

@@ -13,9 +13,6 @@ namespace musycl {
 
 /// A digitally controlled oscillator with an evolving volume envelope
 class dco_envelope : public dco, public clock::follow<dco_envelope> {
-  /// Control the volume evolution of the sound
-  envelope env;
-
   /// Track whether sustain pedal is sustaining this sound
   bool sustain_pedal_in_action;
 
@@ -23,6 +20,9 @@ class dco_envelope : public dco, public clock::follow<dco_envelope> {
   midi::off note_off;
 
 public:
+
+  /// Control the volume evolution of the sound
+  envelope env;
 
   /// Initialize the envelope with its parameters
   dco_envelope(const envelope::param_t& p) : env { p } {}
