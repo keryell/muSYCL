@@ -3,9 +3,14 @@
 
 /// \file Arpeggiator to generate notes from a note flow
 
+#include <algorithm>
+#include <optional>
+#include <variant>
 #include <vector>
 
 #include <triSYCL/detail/overloaded.hpp>
+
+#include <range/v3/all.hpp>
 
 #include "config.hpp"
 
@@ -61,10 +66,14 @@ public:
       current_note.reset();
     }
     if (!notes.empty()) {
+      // Find the lowest note
+      int bass = std::distance
+        (notes.begin(),
+         std::ranges::min_element(notes, {}, &musycl::midi::on::note));
       // Wrap around if we reached the end
       if (note_index >= notes.size())
         note_index = 0;
-       auto n = notes[beat_index == 0 ? 0 : note_index];
+      auto n = notes[beat_index == 0 ? bass : note_index];
       // Replay this note on channel 2 except the first one going on 3
       n.channel = 1 + (beat_index == 0);
       n.note += 12 - 24*(beat_index == 0);
