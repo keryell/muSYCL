@@ -3,6 +3,8 @@
 #ifndef MUSYCL_NOISE_HPP
 #define MUSYCL_NOISE_HPP
 
+#include <limits>
+
 #include <range/v3/all.hpp>
 
 #include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
@@ -16,6 +18,9 @@ namespace musycl {
 
 /// A digitally controlled oscillator
 class noise {
+  /// Track if the noise generator is generating a signal or just 0
+  bool running = false;
+
   /// Some fast random generator
   static inline trisycl::vendor::trisycl::random::xorshift<> rng;
 
@@ -66,10 +71,10 @@ public:
   musycl::audio::frame audio() {
     musycl::audio::frame f;
     if (running) {
-      for (auto &e : f) {
+      for (auto& e : f) {
         // A random number between -1 and 1
         auto random =
-          rng()*2.f/std::numeric_limits<decltype(rng)::value_type>>::max - 1;
+          rng()*2./std::numeric_limits<decltype(rng)::value_type>::max() - 1;
         // Generate a filtered noise sample with an amplitude directly
         // proportional to the velocity
         e = filter.filter(random)*velocity*volume;

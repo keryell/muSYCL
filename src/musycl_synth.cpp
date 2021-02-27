@@ -109,7 +109,8 @@ int main() {
         .sustain_level = 0.3, .release_time = 0.5 } },
     musycl::dco_envelope { musycl::envelope::param_t {
         .decay_time = .1, .sustain_level = .1 } },
-    musycl::dco {}
+    musycl::dco {},
+    musycl::noise {}
   };
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
