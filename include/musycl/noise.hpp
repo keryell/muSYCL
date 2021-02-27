@@ -10,9 +10,13 @@
 #include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
 
 #include "config.hpp"
+
+#include "envelope.hpp"
+#include "low_pass_filter.hpp"
 #include "midi.hpp"
 #include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
+#include "resonance_filter.hpp"
 
 namespace musycl {
 
@@ -25,10 +29,24 @@ class noise {
   static inline trisycl::vendor::trisycl::random::xorshift<> rng;
 
   /// To filter the noise
-  musycl::low_pass_filter filter;
+  low_pass_filter lpf_filter;
+
+  /// The low pass filter envelope
+  envelope lpf_env { { .attack_time = 0, .decay_time = 0.1,
+                               .sustain_level = 0.01, .release_time = 0.1 } };
+
+  /// Filter the noise with some resonance
+  resonance_filter res_filter;
+
+  /// The resonance filter envelope
+  envelope rf_env { { .attack_time = 0.05, .decay_time = 0.05,
+                      .sustain_level = 0.1, .release_time = 0.01 } };
 
   /// Initial velocity of the note
   float velocity;
+
+  /// Initial frequency of the note
+  float frequency;
 
 public:
 
@@ -41,10 +59,10 @@ public:
 
       \return itself to allow operation chaining
   */
-  auto& start(const musycl::midi::on& on) {
-    filter.set_cutoff_frequency(frequency(on));
+  auto& start(const midi::on& on) {
     velocity = on.velocity_1();
-    running = true;
+    frequency = midi::frequency(on);
+    running = lpf_env.start().is_running() | rf_env.start().is_running();
     return *this;
   }
 
@@ -55,8 +73,9 @@ public:
 
       \return itself to allow operation chaining
   */
-  auto& stop(const musycl::midi::off& off) {
-    running = false;
+  auto& stop(const midi::off& off) {
+    lpf_env.stop();
+    rf_env.stop();
     return *this;
   }
 
@@ -68,8 +87,12 @@ public:
 
 
   /// Generate an audio sample
-  musycl::audio::frame audio() {
-    musycl::audio::frame f;
+  audio::frame audio() {
+    lpf_filter.set_cutoff_frequency(frequency*lpf_env.out());
+    res_filter.set_resonance(0.99).set_frequency(2*frequency*rf_env.out());
+   running = lpf_env.is_running() || rf_env.is_running();
+
+    audio::frame f;
     if (running) {
       for (auto& e : f) {
         // A random number between -1 and 1
@@ -77,7 +100,8 @@ public:
           rng()*2./std::numeric_limits<decltype(rng)::value_type>::max() - 1;
         // Generate a filtered noise sample with an amplitude directly
         // proportional to the velocity
-        e = filter.filter(random)*velocity*volume;
+        e = lpf_filter.filter(random)*10*res_filter.filter(random)
+          * velocity*volume;
       }
     }
     else
