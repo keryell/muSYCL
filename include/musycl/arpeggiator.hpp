@@ -75,15 +75,17 @@ public:
         note_index = 0;
       auto n = notes[beat_index == 0 ? bass : note_index];
       // Replay this note on channel 2 except the first one going on 3
-      n.channel = 1 + (beat_index == 0);
-      n.note += 12 - 24*(beat_index == 0);
+      n.channel = beat_index == 0 ? 2 : beat_index == 2 ? 3 : 1;
+      n.note += 24 - 36*(beat_index == 0);
+      if (beat_index == 2)
+        n.velocity = 127;
       current_note = n;
       musycl::midi_in::insert(n);
       ++beat_index;
      if (beat_index > 4)
         beat_index = 0;
      else
-      ++note_index;
+       ++note_index;
     }
   }
 

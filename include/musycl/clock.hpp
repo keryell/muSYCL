@@ -21,11 +21,11 @@ class clock {
   static inline float dphase = 0;
 
   /// Consumers of the frame clock
-  /// \todo using member function pointer 
-  static inline std::map<void *, std::function<void()>> frame_clock_consumers;
+  /// \todo using member function pointer
+  static inline std::map<void*, std::function<void()>> frame_clock_consumers;
 
   /// Consumers of the beat clock
-  static inline std::map<void *, std::function<void()>> beat_consumers;
+  static inline std::map<void*, std::function<void()>> beat_consumers;
 
   /// Distribute the frame clock
   static void notify_frame_clock() {
@@ -112,7 +112,7 @@ public:
 
     /** In a copy assignment, the copy is actually already registered
         and it will continue to work, so do nothing special */
-    follow& operator=(const follow &) = default;
+    follow& operator=(const follow&) = default;
 
 
     /** If we move an object we need to unregister the old one and
@@ -126,7 +126,7 @@ public:
     /** In a move assignment, the copy is actually already registered
         and it will continue to work, but the moved-from object is no
         longer in a usable state, so unregister it */
-    follow& operator=(follow && old) {
+    follow& operator=(follow&& old) {
       old.unregister_actions();
     }
 
