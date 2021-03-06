@@ -54,7 +54,12 @@ int main() {
   musycl::arpeggiator arp;
 
   // The master of time
-  musycl::clock::set_frequency(8);
+  musycl::clock::set_tempo_frequency(8);
+  // The rotary on the extreme top right of Arturia KeyLab 49
+  musycl::midi_in::cc_action<17>
+    ([&] (musycl::midi::control_change::value_type v) {
+       musycl::clock::set_tempo_frequency(v/10.);
+     });
 
   // A low pass filter for the output
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>

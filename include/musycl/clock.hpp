@@ -42,7 +42,7 @@ class clock {
 public:
 
   /// Set the global clock frequency in Hz
-  static void set_frequency(float frequency) {
+  static void set_tempo_frequency(float frequency) {
     dphase = frequency*frame_size/sample_frequency;
     std::cout << "Global clock frequency = " << frequency << " Hz, period = "
               << 1/frequency << " s, "
@@ -51,8 +51,8 @@ public:
 
 
   /// Set the global clock beats-per-minute
-  static void set_bpm(float bpm) {
-    set_frequency(bpm/60);
+  static void set_tempo_bpm(float bpm) {
+    set_tempo_frequency(bpm/60);
   }
 
 
