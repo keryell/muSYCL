@@ -1,5 +1,6 @@
 #include "rtmidi/RtMidi.h"
 
+#include <atomic>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -21,10 +22,12 @@ using namespace std::chrono_literals;
 
 namespace {
 
-volatile bool done = false;
+/// Set to true to end the infinite loop
+std::atomic<bool> done = false;
 
 }
 
+/// Execute some RtMidi code while checking for error
 auto check_error = [] (auto&& function) {
   try {
     return function();
@@ -36,6 +39,7 @@ auto check_error = [] (auto&& function) {
 };
 
 int main() {
+  std::cout << "RtMidi version " << RtMidi::getVersion() << std::endl;
   /* Only from RtMidi 4.0.0...
 
   std::cout << "RtMidi version " << RtMidi::getVersion()
@@ -55,9 +59,20 @@ int main() {
   std::cout << "\nThere are " << n_in_ports
             << " MIDI input sources available.\n";
 
+  // Use some shared point because RtMidiIn is a broken type, it is
+  // neither copyable neither movable
+  std::vector<std::shared_ptr<RtMidiIn>> midi_ins;
+  // Reserve the vector to avoid RtMidi limitations abut copy/move
+  midi_ins.reserve(n_in_ports);
   for (auto i = 0; i < n_in_ports; ++i) {
     auto port_name = check_error([&] { return midi_in.getPortName(i); });
     std::cout << "  Input Port #" << i << ": " << port_name << '\n';
+    midi_ins.push_back(check_error([] {
+      return std::make_shared<RtMidiIn>(midi_api, "muSYCLtest", 1000);
+    }));
+    check_error([&] { midi_ins[i]->openPort(i, "testMIDIinput"); });
+    // Don't ignore sysex, timing, or active sensing messages
+    midi_ins[i]->ignoreTypes(false, false, false);
   }
 
   // Create a MIDI output
@@ -69,29 +84,30 @@ int main() {
             << " MIDI output ports available.\n";
   for (auto i = 0; i < n_out_ports; ++i) {
     auto port_name = check_error([&] { return midi_out.getPortName(i); });
-    std::cout << "  Output Port #" << i << ": " << port_name << '\n';
+    std::cout << "  Output Port #" << i << ": " << port_name << std::endl;
   }
-  std::cout << std::endl;
 
-  // Open the first port and give it a fancy name
-  check_error([&] { midi_in.openPort(midi_in_port, "testMIDIinput"); });
-
-  // Don't ignore sysex, timing, or active sensing messages
-  midi_in.ignoreTypes(false, false, false);
-
-  std::cout << "Reading MIDI from port ... quit with Ctrl-C.\n";
+  std::cout << "\nReading MIDI from port ... quit with Ctrl-C.\n\n";
+  // Trap SIGINT often related to Ctrl-C
   std::signal(SIGINT, [] (int) { done = true; });
   std::vector<std::uint8_t> message;
   while (!done) {
-    auto stamp = midi_in.getMessage(&message);
-    auto n_bytes = message.size();
-    for (int i = 0; i < n_bytes; ++i)
-      std::cout << "Byte " << i << " = " << static_cast<int>(message[i])
-                << ", ";
-    if (n_bytes > 0)
-      std::cout << "stamp = " << stamp << std::endl;
-    // Sleep for 10 milliseconds ... platform-dependent.
-    std::this_thread::sleep_for(10ms);
+    for (auto i = 0; i < n_in_ports; ++i) {
+      auto stamp = midi_ins[i]->getMessage(&message);
+      if (!message.empty()) {
+        std::cout << "Received from port " << i << " at stamp = "
+                  << stamp << " seconds:" <<std::endl << '\t';
+        for (auto c : message)
+          std::cout << std::hex << int { c } << ' ';
+        std::cout << std::endl << '\t';
+        auto n_bytes = message.size();
+        for (int i = 0; i < n_bytes; ++i)
+          std::cout << std::dec <<  "Byte " << i
+                    << " = " << static_cast<int>(message[i])
+                    << ", ";
+        std::cout << std::endl;
+      }
+    }
   }
   std::cout << "\nDone!" << std::endl;
   return 0;

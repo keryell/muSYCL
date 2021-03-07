@@ -94,6 +94,7 @@ int audio_callback(void *output_buffer, void *input_buffer,
 
 
 int main() {
+  std::cout << "RtMidi version " << RtMidi::getVersion() << std::endl;
   /* Only from RtMidi 4.0.0...
 
   std::cout << "RtMidi version " << RtMidi::getVersion()
@@ -108,6 +109,14 @@ int main() {
   auto midi_in = check_error([] { return RtMidiIn { midi_api,
                                                     "muSYCLtest" }; });
 
+  auto n_ports = midi_in.getPortCount();
+  std::cout << "There are " << n_ports << " MIDI input sources available."
+            << std::endl;
+  for (int i = 0; i < n_ports; ++i) {
+    auto port_name = midi_in.getPortName(i);
+    std::cout << "  Input Port #" << i << ": " << port_name << '\n';
+  }
+
   // Open the first port and give it a fancy name
   check_error([&] { midi_in.openPort(midi_in_port, "testMIDIinput"); });
 
@@ -118,7 +127,7 @@ int main() {
   std::vector<std::uint8_t> message;
   do {
     // There is some race condition in RtMidi where the messages are
-    // not seen if these is not some sleep here
+    // not seen if there is not some sleep here
     std::this_thread::sleep_for(1ms);
     midi_in.getMessage(&message);
   } while (!message.empty());
