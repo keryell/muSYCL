@@ -44,11 +44,11 @@ class midi_in {
   /// Capacity of the MIDI message pipe
   static auto constexpr pipe_min_capacity = 64;
 
-  /** The handler to control the MIDI input interface
+  /** The handlers to control the MIDI input interfaces
 
-      Use a pointer because RtMidiIn uses some dynamic polymorphism
-      and it crashes otherwise */
-  static inline std::unique_ptr<RtMidiIn> interface;
+      Use a pointer because RtMidiIn is a broken type and is neither
+      copyable nor movable */
+  static inline std::vector<std::unique_ptr<RtMidiIn>> interfaces;
 
   /// A FIFO used to implement the pipe of MIDI messages
   static inline boost::fibers::buffered_channel<midi::msg>
@@ -73,15 +73,17 @@ class midi_in {
   /// Process the incomming MIDI messages
   static inline void process_midi_in(double time_stamp,
                                      std::vector<std::uint8_t>* p_midi_message,
-                                     void*) {
+                                     void* port) {
     auto &midi_message = *p_midi_message;
     auto n_bytes = midi_message.size();
+    auto p = reinterpret_cast<std::intptr_t>(port);
+    std::cout << "Received from port " << p
+              << " at time stamp = " << time_stamp << std::endl << '\t';
     for (int i = 0; i < n_bytes; ++i)
       std::cout << "Byte " << i << " = 0x"
                 << std::hex << std::setw(2) << std::setfill('0')
                 << static_cast<int>(midi_message[i]) << ", "
                 << std::resetiosflags(std::cout.flags());
-    std::cout << "time stamp = " << time_stamp << std::endl;
 
     auto m = musycl::midi::parse(midi_message);
     dispatch_registered_actions(m);
@@ -94,31 +96,42 @@ public:
 
   void open(const std::string& application_name,
             const std::string& port_name,
-            RtMidi::Api backend,
-            unsigned int port_number) {
-    // Create a MIDI input with a fancy client name
-    interface = check_error([&] {
-      return std::make_unique<RtMidiIn>(backend, application_name);
-    });
+            RtMidi::Api backend) {
+    std::cout << "RtMidi version " << RtMidi::getVersion() << std::endl;
+    // Create a throwable MIDI input just to get later the number of port
+    auto midi_in = check_error([&] { return RtMidiIn { backend,
+                                                      "muSYCLtest" }; });
+    auto n_in_ports = midi_in.getPortCount();
+    std::cout << "\nThere are " << n_in_ports
+              << " MIDI input sources available.\n";
 
-    // Open the first port and give it a fancy name
-    check_error([&] { interface->openPort(port_number, port_name); });
+    for (auto i = 0; i < n_in_ports; ++i) {
+      interfaces.push_back(check_error([&] {
+        return std::make_unique<RtMidiIn>(backend, application_name);
+      }));
 
+      auto port_name = check_error([&] { return midi_in.getPortName(i); });
+      std::cout << "  Input Port #" << i << ": " << port_name << std::endl;
 
-    // Don't ignore sysex, timing, or active sensing messages
-    check_error([&] { interface->ignoreTypes(false, false, false); });
+      // Open the port and give it a fancy name
+      check_error([&] { interfaces[i]->openPort(i, port_name); });
 
-    // Drain the message queue to avoid leftover MIDI messages
-    std::vector<std::uint8_t> message;
-    do {
-      // There is a race condition in RtMidi where the messages are
-      // not seen if these is not some sleep here
-      std::this_thread::sleep_for(1ms);
-      check_error([&] { interface->getMessage(&message); });
-    } while (!message.empty());
+      // Don't ignore sysex, timing, or active sensing messages
+      check_error([&] { interfaces[i]->ignoreTypes(false, false, false); });
 
-    // Handle MIDI messages with this callback function
-    check_error([&] { interface->setCallback(process_midi_in, nullptr); });
+      // Drain the message queue to avoid leftover MIDI messages
+      std::vector<std::uint8_t> message;
+      do {
+        // There is a race condition in RtMidi where the messages are
+        // not seen if these is not some sleep here
+        std::this_thread::sleep_for(1ms);
+        check_error([&] { interfaces[i]->getMessage(&message); });
+      } while (!message.empty());
+
+      // Handle MIDI messages with this callback function
+      check_error([&] { interfaces[i]->setCallback
+        (process_midi_in, reinterpret_cast<void*>(i)); });
+    }
   }
 
 

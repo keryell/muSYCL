@@ -62,8 +62,6 @@ int main() {
   // Use some shared point because RtMidiIn is a broken type, it is
   // neither copyable neither movable
   std::vector<std::shared_ptr<RtMidiIn>> midi_ins;
-  // Reserve the vector to avoid RtMidi limitations abut copy/move
-  midi_ins.reserve(n_in_ports);
   for (auto i = 0; i < n_in_ports; ++i) {
     auto port_name = check_error([&] { return midi_in.getPortName(i); });
     std::cout << "  Input Port #" << i << ": " << port_name << '\n';

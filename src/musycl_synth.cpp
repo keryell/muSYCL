@@ -28,9 +28,9 @@ int main() {
   musycl::midi_in midi_in;
   // Access to the right input on the system
   // - Jack
-  midi_in.open(application_name, "input", RtMidi::UNIX_JACK, 0);
+  midi_in.open(application_name, "input", RtMidi::UNIX_JACK);
   // - ALSA
-  // audio.open_out(application_name, RtMidi::LINUX_ALSA, 1);
+  // audio.open_out(application_name, RtMidi::LINUX_ALSA);
 
   // The audio interface
   musycl::audio audio;
