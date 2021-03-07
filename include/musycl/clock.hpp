@@ -1,7 +1,8 @@
 #ifndef MUSYCL_CLOCK_HPP
 #define MUSYCL_CLOCK_HPP
 
-/// \file Manage the time and distribute the various clocks
+/// \file Manage the time and distribute the various clock ticks, like
+/// audio frame tick, beat tick, measure tick
 
 #include <functional>
 #include <map>
@@ -20,18 +21,44 @@ class clock {
   /// frequency
   static inline float dphase = 0;
 
+  /// Number of beats per measure (bar)
+  static inline int meter = 4;
+
+public:
+
+  /// Describe the type of tick
+  struct type {
+    int beat_index; ///< Current beat in current measure (bar)
+    bool measure; ///< True if this is the start of a measure
+    bool beat; ///< True if this is the start of a beat
+  };
+
+private:
+
+  /// Describes the type of clock tick to interested customers
+  static inline type tick_type;
+
   /// Consumers of the frame clock
   /// \todo using member function pointer
   static inline std::map<void*, std::function<void()>> frame_clock_consumers;
-
-  /// Consumers of the beat clock
-  static inline std::map<void*, std::function<void()>> beat_consumers;
 
   /// Distribute the frame clock
   static void notify_frame_clock() {
     for (const auto& [obj, fcc] : frame_clock_consumers)
       fcc();
   }
+
+  /// Consumers of the measure clock
+  static inline std::map<void*, std::function<void()>>measure_consumers;
+
+  /// Distribute the measure clock
+  static void notify_measure() {
+    for (const auto& [obj, mc] : measure_consumers)
+      mc();
+  }
+
+  /// Consumers of the beat clock
+  static inline std::map<void*, std::function<void()>> beat_consumers;
 
   /// Distribute the beat clock
   static void notify_beat() {
@@ -56,13 +83,33 @@ public:
   }
 
 
+  /** Set the meter of the measure
+
+      https://en.wikipedia.org/wiki/Metre_(music)
+      https://en.wikipedia.org/wiki/Bar_(music)
+  */
+  static void set_meter(int beats) {
+    meter = beats;
+  }
+
+
+  /// Action to do with the tick of the audio frame clock
   static void tick_frame_clock() {
-    notify_frame_clock();
+    tick_type.beat = false;
+    tick_type.measure = false;
     phase = phase + dphase;
     if (phase >= 1) {
       phase -= 1;
+      tick_type.beat = true;
+      if (tick_type.beat_index == 0) {
+        tick_type.measure = true;
+        notify_measure();
+      }
       notify_beat();
     }
+    notify_frame_clock();
+    if (++tick_type.beat_index == meter)
+      tick_type.beat_index = 0;
   }
 
 
@@ -74,14 +121,29 @@ public:
     bool registered = false;
 
 
-    /// Connect the object only to the necessary clocking framework
+    /** Connect the object only to the right clocking framework
+        according to the right receiver function in the customer
+        class */
     void register_actions() {
       registered = true;
-      if constexpr (requires { std::declval<T>().frame_clock(); })
+      if constexpr (requires { std::declval<T>().frame_clock(tick_type); })
+        frame_clock_consumers[this] =
+          [&, this] { static_cast<T&>(*this).frame_clock(tick_type); };
+      else if constexpr (requires { std::declval<T>().frame_clock(); })
         frame_clock_consumers[this] =
           [this] { static_cast<T&>(*this).frame_clock(); };
-      if constexpr (requires { std::declval<T>().beat(); })
+
+      if constexpr (requires { std::declval<T>().beat(tick_type); })
+        beat_consumers[this] =
+          [&, this] { static_cast<T&>(*this).beat(tick_type); };
+      else if constexpr (requires { std::declval<T>().beat(); })
         beat_consumers[this] = [this] { static_cast<T&>(*this).beat(); };
+
+      if constexpr (requires { std::declval<T>().measure(tick_type); })
+        measure_consumers[this] =
+          [&, this] { static_cast<T&>(*this).measure(tick_type); };
+      else if constexpr (requires { std::declval<T>().measure(); })
+        measure_consumers[this] = [this] { static_cast<T&>(*this).measure(); };
     }
 
 

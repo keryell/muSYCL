@@ -61,11 +61,11 @@ int main() {
        musycl::clock::set_tempo_frequency(v/10.);
      });
 
-  // A low pass filter for the output
+  // The low pass filters for the output channels
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
     low_pass_filter;
 
-  // A resonance filter for the output
+  // The resonance filters for the output channels
   std::array<musycl::resonance_filter, musycl::audio::channel_number>
     resonance_filter;
 
