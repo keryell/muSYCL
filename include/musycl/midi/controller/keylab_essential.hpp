@@ -11,37 +11,85 @@
 #include <string>
 #include <vector>
 
+#include <range/v3/all.hpp>
+
 #include "musycl/midi.hpp"
 #include "musycl/midi/midi_out.hpp"
 
 namespace musycl::midi::controller {
 
-/// An Arturia KeyLab MIDI controller
-class keylab_essential {
-/** Arturia MIDI SysEx Id
-    https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
+/** An Arturia KeyLab MIDI controller
+
+    This is made by gathering some information on-line, such as
+
+    https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
+    https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
 */
-static auto constexpr sysex_id = { 0x00, 0x20, 0x6b };
+class keylab_essential {
+  /** Arturia MIDI SysEx Id
+      https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
+  */
+  static auto constexpr sysex_id = { '\0', '\x20', '\x6b' };
+
+  /// The device ID seems just "broadcast"
+  static auto constexpr dev_id = { '\x7f' };
+
+  /// The sub device ID?
+  static auto constexpr sub_dev_id = { '\x42', '\x4', '\0' };
+
+  musycl::midi_out midi_out;
 
 public:
 
   keylab_essential() {
-    musycl::midi_out midi_out;
     midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
-    std::vector<std::uint8_t> hello { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x04,
-                                      0x00,
-        0x60, 0x01, 0x4C, 0x6F, 0x61, 0x64, 0x65, 0x64, 0x20, 0x4D, 0x75, 0x6C,
-        0x74, 0x69, 0x3A, 0x00, 0x02, 0x56, 0x65, 0x6C, 0x25, 0x6C, 0x6F, 0x63,
-        0x69, 0x70, 0x65, 0x21, 0x22, 0x23, 'a', 'b', 'c', 'd', 0x00, 0xF7};
-    musycl::midi_out::write(hello);
-    std::vector<std::uint8_t> header { 0xF0, 0x00, 0x20, 0x6B, 0x7F, 0x42, 0x04,
-                                      0x00,
-        0x60, 0x01};
-    std::vector<std::uint8_t> end { 0x00, 0xF7};
-    musycl::midi_out::write(header);
-    for (std::uint8_t i = 16; i < 32; ++i)
-      musycl::midi_out::write({ i });
-    musycl::midi_out::write(end);
+
+    display("Salut les petits amis");
+    blink();
+  }
+
+
+  template <typename... Ranges>
+  void send_sysex(Ranges&&... messages) {
+    static auto constexpr sysex_start = { '\xf0' };
+    static auto constexpr sysex_end = { '\xf7' };
+
+    musycl::midi_out::write
+      (ranges::to<std::vector<std::uint8_t>>
+       (ranges::view::concat(sysex_start, sysex_id, dev_id,
+                             sub_dev_id, messages..., sysex_end)));
+  }
+
+
+  /// Display a message on the LCD display
+  void display(const std::string& message) {
+    // Split the string in at most 2 lines of 16 characters max
+    auto r = ranges::view::all(message) | ranges::view::chunk(16)
+      | ranges::view::take(2) | ranges::view::enumerate
+      | ranges::view::transform([](auto&& enumeration) {
+          auto [line_number, line_content] = enumeration;
+          return ranges::view::concat
+            (ranges::view::single(char(line_number + 1)),
+             line_content, ranges::view::single('\0'));
+        })
+      | ranges::view::join;
+    static auto constexpr sysex_display_command = { '\x60' };
+    send_sysex(sysex_display_command, r);
+  }
+
+
+  /** Display a blinking cursor
+
+      It looks like having 0 as a line number erase the fist line with
+      a blinking cursor but the first line can be then displayed on
+      the second line.
+
+      Actually it looks more like a random bug which is triggered
+      here...
+  */
+  void blink() {
+    static auto constexpr blink_display_command = { '\x60', '\0', '\0' };
+    send_sysex(blink_display_command);
   }
 
 };
