@@ -14,6 +14,7 @@
 #include <triSYCL/detail/overloaded.hpp>
 
 #include <musycl/musycl.hpp>
+#include <musycl/midi/controller/keylab_essential.hpp>
 
 #include <range/v3/all.hpp>
 
@@ -40,6 +41,9 @@ int main() {
   audio.open(application_name, "output", application_name, RtAudio::UNIX_JACK);
   // - ALSA
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
+
+  // Assume an Arturia KeyLab essential as a MIDI controller
+  musycl::midi::controller::keylab_essential midi_controller;
 
   // The oscillators generating signal, 1 per running note
   std::map<musycl::midi::note_type, musycl::sound_generator> sounds;
