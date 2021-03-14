@@ -30,8 +30,11 @@ namespace musycl::midi::controller {
     https://forum.arturia.com/index.php?topic=90496.0
     https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
     https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
+
+    Some SysEx values can be seen in the MIDI console of the MIDI
+    Control Center from Arturia.
 */
-class keylab_essential {
+class keylab_essential : public clock::follow<keylab_essential> {
   /** Arturia MIDI SysEx Id
       https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
   */
@@ -50,6 +53,29 @@ class keylab_essential {
     { '\x2', '\0', '\x40', '\x50', '\x1' };
 
   musycl::midi_out midi_out;
+
+  /** Button light fuzzing
+
+      Experiment with some light commands
+  */
+  void button_light_fuzzing() {
+    // Pick a button range to check
+    for(auto b = 0x00; b <= 0x0f; ++b) {
+      for(auto l = 0; l <= 127; ++l) {
+        button_light(b, l);
+        std::this_thread::sleep_for(10ms);
+      }
+      std::this_thread::sleep_for(2s);
+      button_light(b, 0);
+    }
+    /* Increase light level across all the buttons.
+       The problem is that it triggers the Vegas light show mode */
+    for(auto l = 0; l <= 127; ++l)
+      for(auto b = 0; b <= 127; ++b) {
+        button_light(b, l);
+        std::this_thread::sleep_for(10ms);
+      }
+  }
 
 public:
 
@@ -200,28 +226,11 @@ public:
   }
 
 
-  /** Button light fuzzing
-
-      Experiment with commands
-
-      A button 14 or 15 starts Vegas mode
-
-      Pad blue 0x70-0x7f
-  */
-  void button_light_fuzzing() {
-    for(auto b = 0x50; b <= 0x5f; ++b) {
-      for(auto l = 0; l <= 127; ++l) {
-        button_light(b, l);
-        std::this_thread::sleep_for(10ms);
-      }
-      std::this_thread::sleep_for(2s);
-    }
-    // exit(0);
-    for(auto l = 0; l <= 127; ++l)
-      for(auto b = 0; b <= 127; ++b) {
-        button_light(b, l);
-        std::this_thread::sleep_for(10ms);
-      }
+  /// This is notified on each beat by the clocking framework
+  void beat(clock::type ct) {
+    static bool parity;
+    parity = !parity;
+    button_light((int)button::metro, 127*parity);
   }
 
 };
