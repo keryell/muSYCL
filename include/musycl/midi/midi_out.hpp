@@ -76,6 +76,14 @@ public:
 
   /// The sycl::pipe::write-like interface to write a MIDI message
   static void write(const std::vector<std::uint8_t>& v) {
+#if 0
+    for (int e : v)
+      std::cout << std::hex << e << ' ';
+    std::cout << std::endl;
+    for (int e : v)
+      std::cout << std::dec << e << ' ';
+    std::cout << std::endl;
+#endif
     // Hard-code now for KeyLab Essential
     interfaces[1]->sendMessage(&v);
   }

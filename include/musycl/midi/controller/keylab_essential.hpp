@@ -43,9 +43,102 @@ class keylab_essential {
   /// The sub device ID?
   static auto constexpr sub_dev_id = { '\x42' };
 
+  static auto constexpr sysex_vegas_mode_off =
+    { '\x2', '\0', '\x40', '\x50', '\0' };
+
+  static auto constexpr sysex_vegas_mode_on =
+    { '\x2', '\0', '\x40', '\x50', '\x1' };
+
   musycl::midi_out midi_out;
 
 public:
+
+  /** Mapping of button light to SySex button light command
+
+      Some names have the suffix \c _bis and \c _ter because they are
+      alternative code to do the same action.
+
+      It is not clear which value trigger the Vegas light show mode.
+  */
+  enum class button : std::int8_t {
+    vegas_mode = 0x0d,
+    vegas_mode_bis = 0x0e,
+    vegas_mode_ter = 0x0f,
+    octave_minus = 0x10,
+    octave_plus = 0x11,
+    chord = 0x12,
+    transpose = 0x13,
+    midi_channel = 0x14,
+    map_select = 0x15,
+    cat_char = 0x16,
+    preset = 0x17,
+    backward = 0x18,
+    forward = 0x19,
+    part_1_next = 0x1a,
+    part_2_prev = 0x1b,
+    live_bank = 0x1c,
+    metro = 0x1d,
+    fast_forward = 0x1e,
+    record = 0x1f,
+    pad_1_blue = 0x20,
+    pad_1_green = 0x21,
+    pad_1_red = 0x22,
+    pad_2_blue = 0x23,
+    pad_2_green = 0x24,
+    pad_2_red = 0x25,
+    pad_3_blue = 0x26,
+    pad_3_green = 0x27,
+    pad_3_red = 0x28,
+    pad_4_blue = 0x29,
+    pad_4_green = 0x2a,
+    pad_4_red = 0x2b,
+    pad_5_blue = 0x2c,
+    pad_5_green = 0x2d,
+    pad_5_red = 0x2e,
+    pad_6_blue = 0x2f,
+    pad_6_green = 0x30,
+    pad_6_red = 0x31,
+    pad_7_blue = 0x32,
+    pad_7_green = 0x33,
+    pad_7_red = 0x34,
+    pad_8_blue = 0x35,
+    pad_8_green = 0x36,
+    pad_8_red = 0x37,
+    chord_bis = 0x38,
+    transpose_bis = 0x39,
+    octave_minus_bis = 0x3a,
+    octave_plus_bis = 0x3b,
+    map_select_bis = 0x3c,
+    midi_channel_bis = 0x3d,
+    save = 0x3e,
+    punch = 0x3f,
+    save_bis = 0x56,
+    undo = 0x57,
+    punch_bis = 0x58,
+    metro_bis = 0x59,
+    loop = 0x5a,
+    rewind = 0x5b,
+    fast_forward_bis = 0x5c,
+    stop = 0x5d,
+    play_pause = 0x5e,
+    record_bis = 0x5f,
+    pad_1_blue_bis = 0x70,
+    pad_2_blue_bis = 0x71,
+    pad_3_blue_bis = 0x72,
+    pad_4_blue_bis = 0x73,
+    pad_5_blue_bis = 0x74,
+    pad_6_blue_bis = 0x75,
+    pad_7_blue_bis = 0x76,
+    pad_8_blue_bis = 0x77,
+    pad_1_blue_ter = 0x78,
+    pad_2_blue_ter = 0x79,
+    pad_3_blue_ter = 0x7a,
+    pad_4_blue_ter = 0x7b,
+    pad_5_blue_ter = 0x7c,
+    pad_6_blue_ter = 0x7d,
+    pad_7_blue_ter = 0x7e,
+    pad_8_blue_ter = 0x7f,
+  };
 
   keylab_essential() {
     midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
