@@ -16,13 +16,13 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <type_traits>
 #include <variant>
 #include <vector>
 
 #include <boost/fiber/buffered_channel.hpp>
-#include <boost/function_types/parameter_types.hpp>
-#include <boost/mpl/at.hpp>
+#include <boost/callable_traits/args.hpp>
 
 #include "rtmidi/RtMidi.h"
 
@@ -178,19 +178,16 @@ public:
       If the action parameter has a floating point type, the value is
       scaled to [0, 1] first.
   */
-  template <int number, typename Lambda>
-  static void cc_action(Lambda&& action) {
-    // Get the lambda call operator type
-    using f_type = decltype(&Lambda::operator());
-    // Get the type of the first parameter of the lambda
-    using arg_1_type = typename boost::mpl::at_c
-      <typename boost::function_types::parameter_types<f_type>::type, 1>::type;
-    // Register an action producing the right value for the lambda
-    if constexpr (std::is_floating_point_v<arg_1_type>)
+  template <int number, typename Callable>
+  static void cc_action(Callable&& action) {
+    using arg0_t =
+      std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
+    // Register an action producing the right value for the action
+    if constexpr (std::is_floating_point_v<arg0_t>)
       // If we have a floating point type, scale the value in [0, 1]
-      cc_actions.emplace(number, [action = std::forward<Lambda>(action)]
+      cc_actions.emplace(number, [action = std::forward<Callable>(action)]
                          (midi::control_change::value_type v) {
-        action(midi::control_change::get_value_as<arg_1_type>(v));
+        action(midi::control_change::get_value_as<arg0_t>(v));
       });
     else
       // Just provides the CC value directly to the action
