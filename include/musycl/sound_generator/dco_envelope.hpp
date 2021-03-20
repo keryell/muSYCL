@@ -9,6 +9,7 @@
 
 #include "../audio.hpp"
 #include "../pipe/midi_in.hpp"
+#include "../sustain.hpp"
 
 namespace musycl {
 

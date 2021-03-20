@@ -1,5 +1,5 @@
-#ifndef MUSYCL_PIPE_SUSTAIN_HPP
-#define MUSYCL_PIPE_SUSTAIN_HPP
+#ifndef MUSYCL_SUSTAIN_HPP
+#define MUSYCL_SUSTAIN_HPP
 
 /** \file SYCL abstraction for a pipe transmitting sustain stain
 
@@ -29,4 +29,4 @@ public:
 
 }
 
-#endif // MUSYCL_PIPE_SUSTAIN_HPP
+#endif // MUSYCL_SUSTAIN_HPP

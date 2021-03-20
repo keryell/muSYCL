@@ -13,8 +13,8 @@
 #include "low_pass_filter.hpp"
 #include "noise.hpp"
 #include "pipe/midi_in.hpp"
-#include "pipe/sustain.hpp"
 #include "resonance_filter.hpp"
 #include "sound_generator.hpp"
+#include "sustain.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP
