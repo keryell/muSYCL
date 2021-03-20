@@ -22,6 +22,9 @@ namespace musycl {
 
 /// A digitally controlled oscillator
 class noise {
+  /// 
+  control::group cg { "Noise generator" };
+
   /// Track if the noise generator is generating a signal or just 0
   bool running = false;
 
@@ -32,15 +35,13 @@ class noise {
   low_pass_filter lpf_filter;
 
   /// The low pass filter envelope
-  envelope lpf_env { { .attack_time = 0, .decay_time = 0.1,
-                               .sustain_level = 0.01, .release_time = 0.1 } };
+  envelope lpf_env;
 
   /// Filter the noise with some resonance
   resonance_filter res_filter;
 
   /// The resonance filter envelope
-  envelope rf_env { { .attack_time = 0.05, .decay_time = 0.05,
-                      .sustain_level = 0.1, .release_time = 0.01 } };
+  envelope rf_env;
 
   /// Initial velocity of the note
   float velocity;
@@ -52,6 +53,18 @@ public:
 
   /// Output volume of the note
   float volume { 1 };
+
+  noise() {
+    lpf_env.param.attack_time = 0;
+    lpf_env.param.decay_time = 0.1;
+    lpf_env.param.sustain_level = 0.01;
+    lpf_env.param.release_time = 0.1;
+    rf_env.param.attack_time = 0.05;
+    rf_env.param.decay_time = 0.05;
+    rf_env.param.sustain_level = 0.1;
+    rf_env.param.release_time = 0.01;
+  }
+
 
   /** Start a note
 

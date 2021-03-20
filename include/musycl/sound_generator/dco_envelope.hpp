@@ -24,10 +24,6 @@ public:
   /// Control the volume evolution of the sound
   envelope env;
 
-  /// Initialize the envelope with its parameters
-  dco_envelope(const envelope::param_t& p) : env { p } {}
-
-
   /** Start a note
 
       \param[in] on is the "note on" MIDI event to start with

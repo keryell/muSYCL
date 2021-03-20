@@ -45,20 +45,24 @@ class envelope : public clock::follow<envelope> {
 public:
 
   /// Parameters of the envelope shape
-  class param_t {
+  class param_t : public control::param {
   public:
 
     /// Attack time, immediate sound by default
-    float attack_time = 0;
+    control::item<float> attack_time
+    { this, 0, "Attack", control::time { 0, 10 } };
 
     /// Decay time, go immediately to sustain phase by default
-    float decay_time = 0;
+    control::item<float> decay_time
+      { this, 0, "Decay", control::time { 0, 10 } };
 
     /// Sustain level, maximum level by default in the sustain phase
-    float sustain_level = 1;
+    control::item<float> sustain_level
+      { this, 1, "Sustain", control::level { 0, 1 } };
 
     /// Release time, go immediately to off by default
-    float release_time = 0;
+    control::item<float> release_time
+      { this, 0, "Release", control::time { 0, 10 } };
   };
 
 
@@ -80,7 +84,7 @@ public:
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p) : param { p } {}
+  envelope(param_t p) { param.update_values(p); }
 
 
   /** Start the envelope generator from the beginning
