@@ -179,7 +179,7 @@ public:
 
     /** If we move an object we need to unregister the old one and
         register the new one */
-    follow(const follow&& old) {
+    follow(follow&& old) {
       old.unregister_actions();
       register_actions();
     }
