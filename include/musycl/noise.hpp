@@ -15,7 +15,6 @@
 #include "envelope.hpp"
 #include "low_pass_filter.hpp"
 #include "midi.hpp"
-#include "pipe/midi_in.hpp"
 #include "resonance_filter.hpp"
 
 namespace musycl {

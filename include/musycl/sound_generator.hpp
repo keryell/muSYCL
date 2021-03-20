@@ -7,7 +7,8 @@
 
 #include "audio.hpp"
 #include "dco.hpp"
-#include "pipe/midi_in.hpp"
+#include "midi.hpp"
+#include "noise.hpp"
 #include "sound_generator/dco_envelope.hpp"
 
 namespace musycl {

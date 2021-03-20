@@ -1,5 +1,5 @@
-#ifndef MUSYCL_PIPE_MIDI_IN_HPP
-#define MUSYCL_PIPE_MIDI_IN_HPP
+#ifndef MUSYCL_MIDI_IN_HPP
+#define MUSYCL_MIDI_IN_HPP
 
 /** \file SYCL abstraction for a MIDI input pipe
 
@@ -213,4 +213,4 @@ public:
 
 }
 
-#endif // MUSYCL_PIPE_MIDI_IN_HPP
+#endif // MUSYCL_MIDI_IN_HPP

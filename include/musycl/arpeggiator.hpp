@@ -16,7 +16,7 @@
 
 #include "clock.hpp"
 #include "midi.hpp"
-#include "pipe/midi_in.hpp"
+#include "midi/midi_in.hpp"
 
 namespace musycl {
 
