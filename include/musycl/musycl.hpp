@@ -4,6 +4,7 @@
 #include "config.hpp"
 
 #include "arpeggiator.hpp"
+#include "audio.hpp"
 #include "clock.hpp"
 #include "control.hpp"
 #include "dco.hpp"
@@ -11,7 +12,6 @@
 #include "lfo.hpp"
 #include "low_pass_filter.hpp"
 #include "noise.hpp"
-#include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
 #include "pipe/sustain.hpp"
 #include "resonance_filter.hpp"

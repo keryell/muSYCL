@@ -5,8 +5,8 @@
 
 #include <variant>
 
+#include "audio.hpp"
 #include "dco.hpp"
-#include "pipe/audio.hpp"
 #include "pipe/midi_in.hpp"
 #include "sound_generator/dco_envelope.hpp"
 

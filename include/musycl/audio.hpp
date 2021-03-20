@@ -1,5 +1,5 @@
-#ifndef MUSYCL_PIPE_AUDIO_HPP
-#define MUSYCL_PIPE_AUDIO_HPP
+#ifndef MUSYCL_AUDIO_HPP
+#define MUSYCL_AUDIO_HPP
 
 /** \file SYCL abstraction for an audio pipe
 
@@ -22,9 +22,6 @@
 #include "musycl/config.hpp"
 
 namespace musycl {
-
-// To use time unit literals directly
-using namespace std::chrono_literals;
 
 /** An audio input/output interface exposed as a SYCL pipe.
 
@@ -162,4 +159,4 @@ public:
 
 }
 
-#endif // MUSYCL_PIPE_AUDIO_HPP
+#endif // MUSYCL_AUDIO_HPP

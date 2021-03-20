@@ -6,7 +6,8 @@
 #include <range/v3/all.hpp>
 
 #include "../config.hpp"
-#include "../pipe/audio.hpp"
+
+#include "../audio.hpp"
 #include "../pipe/midi_in.hpp"
 
 namespace musycl {
