@@ -13,12 +13,12 @@
 #include <sycl/vendor/triSYCL/pipe/cout.hpp>
 #include <triSYCL/detail/overloaded.hpp>
 
+auto constexpr debug_midi_input = true;
+
 #include <musycl/musycl.hpp>
 #include <musycl/midi/controller/keylab_essential.hpp>
 
 #include <range/v3/all.hpp>
-
-auto constexpr debug_midi_input = true;
 
 auto constexpr application_name = "musycl_synth";
 
@@ -43,7 +43,7 @@ int main() {
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
   // Assume an Arturia KeyLab essential as a MIDI controller
-  musycl::midi::controller::keylab_essential midi_controller;
+  musycl::controller::keylab_essential controller;
 
   // The oscillators generating signal, 1 per running note
   std::map<musycl::midi::note_type, musycl::sound_generator> sounds;
@@ -139,6 +139,13 @@ int main() {
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
 
+  controller.param_1.add_action([&](float a) {
+    /* Use a frequency logarithmic scale between 1 Hz and the 4 times
+       the sampling frequency */
+    for (auto& f : low_pass_filter)
+      f.set_cutoff_frequency
+        (std::exp((a*std::log(4*musycl::sample_frequency))));
+  });
   // The forever time loop
   for(;;) {
     // Process all the potential incoming MIDI events
@@ -168,12 +175,6 @@ int main() {
                                      << (int)cc.number << std::endl;
             // Attack/CH1 on Arturia Keylab 49 Essential
             if (cc.number == 73) {
-              // Use a frequency logarithmic scale between 1 Hz and
-              // the 4 times the sampling frequency
-              for (auto& f : low_pass_filter)
-                f.set_cutoff_frequency
-                  (std::exp((cc.value_1()
-                             *std::log(4*musycl::sample_frequency))));
             }
           },
           [] (auto &&other) { ts::pipe::cout::stream() << "other"; }

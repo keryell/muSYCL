@@ -178,8 +178,8 @@ public:
       If the action parameter has a floating point type, the value is
       scaled to [0, 1] first.
   */
-  template <int number, typename Callable>
-  static void cc_action(Callable&& action) {
+  template <typename Callable>
+  static void cc_action(int number, Callable&& action) {
     using arg0_t =
       std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
     // Register an action producing the right value for the action
@@ -192,6 +192,22 @@ public:
     else
       // Just provides the CC value directly to the action
       cc_actions.emplace(number, action);
+  }
+
+
+  /** Associate an action to a channel controller (CC)
+
+      \param[in] number is the CC number
+
+      \param[in] action is the action to call with the value
+      returned by the CC as a parameter.
+
+      If the action parameter has a floating point type, the value is
+      scaled to [0, 1] first.
+  */
+  template <int number, typename Callable>
+  static void cc_action(Callable&& action) {
+    cc_action(number, std::forward<Callable>(action));
   }
 
 
