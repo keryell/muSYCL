@@ -134,8 +134,6 @@ class controller {
     static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
                                                   '\x1' };
 
-    musycl::midi_out midi_out;
-
     /** Button light fuzzing
 
         Experiment with some light commands
@@ -254,8 +252,6 @@ class controller {
     };
 
     keylab_essential() {
-      midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
-
       display("Salut les petits amis");
       // button_light_fuzzing();
     }

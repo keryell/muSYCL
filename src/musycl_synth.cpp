@@ -42,6 +42,10 @@ int main() {
   // - ALSA
   // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
 
+  // The MIDI controller needs the MIDI output too to update the display/buttons
+  musycl::midi_out midi_out;
+  midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
+
   // Assume an Arturia KeyLab essential as a MIDI controller
   musycl::controller::keylab_essential controller;
 
