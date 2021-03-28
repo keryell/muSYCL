@@ -112,8 +112,9 @@ int main() {
   musycl::midi_in::cc_variable<85>(master_volume);
 
   float rectication_ratio = 0;
-  // Use MIDI CC 75 (CH 2) to set the rectification ratio
+  // Use MIDI CC 0x12 (Param 2/Pan 6) to set the rectification ratio
   musycl::midi_in::cc_variable<75>(rectication_ratio);
+  controller.param_2_pan_6.set_variable(rectication_ratio);
 
   musycl::dco_envelope dcoe1;
   dcoe1.env.param.attack_time = 0.1;
@@ -143,7 +144,7 @@ int main() {
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
 
-  controller.param_1.add_action([&](float a) {
+  controller.param_1_pan_5.add_action([&](float a) {
     /* Use a frequency logarithmic scale between 1 Hz and the 4 times
        the sampling frequency */
     for (auto& f : low_pass_filter)

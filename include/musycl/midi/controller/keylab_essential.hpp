@@ -66,11 +66,11 @@ class controller {
             using f_t = std::remove_cvref_t<decltype(f)>;
             if constexpr (std::is_same_v<f_t, cc>) {
               cc_v = f;
-              midi_in::cc_action(
-                  f.value, [&](midi::control_change::value_type v) {
-                    value = v;
-                    dispatch();
-                  });
+              midi_in::cc_action(f.value,
+                                 [&](midi::control_change::value_type v) {
+                                   value = v;
+                                   dispatch();
+                                 });
             }
             if constexpr (std::is_same_v<f_t, cc_inc>)
               cc_inc_v = f;
@@ -97,6 +97,16 @@ class controller {
       else
         // Just provides the CC value directly to the action
         listeners.push_back(action);
+    }
+
+    /** Associate a variable to an item
+
+        \param[out] variable is the variable to set to the value
+        returned by the controller. If the variable has a floating point
+        type, the value is scaled to [0, 1] first.
+    */
+    template <typename T> void set_variable(T& variable) {
+      add_action([&](T v) { variable = v; });
     }
 
     /// The value normalized in [ 0, 1 ]
@@ -161,8 +171,18 @@ class controller {
     /// List all the control items
     // std::vector<control_item> inputs;
 
-    control_item param_1 { control_item::type::knob, control_item::cc { 0x5d },
-                           control_item::cc_inc { 0x14 } };
+    control_item param_1_pan_5 { control_item::type::knob,
+                                 control_item::cc { 0x5d },
+                                 control_item::cc_inc { 0x14 } };
+    control_item param_2_pan_6 { control_item::type::knob,
+                                 control_item::cc { 0x12 },
+                                 control_item::cc_inc { 0x15 } };
+    control_item param_3_pan_7 { control_item::type::knob,
+                                 control_item::cc { 0x13 },
+                                 control_item::cc_inc { 0x16 } };
+    control_item param_4_pan_8 { control_item::type::knob,
+                                 control_item::cc { 0x10 },
+                                 control_item::cc_inc { 0x17 } };
 
     /** Mapping of button light to SySex button light command
 
