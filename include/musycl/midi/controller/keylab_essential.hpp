@@ -56,6 +56,8 @@ class controller {
 
     bool connected = false;
 
+    std::string current_name;
+
     std::vector<std::function<void(midi::control_change::value_type)>>
         listeners;
 
@@ -84,7 +86,14 @@ class controller {
         l(value);
     }
 
-    template <typename Callable> void add_action(Callable&& action) {
+    /// Name the control_item
+    auto& name(const std::string& new_name) {
+      current_name = new_name;
+      return *this;
+    }
+
+    /// Add an action to the control_item
+    template <typename Callable> auto& add_action(Callable&& action) {
       using arg0_t =
           std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
       // Register an action producing the right value for the action
@@ -97,6 +106,7 @@ class controller {
       else
         // Just provides the CC value directly to the action
         listeners.push_back(action);
+      return *this;
     }
 
     /** Associate a variable to an item
@@ -105,8 +115,9 @@ class controller {
         returned by the controller. If the variable has a floating point
         type, the value is scaled to [0, 1] first.
     */
-    template <typename T> void set_variable(T& variable) {
+    template <typename T> auto& set_variable(T& variable) {
       add_action([&](T v) { variable = v; });
+      return *this;
     }
 
     /// The value normalized in [ 0, 1 ]

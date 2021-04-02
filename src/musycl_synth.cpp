@@ -144,12 +144,14 @@ int main() {
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
 
-  controller.param_1_pan_5.add_action([&](float a) {
-    /* Use a frequency logarithmic scale between 1 Hz and the 4 times
-       the sampling frequency */
+  controller.param_1_pan_5.name("Low pass filter").add_action([&](float a) {
+    /* Use a frequency logarithmic scale between 1 Hz and half the
+       sampling frequency */
+    auto cut_off_freq = std::exp((a*std::log(0.5*musycl::sample_frequency)));
     for (auto& f : low_pass_filter)
-      f.set_cutoff_frequency
-        (std::exp((a*std::log(4*musycl::sample_frequency))));
+      f.set_cutoff_frequency(cut_off_freq);
+    controller.display("Low pass filter: "
+                       + std::to_string(cut_off_freq) + " Hz");
   });
   // The forever time loop
   for(;;) {
