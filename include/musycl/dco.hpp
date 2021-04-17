@@ -31,8 +31,17 @@ class dco {
 
 public:
 
+  struct param_t {
+    using owner_t = dco;
+  };
+
   /// Output volume of the note
   float volume { 1 };
+
+
+  dco(const param_t& p) {}
+
+  dco() = default;
 
   /** Start a note
 

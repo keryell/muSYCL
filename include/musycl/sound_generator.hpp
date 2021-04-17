@@ -3,6 +3,7 @@
 
 /// \file Concept of sound generators to be used to play a note
 
+#include <type_traits>
 #include <variant>
 
 #include "audio.hpp"
@@ -23,6 +24,19 @@ class sound_generator {
 
 public:
 
+  /// \todo generate from sound_generator_t
+  using param_t = std::variant<dco::param_t,
+                               dco_envelope::param_t,
+                               noise::param_t>;
+
+  static auto from_param(const param_t& param) {
+    return std::visit([&] (const auto &s) {
+      return sound_generator {
+        typename std::remove_cvref_t<decltype(s)>::owner_t { s }
+      };
+    }, param);
+  }
+
   sound_generator() = default;
 
 
@@ -32,6 +46,9 @@ public:
     : sg { s }
   {}
 
+
+  sound_generator(const param_t& param)
+    : sound_generator { from_param(param) } {}
 
   /// Get the underlying sound generator
   template <typename T>

@@ -50,6 +50,10 @@ class noise {
 
 public:
 
+  struct param_t {
+    using owner_t = noise;
+  };
+
   /// Output volume of the note
   float volume { 1 };
 
@@ -64,6 +68,7 @@ public:
     rf_env.param.release_time = 0.01;
   }
 
+  noise(const param_t& p) {}
 
   /** Start a note
 

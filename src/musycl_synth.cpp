@@ -116,30 +116,29 @@ int main() {
   musycl::midi_in::cc_variable<75>(rectication_ratio);
   controller.param_2_pan_6.set_variable(rectication_ratio);
 
-  musycl::dco_envelope dcoe1;
-  dcoe1.env.param.attack_time = 0.1;
-  dcoe1.env.param.decay_time = 0.4;
-  dcoe1.env.param.sustain_level = 0.3;
-  dcoe1.env.param.release_time = 0.5;
+  musycl::dco_envelope::param_t dcoe1;
+  dcoe1.env.attack_time = 0.1;
+  dcoe1.env.decay_time = 0.4;
+  dcoe1.env.sustain_level = 0.3;
+  dcoe1.env.release_time = 0.5;
 
-  musycl::dco_envelope dcoe2;
-  dcoe2.env.param.decay_time = .1;
-  dcoe2.env.param.sustain_level = .1;
+  musycl::dco_envelope::param_t dcoe2;
+  dcoe2.env.decay_time = .1;
+  dcoe2.env.sustain_level = .1;
 
   // MIDI channel mapping
-  musycl::sound_generator channel_assign[] {
-    std::move(dcoe1),
-    std::move(dcoe2),
-    musycl::dco {},
-    musycl::noise {}
+  musycl::sound_generator::param_t channel_assign[] {
+    dcoe1,
+    dcoe2,
+    musycl::dco::param_t {},
+    musycl::noise::param_t {}
   };
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
-  auto& dco_CH1 = channel_assign[0].get<musycl::dco_envelope>();
-  musycl::midi_in::cc_variable<80>(dco_CH1.env.param.attack_time.value);
-  musycl::midi_in::cc_variable<81>(dco_CH1.env.param.decay_time.value);
-  musycl::midi_in::cc_variable<82>(dco_CH1.env.param.sustain_level.value);
-  musycl::midi_in::cc_variable<83>(dco_CH1.env.param.release_time.value);
+  musycl::midi_in::cc_variable<80>(dcoe1.env.attack_time.value);
+  musycl::midi_in::cc_variable<81>(dcoe1.env.decay_time.value);
+  musycl::midi_in::cc_variable<82>(dcoe1.env.sustain_level.value);
+  musycl::midi_in::cc_variable<83>(dcoe1.env.release_time.value);
 
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
@@ -163,7 +162,9 @@ int main() {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
             if (on.channel < std::size(channel_assign))
               sounds.insert_or_assign
-                (on.note, channel_assign[on.channel].start(on));
+                (on.note,
+                 musycl::sound_generator { channel_assign[on.channel] })
+                .first->second.start(on);
             else
               std::cerr << "Note on to unassigned MIDI channel "
                         << on.channel + 1 << std::endl;

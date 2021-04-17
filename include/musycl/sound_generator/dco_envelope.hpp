@@ -23,8 +23,18 @@ class dco_envelope : public dco, public clock::follow<dco_envelope> {
 
 public:
 
+  struct param_t {
+    using owner_t = dco_envelope;
+
+    envelope::param_t env;
+  };
+
+   param_t param;
+
   /// Control the volume evolution of the sound
-  envelope env;
+  envelope env { param.env };
+
+  dco_envelope(const param_t& p) {}
 
   /** Start a note
 
