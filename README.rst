@@ -5,8 +5,8 @@ Experimental muSYCaL framework around SYCL 2020
 -----------------------------------------------
 
 This is a small synthesizer to experiment with `C++20
-<https://isocpp.org/>`_ programming and acceleration on hardware
-accelerators like GPU, FPGA or CGRA with the `SYCL 2020
+<https://isocpp.org/>`_ programming, design patterns and acceleration
+on hardware accelerators like GPU, FPGA or CGRA with the `SYCL 2020
 <https://www.khronos.org/sycl/>`_ standard.
 
 It starts as a clean room implementation of a synthesizer to have a
@@ -19,6 +19,7 @@ This can be seen as a small DSL to define synthesizers in a
 programmatic way on steroids comparable to modular synthesizers in an
 electronic way.
 
+This is a huge work-in-progress moving slowly...
 
 Running the examples
 --------------------

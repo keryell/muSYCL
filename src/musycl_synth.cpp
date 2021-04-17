@@ -131,7 +131,9 @@ int main() {
     dcoe1,
     dcoe2,
     musycl::dco::param_t {},
-    musycl::noise::param_t {}
+    musycl::noise::param_t {},
+    musycl::dco::param_t {},
+    musycl::dco_envelope::param_t {}
   };
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8

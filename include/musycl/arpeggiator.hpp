@@ -42,11 +42,11 @@ public:
   auto& midi(const midi::msg& m) {
     std::visit(trisycl::detail::overloaded {
         [&] (const midi::on& on) {
-          if (on.channel == 0 && on.note < 60)
+          if (on.note < 60)
             notes.push_back(on);
         },
         [&] (const midi::off& off) {
-          if (off.channel == 0 && off.note < 60)
+          if (off.note < 60)
             // Remove the same note without looking at the velocity
             std::erase_if(notes, [&] (const auto& n) {
                                    return n.channel == off.channel
