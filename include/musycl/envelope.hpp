@@ -45,7 +45,7 @@ class envelope : public clock::follow<envelope> {
 public:
 
   /// Parameters of the envelope shape
-  class param_t : public control::param {
+  class param_detail {
   public:
 
     /// Attack time, immediate sound by default
@@ -65,6 +65,7 @@ public:
       { this, 0, "Release", control::time { 0, 10 } };
   };
 
+  using param_t = control::param<param_detail>;
 
   /// Current parameters of the envelope shape
   param_t param;
@@ -84,7 +85,7 @@ public:
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p) { param.update_values(p); }
+  envelope(param_t p) : param { p } {}
 
 
   /** Start the envelope generator from the beginning
@@ -132,39 +133,39 @@ public:
             return stopped {};
           },
           [&] (attack&) -> state_t {
-            if (state_time >= param.attack_time) {
+            if (state_time >= param->attack_time) {
               // It is time to go into the decay phase
-              state_time -= param.attack_time;
+              state_time -= param->attack_time;
               // The output has reach now the maximum
               output = 1;
               return decay {};
             }
             // Stay in the current state but first compute the increasing output
-            output = state_time/param.attack_time;
+            output = state_time/param->attack_time;
             return state;
           },
-          [&] (decay&)  -> state_t {
-            if (state_time >= param.decay_time) {
+          [&] (decay&) -> state_t {
+            if (state_time >= param->decay_time) {
               // It is time to go into the sustain phase
-              state_time -= param.decay_time;
+              state_time -= param->decay_time;
               return sustain {};
             }
             // Stay in the current state but first compute the decreasing output
-            output = 1 - (1 - param.sustain_level)*state_time/param.decay_time;
+            output = 1 - (1 - param->sustain_level)*state_time/param->decay_time;
             return state;
           },
           [&] (sustain&) -> state_t {
-            output = param.sustain_level;
+            output = param->sustain_level;
             // Keep the state for ever, except if there is some external event
             return state;
           },
-          [&] (release&)  -> state_t {
-            if (state_time >= param.release_time) {
+          [&] (release&) -> state_t {
+            if (state_time >= param->release_time) {
               // It is time to go into the stopped phase
               return stopped {};
             }
             // Fade the signal out and remain in the release state
-            output = release_start_level*(1 - state_time/param.release_time);
+            output = release_start_level*(1 - state_time/param->release_time);
             return state;
           }
         },

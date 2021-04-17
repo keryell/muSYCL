@@ -58,16 +58,17 @@ public:
   float volume { 1 };
 
   noise() {
-    lpf_env.param.attack_time = 0;
-    lpf_env.param.decay_time = 0.1;
-    lpf_env.param.sustain_level = 0.01;
-    lpf_env.param.release_time = 0.1;
-    rf_env.param.attack_time = 0.05;
-    rf_env.param.decay_time = 0.05;
-    rf_env.param.sustain_level = 0.1;
-    rf_env.param.release_time = 0.01;
+    lpf_env.param->attack_time = 0;
+    lpf_env.param->decay_time = 0.1;
+    lpf_env.param->sustain_level = 0.01;
+    lpf_env.param->release_time = 0.1;
+    rf_env.param->attack_time = 0.05;
+    rf_env.param->decay_time = 0.05;
+    rf_env.param->sustain_level = 0.1;
+    rf_env.param->release_time = 0.01;
   }
 
+/// \todo
   noise(const param_t& p) {}
 
   /** Start a note

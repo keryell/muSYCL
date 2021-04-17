@@ -117,14 +117,14 @@ int main() {
   controller.param_2_pan_6.set_variable(rectication_ratio);
 
   musycl::dco_envelope::param_t dcoe1;
-  dcoe1.env.attack_time = 0.1;
-  dcoe1.env.decay_time = 0.4;
-  dcoe1.env.sustain_level = 0.3;
-  dcoe1.env.release_time = 0.5;
+  dcoe1.env->attack_time = 0.1;
+  dcoe1.env->decay_time = 0.4;
+  dcoe1.env->sustain_level = 0.3;
+  dcoe1.env->release_time = 0.5;
 
   musycl::dco_envelope::param_t dcoe2;
-  dcoe2.env.decay_time = .1;
-  dcoe2.env.sustain_level = .1;
+  dcoe2.env->decay_time = .1;
+  dcoe2.env->sustain_level = .1;
 
   // MIDI channel mapping
   musycl::sound_generator::param_t channel_assign[] {
@@ -135,10 +135,10 @@ int main() {
   };
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
-  musycl::midi_in::cc_variable<80>(dcoe1.env.attack_time.value);
-  musycl::midi_in::cc_variable<81>(dcoe1.env.decay_time.value);
-  musycl::midi_in::cc_variable<82>(dcoe1.env.sustain_level.value);
-  musycl::midi_in::cc_variable<83>(dcoe1.env.release_time.value);
+  musycl::midi_in::cc_variable<80>(dcoe1.env->attack_time.value);
+  musycl::midi_in::cc_variable<81>(dcoe1.env->decay_time.value);
+  musycl::midi_in::cc_variable<82>(dcoe1.env->sustain_level.value);
+  musycl::midi_in::cc_variable<83>(dcoe1.env->release_time.value);
 
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });
