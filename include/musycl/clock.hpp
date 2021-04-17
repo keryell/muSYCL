@@ -190,6 +190,7 @@ public:
         longer in a usable state, so unregister it */
     follow& operator=(follow&& old) {
       old.unregister_actions();
+      return *this;
     }
 
 
