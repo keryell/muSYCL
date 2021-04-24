@@ -31,6 +31,10 @@ JACK on Linux.
 It relies also on some extensions from
 https://github.com/triSYCL/triSYCL
 
+The `CsLibGuarded <https://github.com/copperspice/cs_libguarded>`_
+library is used as a Git submodule, so clone the muSYCL project with a
+``git clone --recurse-submodules``.
+
 To get the latest precompiled  Clang compiler you might look at
 https://apt.llvm.org/
 

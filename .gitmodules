@@ -1,0 +1,3 @@
+[submodule "ext/cs_libguarded"]
+	path = ext/cs_libguarded
+	url = https://github.com/copperspice/cs_libguarded

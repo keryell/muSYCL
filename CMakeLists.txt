@@ -8,7 +8,8 @@ include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
 
 # All targets inherit from include dir
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/ext)
 
 find_library(LIBRARY_RTAUDIO NAMES rtaudio REQUIRED)
 
