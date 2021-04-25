@@ -65,6 +65,7 @@ public:
       { this, 0, "Release", control::time { 0, 10 } };
   };
 
+  // Shared parameter between all copies of this envelope generator
   using param_t = control::param<param_detail>;
 
   /// Current parameters of the envelope shape

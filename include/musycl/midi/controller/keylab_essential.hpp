@@ -29,6 +29,7 @@ using namespace std::chrono_literals;
 class controller {
 
  public:
+
   class control_item {
    public:
     enum class type : std::uint8_t { button, knob, slider };
@@ -61,7 +62,7 @@ class controller {
     std::vector<std::function<void(midi::control_change::value_type)>>
         listeners;
 
-    template <typename... Features> control_item(type t, Features... features) {
+    template <typename... Features> control_item(void *, type t, Features... features) {
       // Parse the features
       (
           [&](auto&& f) {
@@ -124,6 +125,13 @@ class controller {
     float value_1() const {
       return midi::control_change::get_value_as<float>(value);
     }
+
+    /// Connect this control to the real parameter
+    template <typename ControlItem>
+    auto& connect(ControlItem& ci) {
+      add_action([&](typename ControlItem::value_type v) { ci.set(v); });
+      return *this;
+    }
   };
 
   /** An Arturia KeyLab MIDI controller
@@ -182,18 +190,33 @@ class controller {
     /// List all the control items
     // std::vector<control_item> inputs;
 
-    control_item param_1_pan_5 { control_item::type::knob,
+    control_item param_1_pan_5 { this, control_item::type::knob,
                                  control_item::cc { 0x5d },
                                  control_item::cc_inc { 0x14 } };
-    control_item param_2_pan_6 { control_item::type::knob,
+
+    control_item param_2_pan_6 { this, control_item::type::knob,
                                  control_item::cc { 0x12 },
                                  control_item::cc_inc { 0x15 } };
-    control_item param_3_pan_7 { control_item::type::knob,
-                                 control_item::cc { 0x13 },
+
+    control_item param_3_pan_7 { this, control_item::type::knob,
+                                 this, control_item::cc { 0x13 },
                                  control_item::cc_inc { 0x16 } };
-    control_item param_4_pan_8 { control_item::type::knob,
+
+    control_item param_4_pan_8 { this, control_item::type::knob,
                                  control_item::cc { 0x10 },
                                  control_item::cc_inc { 0x17 } };
+
+    control_item attack_ch_5 { this, control_item::type::slider,
+                               control_item::cc { 0x50 } };
+
+    control_item decay_ch_6 { this, control_item::type::slider,
+                              control_item::cc { 0x51 } };
+
+    control_item sustain_ch_7 {this,  control_item::type::slider,
+                                control_item::cc { 0x52 } };
+
+    control_item release_ch_8 { this, control_item::type::slider,
+                                control_item::cc { 0x53 } };
 
     /** Mapping of button light to SySex button light command
 

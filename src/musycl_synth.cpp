@@ -49,7 +49,7 @@ int main() {
   // Assume an Arturia KeyLab essential as a MIDI controller
   musycl::controller::keylab_essential controller;
 
-  // The oscillators generating signal, 1 per running note
+  // The sound generators producing the music, 1 per running note
   std::map<musycl::midi::note_type, musycl::sound_generator> sounds;
 
   // MIDI message to be received
@@ -137,10 +137,10 @@ int main() {
   };
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
-  musycl::midi_in::cc_variable<80>(dcoe1.env->attack_time.value);
-  musycl::midi_in::cc_variable<81>(dcoe1.env->decay_time.value);
-  musycl::midi_in::cc_variable<82>(dcoe1.env->sustain_level.value);
-  musycl::midi_in::cc_variable<83>(dcoe1.env->release_time.value);
+  controller.attack_ch_5.connect(dcoe1.env->attack_time);
+  controller.decay_ch_6.connect(dcoe1.env->decay_time);
+  controller.sustain_ch_7.connect(dcoe1.env->sustain_level);
+  controller.release_ch_8.connect(dcoe1.env->release_time);
 
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([] (int v) { musycl::sustain::value(v); });

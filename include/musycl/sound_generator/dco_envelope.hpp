@@ -23,18 +23,22 @@ class dco_envelope : public dco, public clock::follow<dco_envelope> {
 
 public:
 
+  /// All the parameters behind this sound generator
   struct param_t {
     using owner_t = dco_envelope;
 
+    /// The envelop parameters
     envelope::param_t env;
   };
 
-   param_t param;
+  /// The sound parameters
+  param_t param;
 
   /// Control the volume evolution of the sound
   envelope env { param.env };
 
-  dco_envelope(const param_t& p) {}
+  /// Create a sound from its parameters
+  dco_envelope(const param_t& p) : param { p } {}
 
   /** Start a note
 
