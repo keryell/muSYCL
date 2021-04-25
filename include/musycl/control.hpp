@@ -16,16 +16,34 @@ namespace musycl {
 
 class control {
  public:
+  template <typename ValueType>
   class level {
-
    public:
-    level(auto min, auto max) {}
+    using value_type = ValueType;
+
+    const value_type min_value;
+
+    const value_type max_value;
+
+    level(auto min, auto max)
+        : min_value { static_cast<value_type>(min) }
+        , max_value { static_cast<value_type>(max) }
+    {}
   };
 
+  template <typename ValueType>
   class time {
-
    public:
-    time(auto min, auto max) {}
+    using value_type = ValueType;
+
+    const value_type min_value;
+
+    const value_type max_value;
+
+    time(auto min, auto max)
+        : min_value { static_cast<value_type>(min) }
+        , max_value { static_cast<value_type>(max) }
+    {}
   };
 
   class group {
@@ -63,23 +81,21 @@ class control {
     auto& operator->() { return implementation; }
   };
 
-  template <typename T> class item {
+  template <typename ControlType> class item {
    public:
-    using value_type = T;
+    using value_type = typename ControlType::value_type;
 
     value_type value;
 
     std::string user_name;
 
-    template <typename ControlType>
-    item(void*, const T& default_value, const std::string& name,
+    ControlType control_type;
+
+    item(const value_type& default_value, const std::string& name,
          const ControlType& ct)
         : value { default_value }
-        , user_name { name } {}
-
-    template <typename ControlType>
-    item(const T& default_value)
-        : value { default_value } {}
+        , user_name { name }
+        , control_type { ct } {}
 
     operator value_type&() { return value; }
 
@@ -90,6 +106,11 @@ class control {
     void set(const value_type& v) {
       value = v;
       update_display();
+    }
+
+    void set_127(int v) {
+      set(midi::control_change::get_value_in
+          (v, control_type.min_value, control_type.max_value));
     }
 
     value_type& operator=(const value_type& v) {

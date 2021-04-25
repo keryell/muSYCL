@@ -129,7 +129,7 @@ class controller {
     /// Connect this control to the real parameter
     template <typename ControlItem>
     auto& connect(ControlItem& ci) {
-      add_action([&](typename ControlItem::value_type v) { ci.set(v); });
+      add_action([&](int v) { ci.set_127(v); });
       return *this;
     }
   };

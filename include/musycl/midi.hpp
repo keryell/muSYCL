@@ -137,12 +137,14 @@ public :
 
 
   /// The value normalized in [ low, high ] as a given type
+  /// \todo To move out of this namespace
   constexpr static float get_value_in(value_type v, float low, float high) {
     return low + get_value_as<float>(v)*(high - low);
   }
 
 
   /// The value normalized in [ low, high ] as a given type
+  /// \todo To move out of this namespace
   constexpr static float get_log_scale_value_in(value_type v, float low, float high) {
     return low*std::exp(std::log(high/low)*get_value_as<float>(v));
   }

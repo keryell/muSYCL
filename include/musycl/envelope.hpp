@@ -49,20 +49,18 @@ public:
   public:
 
     /// Attack time, immediate sound by default
-    control::item<float> attack_time
-    { this, 0, "Attack", control::time { 0, 10 } };
+    control::item<control::time<float>> attack_time{ 0, "Attack", { 0, 10 } };
 
     /// Decay time, go immediately to sustain phase by default
-    control::item<float> decay_time
-      { this, 0, "Decay", control::time { 0, 10 } };
+    control::item<control::time<float>> decay_time { 0, "Decay", { 0, 10 } };
 
     /// Sustain level, maximum level by default in the sustain phase
-    control::item<float> sustain_level
-      { this, 1, "Sustain", control::level { 0, 1 } };
+    control::item<control::level<float>> sustain_level
+      { 1, "Sustain", { 0, 1 } };
 
     /// Release time, go immediately to off by default
-    control::item<float> release_time
-      { this, 0, "Release", control::time { 0, 10 } };
+    control::item<control::time<float>> release_time
+      { 0, "Release", { 0, 10 } };
   };
 
   // Shared parameter between all copies of this envelope generator
