@@ -50,6 +50,9 @@ public:
     env.start();
     dco::start(on);
     volume = env.out();
+    std::cout << "Start channel " << (int)on.channel << " note " << (int)on.note
+              << " with volume " << volume << std::endl;
+    std::cout << to_string(env) << std::endl;
     return *this;
   }
 

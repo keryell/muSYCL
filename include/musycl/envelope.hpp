@@ -6,6 +6,7 @@
 #ifndef MUSYCL_ENVELOPE_HPP
 #define MUSYCL_ENVELOPE_HPP
 
+#include <sstream>
 #include <variant>
 
 #include <triSYCL/detail/overloaded.hpp>
@@ -79,12 +80,31 @@ private:
 
   float release_start_level;
 
+  /** Hidden friend to get the representation of an envelope to be
+      found by ADL
+
+      \param e is the envelope to investigate
+
+      \return the string representation on the envelope parameters
+  */
+  friend std::string to_string(const envelope& e) {
+    std::ostringstream s;
+    s << "Envelope attack = " << e.param->attack_time.value
+      << ", release = " << e.param->release_time.value
+      << ", sustain = " << e.param->sustain_level.value
+      << ", decay = " << e.param->decay_time.value
+      << ", current volume = " << e.output;
+    return s.str();
+  }
+
 public:
 
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p) : param { p } {}
+  envelope(param_t p) : param { p } {
+std::cout << "Create from a param " << to_string(*this) << std::endl;
+}
 
 
   /** Start the envelope generator from the beginning
@@ -92,6 +112,7 @@ public:
       \return the envelope generator itself to enable command chaining
   */
   auto& start() {
+std::cout << "Start " << to_string(*this) << std::endl;
     // Go into attack mode
     state = attack {};
     state_time = 0;
@@ -104,7 +125,8 @@ public:
       \return the envelope generator itself to enable command chaining
   */
   auto& stop() {
-    // Got into release mode
+std::cout << "Stop " << to_string(*this) << std::endl;
+    // Go into release mode directly
     state = release {};
     // Starting the fading from current output level
     release_start_level = output;
@@ -118,20 +140,25 @@ public:
       Since it is an envelope generator, no need to update it at
       the audio frequency. */
   void frame_clock() {
+std::cout << "frame clock dispatch" << std::endl;
     state_time += frame_period;
     // Loop to handle several FSM transitions in the same time step
     for(;;) {
+std::cout << "time " << state_time << to_string(*this) << std::endl;
       // To keep track of change
       auto previous = state;
       // Visit the current FSM state
       state = std::visit(trisycl::detail::overloaded {
           [&] (const stopped&) -> state_t {
+std::cout << "stop time " << state_time << std::endl;
             // The output level is 0 when the envelope is stopped
             output = 0;
             // Keep the state for ever, except if there is some external event
             return stopped {};
           },
           [&] (attack&) -> state_t {
+std::cout << "attack time " << state_time << std::endl;
+
             if (state_time >= param->attack_time) {
               // It is time to go into the decay phase
               state_time -= param->attack_time;
@@ -144,6 +171,7 @@ public:
             return state;
           },
           [&] (decay&) -> state_t {
+std::cout << "decay time " << state_time << std::endl;
             if (state_time >= param->decay_time) {
               // It is time to go into the sustain phase
               state_time -= param->decay_time;
@@ -154,11 +182,13 @@ public:
             return state;
           },
           [&] (sustain&) -> state_t {
+std::cout << "sustain time " << state_time << std::endl;
             output = param->sustain_level;
             // Keep the state for ever, except if there is some external event
             return state;
           },
           [&] (release&) -> state_t {
+std::cout << "release time " << state_time << std::endl;
             if (state_time >= param->release_time) {
               // It is time to go into the stopped phase
               return stopped {};

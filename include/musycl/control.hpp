@@ -78,7 +78,7 @@ class control {
         : implementation_t { new param_detail } {}
 
     // Forward everything to the implementation detail
-    auto& operator->() { return implementation; }
+    auto& operator->() const { return implementation; }
   };
 
   template <typename ControlType> class item {
