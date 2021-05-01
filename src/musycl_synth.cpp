@@ -3,6 +3,7 @@
     Rely on some triSYCL extensions (kernel I/O) and muSYCL extensions
     (MIDI and audio input/output)
 */
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -129,6 +130,17 @@ int main() {
   controller.param_2_pan_6.name("Rectification ratio")
     .set_variable(rectication_ratio);
 
+  // Keep 2 seconds of delay
+  constexpr auto frame_delay = static_cast<int>(2*musycl::frame_frequency);
+  std::array<musycl::audio::sample_type, frame_delay*musycl::frame_size>
+    delay {};
+  float delay_line_time = 0;
+  controller.param_3_pan_7.name("Delay line time")
+    .set_variable(delay_line_time);
+  float delay_line_ratio = 0;
+  controller.param_4_pan_8.name("Delay line ratio")
+    .set_variable(delay_line_ratio);
+
   musycl::dco_envelope::param_t dcoe1;
   dcoe1.env->attack_time = 0.1;
   dcoe1.env->decay_time = 0.4;
@@ -239,8 +251,17 @@ int main() {
       // Add a constant factor to avoid too much fading between 1 and 2 voices
       a *= master_volume/(4 + sounds.size());
     }
-    // Then send the computed audio frame to the output
-    musycl::audio::write(audio);
+
+  std::shift_right(delay.begin(), delay.end(), musycl::frame_size);
+  std::ranges::copy(audio, delay.begin());
+  int shift = delay_line_time*musycl::sample_frequency;
+std::cout << "Shift " << shift << " ratio " << delay_line_ratio << std::endl;
+  auto f = ranges::subrange(delay.begin() + shift,
+                            delay.begin() + shift + musycl::frame_size);
+  for (auto&& [a, d] : ranges::views::zip(audio, f))
+    a.x() += (d*delay_line_ratio).x();
+  // Then send the computed audio frame to the output
+  musycl::audio::write(audio);
   }
   return 0;
 }
