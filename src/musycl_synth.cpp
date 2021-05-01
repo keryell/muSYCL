@@ -64,10 +64,13 @@ int main() {
   // The master of time
   musycl::clock::set_tempo_frequency(8);
   // The rotary on the extreme top right of Arturia KeyLab 49
-  musycl::midi_in::cc_action<17>
-    ([&] (musycl::midi::control_change::value_type v) {
-       musycl::clock::set_tempo_frequency(v/10.);
-     });
+  controller.top_right_knob_9.name("Tempo rate")
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      auto tempo = v/10.;
+      musycl::clock::set_tempo_frequency(v/10.);
+      controller.display("Tempo rate: "
+                         + std::to_string(tempo) + " Hz");
+    });
 
   // The low pass filters for the output channels
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
@@ -78,34 +81,44 @@ int main() {
     resonance_filter;
 
   // Use "Cutoff" on Arturia KeyLab 49 to set the resonance frequency
-  musycl::midi_in::cc_action<74>
-    ([&] (musycl::midi::control_change::value_type v) {
-       for (auto &f : resonance_filter)
-         f.set_frequency
-           (musycl::midi::control_change::get_log_scale_value_in(v, 20, 10000));
-     });
+  controller.cutoff_pan_1.name("Cutoff frequency")
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      auto cut_off_freq =
+        musycl::midi::control_change::get_log_scale_value_in(v, 20, 10000);
+      for (auto& f : resonance_filter)
+         f.set_frequency(cut_off_freq);
+      controller.display("Resonance filter: "
+                         + std::to_string(cut_off_freq) + " Hz");
+    });
+
   // Use "Resonance" on Arturia KeyLab 49 to set the resonance
-  musycl::midi_in::cc_action<71>
-    ([&] (musycl::midi::control_change::value_type v) {
-       for (auto &f : resonance_filter)
-         f.set_resonance(std::log(v + 1.f)/std::log(128.f));
-     });
+  controller.resonance_pan_2.name("Resonance factor")
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      auto resonance = std::log(v + 1.f)/std::log(128.f);
+      for (auto& f : resonance_filter)
+        f.set_resonance(resonance);
+      controller.display("Resonance factor: " + std::to_string(resonance));
+    });
 
   // Create an LFO and start it
   musycl::lfo lfo;
   lfo.set_frequency(2).set_low(0.5).run();
 
   // Use MIDI CC 76 (LFO Rate on Arturia KeyLab 49) to set the LFO frequency
-  musycl::midi_in::cc_action<76>
-    ([&] (musycl::midi::control_change::value_type v) {
-      lfo.set_frequency(musycl::midi::control_change::get_log_scale_value_in
-                        (v, 0.1, 20));
+  controller.lfo_rate_pan_3.name("LFO rate")
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      auto frequency =
+        musycl::midi::control_change::get_log_scale_value_in(v, 0.1, 20);
+      lfo.set_frequency(frequency);
+      controller.display("LFO rate: " + std::to_string(frequency));
     });
 
   // Use MIDI CC 77 (LFO Amt on Arturia KeyLab 49) to set the LFO low level
-  musycl::midi_in::cc_action<77>
-    ([&] (musycl::midi::control_change::value_type v) {
-      lfo.set_low(musycl::midi::control_change::get_value_as<float>(v));
+  controller.lfo_amt_pan_4.name("LFO amount")
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      auto low = musycl::midi::control_change::get_value_as<float>(v);
+      lfo.set_low(low);
+      controller.display("LFO low bar: " + std::to_string(low));
     });
 
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
@@ -113,8 +126,8 @@ int main() {
 
   float rectication_ratio = 0;
   // Use MIDI CC 0x12 (Param 2/Pan 6) to set the rectification ratio
-  musycl::midi_in::cc_variable<75>(rectication_ratio);
-  controller.param_2_pan_6.set_variable(rectication_ratio);
+  controller.param_2_pan_6.name("Rectification ratio")
+    .set_variable(rectication_ratio);
 
   musycl::dco_envelope::param_t dcoe1;
   dcoe1.env->attack_time = 0.1;

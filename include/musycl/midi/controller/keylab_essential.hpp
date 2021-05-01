@@ -190,6 +190,22 @@ class controller {
     /// List all the control items
     // std::vector<control_item> inputs;
 
+    control_item cutoff_pan_1 { this, control_item::type::knob,
+                                control_item::cc { 0x4a },
+                                control_item::cc_inc { 0x10 } };
+
+    control_item resonance_pan_2 { this, control_item::type::knob,
+                                   control_item::cc { 0x47 },
+                                   control_item::cc_inc { 0x11 } };
+
+    control_item lfo_rate_pan_3 { this, control_item::type::knob,
+                                  control_item::cc { 0x4c },
+                                  control_item::cc_inc { 0x12 } };
+
+    control_item lfo_amt_pan_4 { this, control_item::type::knob,
+                                 control_item::cc { 0x4d },
+                                 control_item::cc_inc { 0x13 } };
+
     control_item param_1_pan_5 { this, control_item::type::knob,
                                  control_item::cc { 0x5d },
                                  control_item::cc_inc { 0x14 } };
@@ -205,6 +221,10 @@ class controller {
     control_item param_4_pan_8 { this, control_item::type::knob,
                                  control_item::cc { 0x10 },
                                  control_item::cc_inc { 0x17 } };
+
+    // The unnamed knob on the top right, non mapped in DAW mode
+    control_item top_right_knob_9 { this, control_item::type::knob,
+                                    control_item::cc { 0x11 } };
 
     control_item attack_ch_5 { this, control_item::type::slider,
                                control_item::cc { 0x50 } };
