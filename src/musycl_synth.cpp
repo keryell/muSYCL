@@ -252,16 +252,16 @@ int main() {
       a *= master_volume/(4 + sounds.size());
     }
 
-  std::shift_right(delay.begin(), delay.end(), musycl::frame_size);
-  std::ranges::copy(audio, delay.begin());
-  int shift = delay_line_time*musycl::sample_frequency;
-std::cout << "Shift " << shift << " ratio " << delay_line_ratio << std::endl;
-  auto f = ranges::subrange(delay.begin() + shift,
-                            delay.begin() + shift + musycl::frame_size);
-  for (auto&& [a, d] : ranges::views::zip(audio, f))
-    a.x() += (d*delay_line_ratio).x();
-  // Then send the computed audio frame to the output
-  musycl::audio::write(audio);
+    std::shift_left(delay.begin(), delay.end(), musycl::frame_size);
+    std::ranges::copy(audio, delay.end() - musycl::frame_size);
+    int shift = delay_line_time*musycl::sample_frequency;
+    auto f = ranges::subrange(delay.end() - musycl::frame_size - shift,
+                              delay.end() - shift);
+    for (auto&& [a, d] : ranges::views::zip(audio, f))
+      a += d*delay_line_ratio;
+
+    // Then send the computed audio frame to the output
+    musycl::audio::write(audio);
   }
   return 0;
 }
