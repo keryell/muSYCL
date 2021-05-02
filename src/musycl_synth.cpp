@@ -259,10 +259,16 @@ int main() {
     std::shift_left(delay.begin(), delay.end(), musycl::frame_size);
     std::ranges::copy(audio, delay.end() - musycl::frame_size);
     int shift = delay_line_time*musycl::sample_frequency;
+    // Left channel
     auto f = ranges::subrange(delay.end() - musycl::frame_size - shift,
                               delay.end() - shift);
     for (auto&& [a, d] : ranges::views::zip(audio, f))
-      a += d*delay_line_ratio;
+      a.x() += d.x()*delay_line_ratio;
+    // Right channel with twice the delay
+    f = ranges::subrange(delay.end() - musycl::frame_size - 2*shift,
+                         delay.end() - 2*shift);
+    for (auto&& [a, d] : ranges::views::zip(audio, f))
+      a.y() += d.y()*delay_line_ratio;
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);

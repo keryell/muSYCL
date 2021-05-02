@@ -13,7 +13,7 @@ It starts as a clean room implementation of a synthesizer to have a
 clean modern core architecture which can then be accelerated. So there
 is no low-level features like pointers, macros, raw loops, etc. used
 in the code as much as possible. Just mostly high-level generic and
-functional programming.
+functional programming with C++20 ranges, concepts...
 
 This can be seen as a small DSL to define synthesizers in a
 programmatic way on steroids comparable to modular synthesizers in an
