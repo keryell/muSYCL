@@ -130,13 +130,17 @@ int main() {
   controller.param_2_pan_6.name("Rectification ratio")
     .set_variable(rectication_ratio);
 
-  // Keep 2 seconds of delay
-  constexpr auto frame_delay = static_cast<int>(2*musycl::frame_frequency);
+  // Keep 5 seconds of delay
+  constexpr auto frame_delay = static_cast<int>(5*musycl::frame_frequency);
   std::array<musycl::audio::sample_type, frame_delay*musycl::frame_size>
     delay {};
   float delay_line_time = 0;
   controller.param_3_pan_7.name("Delay line time")
-    .set_variable(delay_line_time);
+    .add_action([&](musycl::midi::control_change::value_type v) {
+      delay_line_time = v*v/127.f/127*2;
+      controller.display("Delay line time: "
+                         + std::to_string(delay_line_time) + 's');
+    });
   float delay_line_ratio = 0;
   controller.param_4_pan_8.name("Delay line ratio")
     .set_variable(delay_line_ratio);
