@@ -61,7 +61,7 @@ public:
   /// This is notified on each beat by the clocking framework
   void beat(clock::type ct) {
     if (current_note) {
-      midi_in::insert(current_note->as_off());
+      midi_in::insert(0, current_note->as_off());
       current_note.reset();
     }
     if (!notes.empty()) {
@@ -79,7 +79,7 @@ public:
       if (ct.beat_index == 2)
         n.velocity = 127;
       current_note = n;
-      midi_in::insert(n);
+      midi_in::insert(0, n);
       ++note_index;
     }
   }
