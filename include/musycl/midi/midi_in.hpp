@@ -99,9 +99,9 @@ class midi_in {
 
     auto m = musycl::midi::parse(midi_message);
     dispatch_registered_actions(p, m);
-    // Also enqueue the midi event for explicit consumption
-    // \todo do not block on full
-    channel[p].push(m);
+    /* Also enqueue the midi event for explicit consumption. If it is
+       full, just drop the message */
+    channel[p].try_push(m);
   }
 
  public:
