@@ -58,7 +58,11 @@ class midi_in {
   static inline std::vector<std::unique_ptr<RtMidiIn>> interfaces;
 
   /// FIFO used to implement the pipe of MIDI messages on each port
-  static inline std::map<std::int8_t, pipe_channel> channel;
+  static inline std::map<std::int8_t, pipe_channel> channels;
+
+  /* FIFO used to postpone event dispatch at a time picked by the user
+     to avoid race condition */
+  static inline std::map<std::int8_t, pipe_channel> dispatch_channels;
 
   /// A key to dispatch MIDI messages from this index
   struct port_msg_header {
@@ -99,11 +103,13 @@ class midi_in {
                 << ", " << std::resetiosflags(std::cout.flags());
 
     auto m = musycl::midi::parse(midi_message);
-    // \todo Make this callable from the main loop to avoid race-condition
-    dispatch_registered_actions(p, m);
+    /* Enqueue the midi message for future event dispatch by
+       dispatch_registered_actions(). If it is full, just drop the
+       message */
+    dispatch_channels[p].try_push(m);
     /* Also enqueue the midi event for explicit consumption. If it is
        full, just drop the message */
-    channel[p].try_push(m);
+    channels[p].try_push(m);
   }
 
  public:
@@ -149,24 +155,34 @@ class midi_in {
   }
 
   /// The sycl::pipe::read-like interface to read a MIDI message
-  static midi::msg read(std::int8_t port) { return channel[port].value_pop(); }
+  static midi::msg read(std::int8_t port) { return channels[port].value_pop(); }
 
   /// The non-blocking sycl::pipe::read-like interface to read a MIDI message
   static bool try_read(std::int8_t port, midi::msg& m) {
-    return channel[port].try_pop(m) ==
+    return channels[port].try_pop(m) ==
            boost::fibers::channel_op_status::success;
   }
 
   /// Insert a new MIDI message in the input flow
   static void insert(std::int8_t port, const midi::msg& m) {
-    channel[port].push(m);
+    channels[port].push(m);
   }
 
-  /// Dispatch the registered actions for a MIDI input event
-  static void dispatch_registered_actions(std::int8_t port,
-                                          const midi::msg& m) {
-    auto [first, last] = midi_actions.equal_range({ port, m });
-    std::for_each(first, last, [&](auto&& action) { action.second(m); });
+  /** Dispatch the registered actions for a MIDI input event
+
+      This is decoupled from the MIDI system call-back function to be
+      called by the user at the right time, typically when this will
+      not cause race condition, compared to asynchronous call back
+      happening in a background thread.
+   */
+  static void dispatch_registered_actions() {
+    for (auto&& [port, channel] : dispatch_channels) {
+      midi::msg m;
+      while (channel.try_pop(m) == boost::fibers::channel_op_status::success) {
+        auto [first, last] = midi_actions.equal_range({ port, m });
+        std::for_each(first, last, [&](auto&& action) { action.second(m); });
+      }
+    }
   }
 
   /** Associate an action to a channel controller (CC)

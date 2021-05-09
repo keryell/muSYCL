@@ -187,7 +187,10 @@ int main() {
   });
   // The forever time loop
   for(;;) {
-    // Process all the potential incoming MIDI events on port 0
+   /* Dispatch here all the potential incoming MIDI registered
+      actions, so they will not cause race condition */
+    musycl::midi_in::dispatch_registered_actions();
+    // Process all the potential incoming MIDI messages on port 0
     while (musycl::midi_in::try_read(0, m)) {
       arp.midi(m);
       std::visit(trisycl::detail::overloaded {
