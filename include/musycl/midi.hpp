@@ -48,6 +48,10 @@ class note_base_header {
   note_base_header(Channel&& c, Note&& n)
       : channel { static_cast<channel_type>(c) }
       , note { static_cast<note_type>(n) } {}
+
+  /// Use default lexicographic comparison
+  friend auto operator<=>(const note_base_header&,
+                          const note_base_header&) = default;
 };
 
 /// A "note" MIDI message implementation detail
@@ -132,6 +136,10 @@ class control_change_header {
   control_change_header(Channel&& c, Number&& n)
       : channel { static_cast<channel_type>(c) }
       , number { static_cast<number_type>(n) } {}
+
+  /// Use default lexicographic comparison
+  friend auto operator<=>(const control_change_header&,
+                          const control_change_header&) = default;
 };
 
 /// The MIDI "control change" message
@@ -186,6 +194,7 @@ class msg_header {
                                  midi::off_header, midi::control_change_header>;
   variant_t variant;
 
+ public:
   msg_header(const msg& m)
       : variant { std::visit(
             [&](const auto& e) {
@@ -195,6 +204,32 @@ class msg_header {
                 return variant_t { e.header() };
             },
             m) } {}
+
+  template <typename Header>
+  msg_header(const Header& h)
+      : variant { h } {}
+
+  // Use some lexicographic comparison
+  friend auto operator<=>(const msg_header& lhs, const msg_header& rhs) {
+    /* If the alternative types inside the variants are different,
+       they are obviously different and use the alternative index as a
+       comparison way */
+    auto type_comparison = lhs.variant.index() <=> rhs.variant.index();
+    if (0 != type_comparison)
+      return type_comparison;
+    /* Otherwise look at the comparison of each variant alternative
+       and we know here they have the same type */
+    return std::visit(
+        [&](const auto& e) {
+          if constexpr (std::is_same_v<decltype(e), const std::monostate&>)
+            // 2 empty variants are equal
+            return std::strong_ordering::equal;
+          else
+            return e <=>
+                   std::get<std::remove_cvref_t<decltype(e)>>(rhs.variant);
+        },
+        lhs.variant);
+  }
 };
 
 /// Get the 4 MSB bits of the MIDI status byte that give the command kind
