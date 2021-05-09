@@ -60,17 +60,18 @@ class midi_in {
   /// FIFO used to implement the pipe of MIDI messages on each port
   static inline std::map<std::int8_t, pipe_channel> channel;
 
-  /// A key to dispatch MIDI CC actions
-  struct port_cc {
+  /// A key to dispatch MIDI messages from this index
+  struct port_msg_header {
     std::int8_t port;
-    std::int8_t cc;
+    midi::msg_header header;
     // Just use some lexicographic comparison by default
-    auto operator<=>(const port_cc&) const = default;
+    auto operator<=>(const port_msg_header&) const = default;
   };
 
   /// Actions to run for each received CC message from each MIDI port
-  static inline std::multimap<port_cc, std::function<void(std::int8_t)>>
-      cc_actions;
+  static inline std::multimap<port_msg_header,
+                              std::function<void(const midi::msg&)>>
+      midi_actions;
 
   /// Check for RtMidi errors
   static auto constexpr check_error = [](auto&& function) {
@@ -98,6 +99,7 @@ class midi_in {
                 << ", " << std::resetiosflags(std::cout.flags());
 
     auto m = musycl::midi::parse(midi_message);
+    // \todo Make this callable from the main loop to avoid race-condition
     dispatch_registered_actions(p, m);
     /* Also enqueue the midi event for explicit consumption. If it is
        full, just drop the message */
@@ -163,15 +165,8 @@ class midi_in {
   /// Dispatch the registered actions for a MIDI input event
   static void dispatch_registered_actions(std::int8_t port,
                                           const midi::msg& m) {
-    std::visit(
-        trisycl::detail::overloaded {
-            [&](const musycl::midi::control_change& cc) {
-              auto [first, last] = cc_actions.equal_range({ port, cc.number });
-              std::for_each(first, last,
-                            [&](auto&& action) { action.second(cc.value); });
-            },
-            [](auto&& other) {} },
-        m);
+    auto [first, last] = midi_actions.equal_range({ port, m });
+    std::for_each(first, last, [&](auto&& action) { action.second(m); });
   }
 
   /** Associate an action to a channel controller (CC)
@@ -194,14 +189,19 @@ class midi_in {
     // Register an action producing the right value for the action
     if constexpr (std::is_floating_point_v<arg0_t>)
       // If we have a floating point type, scale the value in [0, 1]
-      cc_actions.emplace(
-          port_cc { port, number }, [action = std::forward<Callable>(action)](
-                                        midi::control_change::value_type v) {
-            action(midi::control_change::get_value_as<arg0_t>(v));
+      midi_actions.emplace(
+          port_msg_header { port, midi::control_change_header { 0, number } },
+          [action = std::forward<Callable>(action)](const midi::msg& m) {
+            action(midi::control_change::get_value_as<arg0_t>(
+                std::get<midi::control_change>(m).value));
           });
     else
       // Just provides the CC value directly to the action
-      cc_actions.emplace(port_cc { port, number }, action);
+      midi_actions.emplace(
+          port_msg_header { port, midi::control_change_header { 0, number } },
+          [action = std::forward<Callable>(action)](const midi::msg& m) {
+            action(std::get<midi::control_change>(m).value);
+          });
   }
 
   /** Associate an action to a channel controller (CC) on the first
