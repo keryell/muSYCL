@@ -101,6 +101,7 @@ class midi_in {
       std::cout << "Byte " << i << " = 0x" << std::hex << std::setw(2)
                 << std::setfill('0') << static_cast<int>(midi_message[i])
                 << ", " << std::resetiosflags(std::cout.flags());
+    std::cout << std::endl;
 
     auto m = musycl::midi::parse(midi_message);
     /* Enqueue the midi message for future event dispatch by
@@ -179,10 +180,28 @@ class midi_in {
     for (auto&& [port, channel] : dispatch_channels) {
       midi::msg m;
       while (channel.try_pop(m) == boost::fibers::channel_op_status::success) {
+        std::cout << m << std::endl;
         auto [first, last] = midi_actions.equal_range({ port, m });
         std::for_each(first, last, [&](auto&& action) { action.second(m); });
       }
     }
+  }
+
+  /** Associate an action to a MIDI message
+
+      \param[in] port is the input MIDI port
+
+      \param[in] header is the MIDI message header to dispatch
+
+      \param[in] action is the action to call with the matching MIDI
+      message
+  */
+  template <typename Callable>
+  static void add_action(std::int8_t port, const midi::msg_header& header,
+                         Callable&& action) {
+    std::cout << "add_action on port " << int { port } << " for" << header
+              << std::endl;
+    midi_actions.emplace(port_msg_header { port, header }, action);
   }
 
   /** Associate an action to a channel controller (CC)

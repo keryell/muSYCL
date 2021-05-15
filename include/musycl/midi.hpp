@@ -49,6 +49,15 @@ class note_base_header {
       : channel { static_cast<channel_type>(c) }
       , note { static_cast<note_type>(n) } {}
 
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os,
+             const note_base_header& nbh) {
+    return os << "channel: " << int { nbh.channel }
+              << " note: " << int { nbh.note };
+  }
+
   /// Use default lexicographic comparison
   friend auto operator<=>(const note_base_header&,
                           const note_base_header&) = default;
@@ -73,6 +82,13 @@ template <typename Header> class note_base : public Header {
 
   /// Get the header of this message
   const Header& header() const { return *this; }
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const note_base& nb) {
+    return os << nb.header() << " velocity: " << int { nb.velocity };
+  }
 };
 
 /// Compute the frequency of a MIDI note with an optional transposition
@@ -92,18 +108,40 @@ float frequency(const note_base_header& n,
 class off_header : public note_base_header {
   /// Inherit the note_base constructors
   using note_base_header::note_base_header;
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const off_header& oh) {
+    return os << "note off header: " << static_cast<note_base_header>(oh);
+  }
 };
 
 /// A "note off" MIDI message is just a kind of note
 class off : public note_base<off_header> {
   /// Inherit the note_base constructors
   using note_base<off_header>::note_base;
+
+ public:
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const off& o) {
+    return os << "note off: " << static_cast<note_base>(o);
+  }
 };
 
 /// A "note on" MIDI header is just a kind of note header
 class on_header : public note_base_header {
   /// Inherit the note_base constructors
   using note_base_header::note_base_header;
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const on_header& oh) {
+    return os << "note on header: " << static_cast<note_base_header>(oh);
+  }
 };
 
 /// A "note on" MIDI message is just a kind of note
@@ -114,9 +152,16 @@ class on : public note_base<on_header> {
  public:
   /// Get an note-off message for this note
   const off& as_off() { return *reinterpret_cast<off*>(this); }
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const on& o) {
+    return os << "note on: " << static_cast<note_base>(o);
+  }
 };
 
-/// he MIDI "control change" header, split from message for indexing purpose
+/// The MIDI "control change" header, split from message for indexing purpose
 class control_change_header {
  public:
   /* Use signed integers because it is less disturbing when doing
@@ -136,6 +181,15 @@ class control_change_header {
   control_change_header(Channel&& c, Number&& n)
       : channel { static_cast<channel_type>(c) }
       , number { static_cast<number_type>(n) } {}
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os,
+             const control_change_header& cch) {
+    return os << "channel: " << int { cch.channel }
+              << " number: " << int { cch.number };
+  }
 
   /// Use default lexicographic comparison
   friend auto operator<=>(const control_change_header&,
@@ -159,6 +213,14 @@ class control_change : public control_change_header {
 
   /// Get the header of this message
   const control_change_header& header() const { return *this; }
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const control_change& cc) {
+    return os << "control change: " << cc.header()
+              << " value: " << int { cc.value };
+  }
 
   /// The value normalized in [ 0, 1 ] as a given type
   template <typename Value> constexpr static Value get_value_as(value_type v) {
@@ -187,6 +249,21 @@ class control_change : public control_change_header {
 using msg =
     std::variant<std::monostate, midi::on, midi::off, midi::control_change>;
 
+/// Output the MIDI message value to a standard output stream
+template <class CharT, class Traits>
+std::basic_ostream<CharT, Traits>&
+operator<<(std::basic_ostream<CharT, Traits>& os, const msg& m) {
+  std::visit(
+      [&](const auto& e) {
+        if constexpr (std::is_same_v<decltype(e), const std::monostate&>)
+          os << "MIDI message empty";
+        else
+          os << "MIDI message: " << e;
+      },
+      m);
+  return os;
+}
+
 /** A type representing the processed MIDI messages headers without
     the value, just with the message type for indexing purpose */
 class msg_header {
@@ -208,6 +285,21 @@ class msg_header {
   template <typename Header>
   msg_header(const Header& h)
       : variant { h } {}
+
+  /// Output the MIDI message header to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const msg_header& m) {
+    std::visit(
+        [&](const auto& e) {
+          if constexpr (std::is_same_v<decltype(e), const std::monostate&>)
+            os << "MIDI header empty";
+          else
+            os << "MIDI header: " << e;
+        },
+        m.variant);
+    return os;
+  }
 
   // Use some lexicographic comparison
   friend auto operator<=>(const msg_header& lhs, const msg_header& rhs) {
