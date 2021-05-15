@@ -30,6 +30,7 @@ class controller {
 
  public:
 
+  /// \todo refactor with concern separation
   class control_item {
    public:
     enum class type : std::uint8_t { button, knob, slider };
@@ -50,8 +51,17 @@ class controller {
           : value(v) {}
     };
 
+    class note {
+     public:
+      std::int8_t value = false;
+
+      note(std::int8_t v)
+          : value(v) {}
+    };
+
     std::optional<cc> cc_v;
     std::optional<cc_inc> cc_inc_v;
+    std::optional<note> note_v;
 
     midi::control_change::value_type value;
 
@@ -75,14 +85,25 @@ class controller {
                                    dispatch();
                                  });
             }
-            if constexpr (std::is_same_v<f_t, cc_inc>)
+            else if constexpr (std::is_same_v<f_t, cc_inc>)
+              // \todo
               cc_inc_v = f;
-            /// \todo
+            else if constexpr (std::is_same_v<f_t, note>) {
+              note_v = f;
+              // Listen a note from port 1 and channel 0
+              midi_in::add_action(1, midi::on_header { 0, f.value },
+                                  [&](const midi::msg& m) {
+                                    // Recycle value as a bool for now
+                                    value = !value;
+                                    dispatch();
+                                  });
+            }
           }(std::forward<Features>(features)),
           ...);
     }
 
     void dispatch() {
+      std::cout << "Dispatch" << std::endl;
       for (auto& l : listeners)
         l(value);
     }
@@ -237,6 +258,9 @@ class controller {
 
     control_item release_ch_8 { this, control_item::type::slider,
                                 control_item::cc { 0x53 } };
+
+    control_item play_pause { this, control_item::type::button,
+                              control_item::note { 0x5e } };
 
     /** Mapping of button light to SySex button light command
 

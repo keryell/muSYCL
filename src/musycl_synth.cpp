@@ -61,7 +61,12 @@ int main() {
 
   // An arpeggiator
   musycl::arpeggiator arp;
-
+  controller.play_pause.name("Arpeggiator Start/Stop")
+    .add_action([&](bool v) {
+      arp.run(v);
+      controller.display("Arpeggiator running: "
+                         + std::to_string(v));
+    });
   // The master of time
   musycl::clock::set_tempo_frequency(8);
   // The rotary on the extreme top right of Arturia KeyLab 49

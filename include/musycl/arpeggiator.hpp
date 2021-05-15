@@ -31,6 +31,9 @@ class arpeggiator : public clock::follow<arpeggiator> {
   /// Current note
   std::optional<midi::on> current_note;
 
+  /// Control whether the sequencer is running
+  bool running = false;
+
 public:
 
   /** Handle MIDI note events
@@ -57,13 +60,30 @@ public:
     return *this;
   }
 
+  /// Start or stop the sequencer
+  void run(bool is_running) {
+    std::cerr << "Run " << is_running << std::endl;
 
-  /// This is notified on each beat by the clocking framework
-  void beat(clock::type ct) {
+    if (running && !is_running)
+      // If the sequencer is going to stop, stop the current note
+      stop_current_note();
+    running = is_running;
+  }
+
+  /// Stop current note
+  void stop_current_note() {
     if (current_note) {
       midi_in::insert(0, current_note->as_off());
       current_note.reset();
     }
+  }
+
+  /// This is notified on each beat by the clocking framework
+  void beat(clock::type ct) {
+    if (!running)
+      return;
+
+    stop_current_note();
     if (!notes.empty()) {
       // Find the lowest note
       int bass = std::distance
