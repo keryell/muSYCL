@@ -11,8 +11,8 @@
 
 #include <triSYCL/detail/overloaded.hpp>
 
-#include "config.hpp"
 #include "clock.hpp"
+#include "config.hpp"
 
 namespace musycl {
 
@@ -43,25 +43,25 @@ class envelope : public clock::follow<envelope> {
   /// The current state of the state machine, the first one is the default
   state_t state;
 
-public:
-
+ public:
   /// Parameters of the envelope shape
   class param_detail {
-  public:
-
+   public:
     /// Attack time, immediate sound by default
-    control::item<control::time<float>> attack_time{ 0, "Attack", { 0, 10 } };
+    control::item<control::time<float>> attack_time { 0, "Attack", { 0, 10 } };
 
     /// Decay time, go immediately to sustain phase by default
     control::item<control::time<float>> decay_time { 0, "Decay", { 0, 10 } };
 
     /// Sustain level, maximum level by default in the sustain phase
-    control::item<control::level<float>> sustain_level
-      { 1, "Sustain", { 0, 1 } };
+    control::item<control::level<float>> sustain_level { 1,
+                                                         "Sustain",
+                                                         { 0, 1 } };
 
     /// Release time, go immediately to off by default
-    control::item<control::time<float>> release_time
-      { 0, "Release", { 0, 10 } };
+    control::item<control::time<float>> release_time { 0,
+                                                       "Release",
+                                                       { 0, 10 } };
   };
 
   // Shared parameter between all copies of this envelope generator
@@ -70,8 +70,7 @@ public:
   /// Current parameters of the envelope shape
   param_t param;
 
-private:
-
+ private:
   /// Envelope incremental time, tracking time since in the current state
   float state_time = 0;
 
@@ -97,35 +96,29 @@ private:
     return s.str();
   }
 
-public:
-
+ public:
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p) : param { p } {
-std::cout << "Create from a param " << to_string(*this) << std::endl;
-}
-
+  envelope(param_t p)
+      : param { p } {}
 
   /** Start the envelope generator from the beginning
 
       \return the envelope generator itself to enable command chaining
   */
   auto& start() {
-std::cout << "Start " << to_string(*this) << std::endl;
     // Go into attack mode
     state = attack {};
     state_time = 0;
     return *this;
   }
 
-
   /** Stop the envelope generator
 
       \return the envelope generator itself to enable command chaining
   */
   auto& stop() {
-std::cout << "Stop " << to_string(*this) << std::endl;
     // Go into release mode directly
     state = release {};
     // Starting the fading from current output level
@@ -134,71 +127,69 @@ std::cout << "Stop " << to_string(*this) << std::endl;
     return *this;
   }
 
-
   /** Update the envelope at the frame frequency
 
       Since it is an envelope generator, no need to update it at
       the audio frequency. */
   void frame_clock() {
-std::cout << "frame clock dispatch" << std::endl;
     state_time += frame_period;
     // Loop to handle several FSM transitions in the same time step
-    for(;;) {
-std::cout << "time " << state_time << to_string(*this) << std::endl;
+    for (;;) {
       // To keep track of change
       auto previous = state;
       // Visit the current FSM state
       state = std::visit(trisycl::detail::overloaded {
-          [&] (const stopped&) -> state_t {
-std::cout << "stop time " << state_time << std::endl;
-            // The output level is 0 when the envelope is stopped
-            output = 0;
-            // Keep the state for ever, except if there is some external event
-            return stopped {};
-          },
-          [&] (attack&) -> state_t {
-std::cout << "attack time " << state_time << std::endl;
-
-            if (state_time >= param->attack_time) {
-              // It is time to go into the decay phase
-              state_time -= param->attack_time;
-              // The output has reach now the maximum
-              output = 1;
-              return decay {};
-            }
-            // Stay in the current state but first compute the increasing output
-            output = state_time/param->attack_time;
-            return state;
-          },
-          [&] (decay&) -> state_t {
-std::cout << "decay time " << state_time << std::endl;
-            if (state_time >= param->decay_time) {
-              // It is time to go into the sustain phase
-              state_time -= param->decay_time;
-              return sustain {};
-            }
-            // Stay in the current state but first compute the decreasing output
-            output = 1 - (1 - param->sustain_level)*state_time/param->decay_time;
-            return state;
-          },
-          [&] (sustain&) -> state_t {
-std::cout << "sustain time " << state_time << std::endl;
-            output = param->sustain_level;
-            // Keep the state for ever, except if there is some external event
-            return state;
-          },
-          [&] (release&) -> state_t {
-std::cout << "release time " << state_time << std::endl;
-            if (state_time >= param->release_time) {
-              // It is time to go into the stopped phase
-              return stopped {};
-            }
-            // Fade the signal out and remain in the release state
-            output = release_start_level*(1 - state_time/param->release_time);
-            return state;
-          }
-        },
-        state);
+                             [&](const stopped&) -> state_t {
+                               // The output level is 0 when the envelope is
+                               // stopped
+                               output = 0;
+                               // Keep the state for ever, except if there is
+                               // some external event
+                               return stopped {};
+                             },
+                             [&](attack&) -> state_t {
+                               if (state_time >= param->attack_time) {
+                                 // It is time to go into the decay phase
+                                 state_time -= param->attack_time;
+                                 // The output has reach now the maximum
+                                 output = 1;
+                                 return decay {};
+                               }
+                               // Stay in the current state but first compute
+                               // the increasing output
+                               output = state_time / param->attack_time;
+                               return state;
+                             },
+                             [&](decay&) -> state_t {
+                               if (state_time >= param->decay_time) {
+                                 // It is time to go into the sustain phase
+                                 state_time -= param->decay_time;
+                                 return sustain {};
+                               }
+                               // Stay in the current state but first compute
+                               // the decreasing output
+                               output = 1 - (1 - param->sustain_level) *
+                                                state_time / param->decay_time;
+                               return state;
+                             },
+                             [&](sustain&) -> state_t {
+                               output = param->sustain_level;
+                               // Keep the state for ever, except if there is
+                               // some external event
+                               return state;
+                             },
+                             [&](release&) -> state_t {
+                               if (state_time >= param->release_time) {
+                                 // It is time to go into the stopped phase
+                                 return stopped {};
+                               }
+                               // Fade the signal out and remain in the release
+                               // state
+                               output = release_start_level *
+                                        (1 - state_time / param->release_time);
+                               return state;
+                             } },
+                         state);
 
       if (previous.index() == state.index())
         // If the state did not change, no need to evaluate for another change
@@ -206,18 +197,12 @@ std::cout << "release time " << state_time << std::endl;
     }
   }
 
-
   /// Return the running status
-  bool is_running() {
-    return !std::holds_alternative<stopped>(state);
-  }
-
+  bool is_running() { return !std::holds_alternative<stopped>(state); }
 
   /// Get the current value between [0, 1]
-  float out() const {
-    return output;
-  }
+  float out() const { return output; }
 };
 
-}
+} // namespace musycl
 #endif // MUSYCL_ENVELOPE_HPP
