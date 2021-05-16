@@ -17,6 +17,9 @@
 
 namespace musycl::midi {
 
+/// The MIDI clock is based on the 24th of a quarter note
+auto constexpr clock_per_quarter = 24;
+
 /// MIDI has 128 notes
 auto constexpr note_number = 128;
 

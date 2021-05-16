@@ -68,14 +68,14 @@ int main() {
                          + std::to_string(v));
     });
   // The master of time
-  musycl::clock::set_tempo_frequency(8);
+  musycl::clock::set_tempo_bpm(120);
   // The rotary on the extreme top right of Arturia KeyLab 49
   controller.top_right_knob_9.name("Tempo rate")
     .add_action([&](musycl::midi::control_change::value_type v) {
-      auto tempo = v/10.;
-      musycl::clock::set_tempo_frequency(v/10.);
+      auto tempo = int { v } * 2;
+      musycl::clock::set_tempo_bpm(v);
       controller.display("Tempo rate: "
-                         + std::to_string(tempo) + " Hz");
+                         + std::to_string(tempo) + " bpm");
     });
 
   // The low pass filters for the output channels
