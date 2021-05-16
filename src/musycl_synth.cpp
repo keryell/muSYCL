@@ -73,7 +73,7 @@ int main() {
   controller.top_right_knob_9.name("Tempo rate")
     .add_action([&](musycl::midi::control_change::value_type v) {
       auto tempo = int { v } * 2;
-      musycl::clock::set_tempo_bpm(v);
+      musycl::clock::set_tempo_bpm(tempo);
       controller.display("Tempo rate: "
                          + std::to_string(tempo) + " bpm");
     });
