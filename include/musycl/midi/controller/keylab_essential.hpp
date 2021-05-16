@@ -29,7 +29,6 @@ using namespace std::chrono_literals;
 class controller {
 
  public:
-
   /// \todo refactor with concern separation
   class control_item {
    public:
@@ -72,7 +71,8 @@ class controller {
     std::vector<std::function<void(midi::control_change::value_type)>>
         listeners;
 
-    template <typename... Features> control_item(void *, type t, Features... features) {
+    template <typename... Features>
+    control_item(void*, type t, Features... features) {
       // Parse the features
       (
           [&](auto&& f) {
@@ -84,8 +84,7 @@ class controller {
                                    value = v;
                                    dispatch();
                                  });
-            }
-            else if constexpr (std::is_same_v<f_t, cc_inc>)
+            } else if constexpr (std::is_same_v<f_t, cc_inc>)
               // \todo
               cc_inc_v = f;
             else if constexpr (std::is_same_v<f_t, note>) {
@@ -148,8 +147,7 @@ class controller {
     }
 
     /// Connect this control to the real parameter
-    template <typename ControlItem>
-    auto& connect(ControlItem& ci) {
+    template <typename ControlItem> auto& connect(ControlItem& ci) {
       add_action([&](int v) { ci.set_127(v); });
       return *this;
     }
@@ -235,8 +233,8 @@ class controller {
                                  control_item::cc { 0x12 },
                                  control_item::cc_inc { 0x15 } };
 
-    control_item param_3_pan_7 { this, control_item::type::knob,
-                                 this, control_item::cc { 0x13 },
+    control_item param_3_pan_7 { this, control_item::type::knob, this,
+                                 control_item::cc { 0x13 },
                                  control_item::cc_inc { 0x16 } };
 
     control_item param_4_pan_8 { this, control_item::type::knob,
@@ -253,7 +251,7 @@ class controller {
     control_item decay_ch_6 { this, control_item::type::slider,
                               control_item::cc { 0x51 } };
 
-    control_item sustain_ch_7 {this,  control_item::type::slider,
+    control_item sustain_ch_7 { this, control_item::type::slider,
                                 control_item::cc { 0x52 } };
 
     control_item release_ch_8 { this, control_item::type::slider,
@@ -401,10 +399,12 @@ class controller {
     }
 
     /// This is notified on each beat by the clocking framework
-    void beat(clock::type ct) {
-      static bool parity;
-      parity = !parity;
-      button_light((int)button_out::metro, 127 * parity);
+    void midi_clock(clock::type ct) {
+      // Blink the Metro light for 1 quarter of a quarter note at the
+      // start of each (quarter) beat
+      std::cout << ct.midi_clock_index << std::endl;
+      button_light((int)button_out::metro,
+                   127 * (ct.midi_clock_index < midi::clock_per_quarter / 4));
     }
   };
 };
