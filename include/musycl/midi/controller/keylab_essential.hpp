@@ -400,11 +400,15 @@ class controller {
 
     /// This is notified on each beat by the clocking framework
     void midi_clock(clock::type ct) {
-      // Blink the Metro light for 1 quarter of a quarter note at the
-      // start of each (quarter) beat
-      std::cout << ct.midi_clock_index << std::endl;
-      button_light((int)button_out::metro,
-                   127 * (ct.midi_clock_index < midi::clock_per_quarter / 4));
+      // Blink the Metro light for 16th of note at the start of each
+      // (quarter) beat, except for the first beat of the measure
+      // where it is half the light and for an 8th of note
+      auto light_level =
+          127 * (ct.midi_clock_index <
+                 midi::clock_per_quarter * (1 + (ct.beat_index == 0)) / 4) >>
+          (ct.beat_index == 0);
+
+      button_light((int)button_out::metro, light_level);
     }
   };
 };

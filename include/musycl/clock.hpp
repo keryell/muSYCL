@@ -111,8 +111,6 @@ class clock {
     tick_type.measure = false;
     // Move the time on
     phase = phase + midi_dphase;
-    std::cout << "\tmidi_dphase = " << midi_dphase << " phase = " << phase
-              << std::endl;
     if (phase >= 1) {
       // We have finished a MIDI clock period
       tick_type.midi_clock = true;
