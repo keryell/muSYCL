@@ -50,8 +50,8 @@ int main() {
   // Assume an Arturia KeyLab essential as a MIDI controller
   musycl::controller::keylab_essential controller;
 
-  // The sound generators producing the music, 1 per running note
-  std::map<musycl::midi::note_type, musycl::sound_generator> sounds;
+  // The sound generators producing the music, 1 per running note & MIDI channel
+  std::map<musycl::midi::note_base_header, musycl::sound_generator> sounds;
 
   // MIDI message to be received
   musycl::midi::msg m;
@@ -203,7 +203,7 @@ int main() {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
             if (on.channel < std::size(channel_assign))
               sounds.insert_or_assign
-                (on.note,
+                (on.base_header(),
                  musycl::sound_generator { channel_assign[on.channel] })
                 .first->second.start(on);
             else
@@ -214,7 +214,7 @@ int main() {
             ts::pipe::cout::stream() << "MIDI off "
                                      << (int)off.note << std::endl;
             if (off.channel < std::size(channel_assign))
-              sounds[off.note].stop(off);
+              sounds[off.base_header()].stop(off);
             else
               std::cerr << "Note off to unassigned MIDI channel "
                         << off.channel + 1 << std::endl;

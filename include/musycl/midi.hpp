@@ -52,6 +52,11 @@ class note_base_header {
       : channel { static_cast<channel_type>(c) }
       , note { static_cast<note_type>(n) } {}
 
+  /// Get the base header, typically from an on/off note
+  note_base_header base_header() {
+    return *this;
+  }
+
   /// Output the object value to a standard output stream
   template <class CharT, class Traits>
   friend std::basic_ostream<CharT, Traits>&
