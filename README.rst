@@ -69,3 +69,10 @@ but there are also some simple tests:
   comes from the MIDI interface;
 
 - ``./experiment/synth`` a minimalistic monodic synthesizer.
+
+To debug the project, add ``-DCMAKE_BUILD_TYPE=Debug`` configuration
+line of ``cmake``. When using GDB, think to use::
+
+  handle SIG32 nostop
+
+to ignore the noisy user signal 32 used by the audio/MIDI library.

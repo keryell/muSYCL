@@ -10,11 +10,11 @@
 
 #include "config.hpp"
 #include "midi.hpp"
+#include "scheduler.hpp"
 
 namespace musycl {
 
 class clock {
-
   /// The phase in the beat
   static inline float phase = 0;
 
@@ -26,6 +26,9 @@ class clock {
   static inline int meter = 4;
 
  public:
+  /// To schedule things according to real time and duration
+  static inline musycl::scheduler scheduler;
+
   /// Describe the type of tick
   struct type {
     int midi_clock_index; ///< Current MIDI beat in current beat
@@ -106,6 +109,8 @@ class clock {
 
       This is where all the timing events are generated. */
   static void tick_frame_clock() {
+    scheduler.schedule();
+
     tick_type.midi_clock = false;
     tick_type.beat = false;
     tick_type.measure = false;
