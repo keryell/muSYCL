@@ -105,12 +105,12 @@ public:
 
 
   /// Generate an audio sample
-  audio::frame audio() {
+  musycl::audio::frame audio() {
     lpf_filter.set_cutoff_frequency(frequency*lpf_env.out());
     res_filter.set_resonance(0.99).set_frequency(2*frequency*rf_env.out());
    running = lpf_env.is_running() || rf_env.is_running();
 
-    audio::frame f;
+    musycl::audio::frame f;
     if (running) {
       for (auto& e : f) {
         // A random number between -1 and 1
