@@ -347,18 +347,29 @@ class controller {
       pad_8_blue_ter = 0x7f,
     };
 
+    /// Start the KeyLab controller
     keylab_essential() {
       display("Salut les petits amis");
       // button_light_fuzzing();
+      // Refresh the LCD display because it is garbled by various information
+      clock::scheduler.appoint_cyclic(0.25s, [this] (auto) { refresh_display(); });
     }
 
-    template <typename... Ranges> void send_sysex(Ranges&&... messages) {
+    /** Send a MIDI SysEx message by prepending SysEx Start and
+        appending SysEx End
+
+        \return a copy of the full MIDI message sent, for example for
+        later replay.
+     */
+    template <typename... Ranges> auto send_sysex(Ranges&&... messages) {
       static auto constexpr sysex_start = { '\xf0' };
       static auto constexpr sysex_end = { '\xf7' };
 
-      musycl::midi_out::write(ranges::to<std::vector<std::uint8_t>>(
+      auto sysex_message = ranges::to<std::vector<std::uint8_t>>(
           ranges::view::concat(sysex_start, sysex_id, dev_id, sub_dev_id,
-                               messages..., sysex_end)));
+                               messages..., sysex_end));
+      midi_out::write(sysex_message);
+      return sysex_message;
     }
 
     void button_light(std::int8_t button, std::int8_t level) {
@@ -366,6 +377,9 @@ class controller {
       send_sysex(sysex_button_light, ranges::view::single(button),
                  ranges::view::single(level));
     }
+
+    /// Store the last displayed message to refresh the display regularly
+    std::vector<std::uint8_t> last_displayed_sysex_message;
 
     /// Display a message on the LCD display
     void display(const std::string& message) {
@@ -380,7 +394,12 @@ class controller {
                }) |
                ranges::view::join;
       static auto constexpr sysex_display_command = { '\x4', '\0', '\x60' };
-      send_sysex(sysex_display_command, r);
+      last_displayed_sysex_message = send_sysex(sysex_display_command, r);
+    }
+
+    /// Refresh the LCD display with the last displayed message
+    void refresh_display() {
+      midi_out::write(last_displayed_sysex_message);
     }
 
     /** Display a blinking cursor
@@ -405,7 +424,6 @@ class controller {
          the measure being full brightness */
       auto light_level = (ct.midi_clock_index < midi::clock_per_quarter / 4) *
                          (32 + 95 * (ct.beat_index == 0));
-
       button_light((int)button_out::metro, light_level);
     }
   };
