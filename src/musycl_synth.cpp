@@ -61,7 +61,8 @@ int main() {
 
   // An arpeggiator
   musycl::arpeggiator arp;
-  controller.play_pause.name("Arpeggiator Start/Stop")
+  //controller.play_pause.name("Arpeggiator Start/Stop")
+  controller.pad_1.name("Arpeggiator Start/Stop")
     .add_action([&](bool v) {
       arp.run(v);
       controller.display("Arpeggiator running: "

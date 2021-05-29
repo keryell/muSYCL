@@ -58,9 +58,18 @@ class controller {
           : value(v) {}
     };
 
+    class pad {
+     public:
+      std::int8_t value = false;
+
+      pad(std::int8_t v)
+          : value(v) {}
+    };
+
     std::optional<cc> cc_v;
     std::optional<cc_inc> cc_inc_v;
     std::optional<note> note_v;
+    std::optional<pad> pad_v;
 
     midi::control_change::value_type value;
 
@@ -91,6 +100,16 @@ class controller {
               note_v = f;
               // Listen a note from port 1 and channel 0
               midi_in::add_action(1, midi::on_header { 0, f.value },
+                                  [&](const midi::msg& m) {
+                                    // Recycle value as a bool for now
+                                    value = !value;
+                                    dispatch();
+                                  });
+            }
+            else if constexpr (std::is_same_v<f_t, pad>) {
+              pad_v = f;
+              // Listen a note from port 0 and channel 10
+              midi_in::add_action(0, midi::on_header { 9, f.value },
                                   [&](const midi::msg& m) {
                                     // Recycle value as a bool for now
                                     value = !value;
@@ -259,6 +278,9 @@ class controller {
 
     control_item play_pause { this, control_item::type::button,
                               control_item::note { 0x5e } };
+
+    control_item pad_1 = { this, control_item::type::button,
+      control_item::pad { 0x24 } };
 
     /** Mapping of button light to SySex button light command
 
