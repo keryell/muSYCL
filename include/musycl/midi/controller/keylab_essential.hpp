@@ -379,6 +379,11 @@ class controller {
                                                button_out::pad_1_blue,
                                                button_out::pad_1_green } };
 
+    control_item pad_2 = { this, control_item::type::button,
+                           control_item::pad { 0x25, button_out::pad_2_red,
+                                               button_out::pad_2_blue,
+                                               button_out::pad_2_green } };
+
     /// Start the KeyLab controller
     keylab_essential() {
       display("Salut les petits amis");

@@ -4,6 +4,7 @@
 /// \file Arpeggiator to generate notes from a note flow
 
 #include <algorithm>
+#include <functional>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -21,6 +22,12 @@
 namespace musycl {
 
 class arpeggiator : public clock::follow<arpeggiator> {
+ public:
+  /// Ignore lower note than this one
+  midi::note_type low_input_limit;
+
+  /// Ignore upper note than this one
+  midi::note_type high_input_limit;
 
   /// The notes to play with
   std::vector<midi::on> notes;
@@ -31,10 +38,31 @@ class arpeggiator : public clock::follow<arpeggiator> {
   /// Current note
   std::optional<midi::on> current_note;
 
+  /// Current clock time
+  clock::type current_clock_time;
+
   /// Control whether the sequencer is running
   bool running = false;
 
- public:
+  /// Type of an arpeggiator procedure
+  using callable_t = std::function<void(arpeggiator&)>;
+
+  /// User-provided arpeggiator procedure
+  callable_t callable;
+
+  arpeggiator() = default;
+
+  /** Create an arpeggiator sensitive to notes between low and high inclusive
+
+      \input[in] c is a callable implementing the arpeggiato or use a
+      default one
+  */
+  arpeggiator(midi::note_type low, midi::note_type high, callable_t c = {}) {
+    low_input_limit = low;
+    high_input_limit = high;
+    callable = c;
+  }
+
   /** Handle MIDI note events
 
       \param[in] a MIDI event to process
@@ -83,7 +111,13 @@ class arpeggiator : public clock::follow<arpeggiator> {
     if (!running)
       return;
 
-    // Work on the 16th of note
+    current_clock_time = ct;
+    if (callable) {
+      callable(*this);
+      return;
+    }
+
+    // Otherwise use a default arpeggiator, work on the 16th of note
     if (ct.midi_clock_index % (midi::clock_per_quarter / 4) == 0) {
       stop_current_note();
       if (!notes.empty()) {

@@ -62,12 +62,28 @@ int main() {
   // An arpeggiator
   musycl::arpeggiator arp;
   //controller.play_pause.name("Arpeggiator Start/Stop")
-  controller.pad_1.name("Arpeggiator Start/Stop")
+  controller.pad_2.name("Arpeggiator Start/Stop")
     .add_action([&](bool v) {
       arp.run(v);
       controller.display("Arpeggiator running: "
                          + std::to_string(v));
     });
+  musycl::arpeggiator arp_bass { 0, 0, [] (auto& self) {
+    if (self.current_clock_time.beat) {
+      /// Insert a C0 note on each beat
+      self.current_note = musycl::midi::on { 0, 24, 127 };
+      musycl::midi_in::insert(0, *self.current_note);
+    }
+    else
+      self.stop_current_note();
+   }};
+  controller.pad_1.name("Bass arpeggiator Start/Stop")
+    .add_action([&](bool v) {
+      arp_bass.run(v);
+      controller.display("Bass arpeggiator running: "
+                         + std::to_string(v));
+    });
+
   // The master of time
   musycl::clock::set_tempo_bpm(120);
   // The rotary on the extreme top right of Arturia KeyLab 49
