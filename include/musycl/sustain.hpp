@@ -1,13 +1,10 @@
 #ifndef MUSYCL_SUSTAIN_HPP
 #define MUSYCL_SUSTAIN_HPP
 
-/** \file SYCL abstraction for a pipe transmitting sustain stain
+/** \file Abstraction transmitting sustain
 
-    The sustain pedal broadcast its status to any interested modules,
-    so try a SYCL pipe-like abstraction for this.
+    The sustain pedal broadcast its status to any interested modules.
 */
-
-#include "musycl/midi.hpp"
 
 namespace musycl {
 
