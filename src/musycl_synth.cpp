@@ -69,9 +69,10 @@ int main() {
                          + std::to_string(v));
     });
   musycl::arpeggiator arp_bass { 0, 0, [] (auto& self) {
+    static trisycl::vendor::trisycl::random::xorshift<> rng;
     if (self.current_clock_time.beat) {
       /// Insert a C0 note on each beat
-      self.current_note = musycl::midi::on { 0, 24, 127 };
+      self.current_note = musycl::midi::on { 0, 24, (rng() & 63) + 64 };
       musycl::midi_in::insert(0, *self.current_note);
     }
     else
