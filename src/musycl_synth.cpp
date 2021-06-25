@@ -199,6 +199,11 @@ int main() {
     musycl::sustain::value(v);
   });
 
+  // Connect the pitch wheel to its MIDI event
+  musycl::midi_in::cc_action<64>([](std::int8_t v) {
+    musycl::pitch::value(v);
+  });
+
   controller.param_1_pan_5.name("Low pass filter").add_action([&](float a) {
     /* Use a frequency logarithmic scale between 1 Hz and half the
        sampling frequency */
@@ -244,7 +249,8 @@ int main() {
             if (cc.number == 73) {
             }
           },
-          [] (auto &&other) { ts::pipe::cout::stream() << "other"; }
+          [&] (auto &&other) { ts::pipe::cout::stream() << "other: "
+                                                        << m << std::endl; }
         }, m);
     }
 

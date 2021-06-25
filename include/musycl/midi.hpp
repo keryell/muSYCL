@@ -53,9 +53,7 @@ class note_base_header {
       , note { static_cast<note_type>(n) } {}
 
   /// Get the base header, typically from an on/off note
-  note_base_header base_header() {
-    return *this;
-  }
+  note_base_header base_header() { return *this; }
 
   /// Output the object value to a standard output stream
   template <class CharT, class Traits>
@@ -252,10 +250,76 @@ class control_change : public control_change_header {
   float value_1() const { return get_value_as<float>(value); }
 };
 
+/// The "pitch bend" MIDI message header
+class pitch_bend_header {
+ public:
+  /// The channel number between 0 and 15
+  channel_type channel;
+
+  pitch_bend_header() = default;
+
+  /// A specific constructor to handle unsigned to signed narrowing
+  template <typename Channel>
+  pitch_bend_header(Channel&& c)
+      : channel { static_cast<channel_type>(c) } {}
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os,
+             const pitch_bend_header& pbh) {
+    return os << "channel: " << int { pbh.channel };
+  }
+
+  /// Use default lexicographic comparison
+  friend auto operator<=>(const pitch_bend_header&,
+                          const pitch_bend_header&) = default;
+};
+
+/// The MIDI "pitch bend" message
+class pitch_bend : public pitch_bend_header {
+ public:
+  /// The absolute range of the values
+  static constexpr std::int16_t signed_range = 1 << 13;
+
+  /// Type for MIDI pitch bend value from 0 to (1 << 14) - 1
+  using value_type = std::int16_t;
+
+  /// The value associated to this control change
+  value_type v;
+
+  /// A specific constructor to handle unsigned to signed narrowing
+  template <typename Channel, typename Value>
+  pitch_bend(Channel&& c, Value&& value)
+      : pitch_bend_header { c }
+      , v { static_cast<value_type>(value) } {}
+
+  /// Get the header of this message
+  const pitch_bend_header& header() const { return *this; }
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const pitch_bend& pb) {
+    return os << "pitch bend: " << pb.header() << " value: " << pb.v << " ("
+              << pb.value_1() << ')' << signed_range;
+  }
+
+  /// The raw value
+  value_type value() { return v; }
+
+  /// The value normalized in [ -1, 1 ]
+  float value_1() const {
+    if (v > signed_range)
+      return (v - signed_range) / static_cast<float>(signed_range - 1);
+    return (v - signed_range) / static_cast<float>(signed_range);
+  }
+};
+
 /** A MIDI message can be one of different types, including the
     monostate for empty message at initialization */
-using msg =
-    std::variant<std::monostate, midi::on, midi::off, midi::control_change>;
+using msg = std::variant<std::monostate, midi::on, midi::off,
+                         midi::control_change, midi::pitch_bend>;
 
 /// Output the MIDI message value to a standard output stream
 template <class CharT, class Traits>
@@ -275,8 +339,9 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const msg& m) {
 /** A type representing the processed MIDI messages headers without
     the value, just with the message type for indexing purpose */
 class msg_header {
-  using variant_t = std::variant<std::monostate, midi::on_header,
-                                 midi::off_header, midi::control_change_header>;
+  using variant_t =
+      std::variant<std::monostate, midi::on_header, midi::off_header,
+                   midi::control_change_header, midi::pitch_bend_header>;
   variant_t variant;
 
  public:
@@ -363,6 +428,10 @@ msg parse(const std::vector<std::uint8_t>& midi_message) {
         // This is a control change message
         m = midi::control_change { channel(midi_message[0]), midi_message[1],
                                    midi_message[2] };
+      else if (sh == 0xe)
+        // This is a control change message
+        m = midi::pitch_bend { channel(midi_message[0]),
+                               midi_message[1] | (midi_message[2] << 7) };
     }
   }
   return m;
