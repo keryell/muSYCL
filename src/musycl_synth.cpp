@@ -59,6 +59,9 @@ int main() {
   // Master volume of the output in [ 0, 1 ]
   float master_volume = 1;
 
+  /// Master pitch bend on MIDI port 0 channel 0
+  musycl::pitch_bend pb { 0, 0 };
+
   // An arpeggiator
   musycl::arpeggiator arp;
   //controller.play_pause.name("Arpeggiator Start/Stop")
@@ -197,11 +200,6 @@ int main() {
   // Connect the sustain pedal to its MIDI event
   musycl::midi_in::cc_action<64>([](std::int8_t v) {
     musycl::sustain::value(v);
-  });
-
-  // Connect the pitch wheel to its MIDI event
-  musycl::midi_in::cc_action<64>([](std::int8_t v) {
-    musycl::pitch::value(v);
   });
 
   controller.param_1_pan_5.name("Low pass filter").add_action([&](float a) {
