@@ -12,6 +12,7 @@
 
 #include "audio.hpp"
 #include "midi.hpp"
+#include "modulation_actuator.hpp"
 #include "pitch_bend.hpp"
 
 namespace musycl {
@@ -80,10 +81,12 @@ class dco {
       // Update the output frequency from the note ± 24 semitones from
       // the pitch bend
       dphase = frequency(note, 24 * pitch_bend::value()) / sample_frequency;
+      /// Modulate the PWM with the modulation actuator starting from square
+      float pwm = modulation_actuator::value() * 0.5f + 0.5f;
       for (auto& e : f) {
         // Generate a square waveform with an amplitude directly
         // proportional to the velocity
-        e = (2 * (phase > 0.5) - 1) * velocity * volume;
+        e = (2 * (phase > pwm) - 1) * velocity * volume;
         phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)
