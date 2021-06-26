@@ -12,6 +12,7 @@
 
 #include "audio.hpp"
 #include "midi.hpp"
+#include "pitch_bend.hpp"
 
 namespace musycl {
 
@@ -29,15 +30,16 @@ class dco {
   /// Initial velocity of the note
   float velocity;
 
-public:
+  /// The base note
+  musycl::midi::on note;
 
+ public:
   struct param_t {
     using owner_t = dco;
   };
 
   /// Output volume of the note
   float volume { 1 };
-
 
   dco(const param_t& p) {}
 
@@ -50,13 +52,12 @@ public:
       \return itself to allow operation chaining
   */
   auto& start(const musycl::midi::on& on) {
-    dphase = frequency(on)/sample_frequency;
+    note = on;
     velocity = on.velocity_1();
     std::cout << "Velocity " << velocity << std::endl;
     running = true;
     return *this;
   }
-
 
   /** Stop the current note
 
@@ -69,33 +70,31 @@ public:
     return *this;
   }
 
-
   /// Return the running status
-  bool is_running() {
-    return running;
-  }
-
+  bool is_running() { return running; }
 
   /// Generate an audio sample
   musycl::audio::frame audio() {
     musycl::audio::frame f;
     if (running) {
-      for (auto &e : f) {
+      // Update the output frequency from the note ± 24 semitones from
+      // the pitch bend
+      dphase = frequency(note, 24 * pitch_bend::value()) / sample_frequency;
+      for (auto& e : f) {
         // Generate a square waveform with an amplitude directly
         // proportional to the velocity
-        e = (2*(phase > 0.5) - 1)*velocity*volume;
+        e = (2 * (phase > 0.5) - 1) * velocity * volume;
         phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)
           phase -= 1;
       }
-    }
-    else
+    } else
       // If the DCO is not running, the output is 0
       ranges::fill(f, 0);
     return f;
   }
 };
 
-}
+} // namespace musycl
 #endif // MUSYCL_DCO_HPP
