@@ -14,6 +14,7 @@
 #include "midi.hpp"
 #include "midi/midi_in.hpp"
 #include "midi/midi_out.hpp"
+#include "modulation_actuator.hpp"
 #include "noise.hpp"
 #include "pitch_bend.hpp"
 #include "resonance_filter.hpp"

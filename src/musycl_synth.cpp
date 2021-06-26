@@ -62,6 +62,9 @@ int main() {
   /// Master pitch bend on MIDI port 0 channel 0
   musycl::pitch_bend pb { 0, 0 };
 
+  /// Master modulation wheel on MIDI port 0 channel 0
+  musycl::modulation_actuator ma { 0, 0 };
+
   // An arpeggiator
   musycl::arpeggiator arp;
   //controller.play_pause.name("Arpeggiator Start/Stop")

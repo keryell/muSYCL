@@ -217,7 +217,7 @@ class midi_in {
       scaled to [0, 1] first.
   */
   template <typename Callable>
-  static void cc_action(std::int8_t port, std::int8_t number,
+  static void cc_action(std::int8_t port, std::int8_t channel, std::int8_t number,
                         Callable&& action) {
     using arg0_t =
         std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
@@ -225,7 +225,7 @@ class midi_in {
     if constexpr (std::is_floating_point_v<arg0_t>)
       // If we have a floating point type, scale the value in [0, 1]
       midi_actions.emplace(
-          port_msg_header { port, midi::control_change_header { 0, number } },
+          port_msg_header { port, midi::control_change_header { channel, number } },
           [action = std::forward<Callable>(action)](const midi::msg& m) {
             action(midi::control_change::get_value_as<arg0_t>(
                 std::get<midi::control_change>(m).value));
@@ -233,7 +233,7 @@ class midi_in {
     else
       // Just provides the CC value directly to the action
       midi_actions.emplace(
-          port_msg_header { port, midi::control_change_header { 0, number } },
+          port_msg_header { port, midi::control_change_header { channel, number } },
           [action = std::forward<Callable>(action)](const midi::msg& m) {
             action(std::get<midi::control_change>(m).value);
           });
@@ -252,7 +252,7 @@ class midi_in {
   */
   template <typename Callable>
   static void cc_action(std::int8_t number, Callable&& action) {
-    cc_action(0, number, std::forward<Callable>(action));
+    cc_action(0, 0, number, std::forward<Callable>(action));
   }
 
   /** Associate an action to a channel controller (CC)
