@@ -184,15 +184,27 @@ int main() {
   dcoe2.env->decay_time = .1;
   dcoe2.env->sustain_level = .1;
 
+  musycl::dco::param_t dco3;
+
   // MIDI channel mapping
   musycl::sound_generator::param_t channel_assign[] {
     dcoe1,
     dcoe2,
-    musycl::dco::param_t {},
+    dco3,
     musycl::noise::param_t {},
     musycl::dco::param_t {},
     musycl::dco_envelope::param_t {}
   };
+
+  // Control the DCO 1 & 3 parameters
+  controller.attack_ch_1.connect(dcoe1.dco->square_volume);
+  controller.attack_ch_1.connect(dco3->square_volume);
+  controller.decay_ch_2.connect(dcoe1.dco->triangle_volume);
+  controller.decay_ch_2.connect(dco3->triangle_volume);
+  controller.sustain_ch_3.connect(dcoe1.dco->triangle_low_level_ratio);
+  controller.sustain_ch_3.connect(dco3->triangle_low_level_ratio);
+  controller.release_ch_4.connect(dcoe1.dco->triangle_fall_ratio);
+  controller.release_ch_4.connect(dco3->triangle_fall_ratio);
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
   controller.attack_ch_5.connect(dcoe1.env->attack_time);

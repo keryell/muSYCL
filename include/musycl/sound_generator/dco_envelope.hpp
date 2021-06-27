@@ -14,18 +14,22 @@
 namespace musycl {
 
 /// A digitally controlled oscillator with an evolving volume envelope
-class dco_envelope : public dco, public clock::follow<dco_envelope> {
+class dco_envelope
+    : public dco
+    , public clock::follow<dco_envelope> {
   /// Track whether sustain pedal is sustaining this sound
   bool sustain_pedal_in_action = false;
 
   /// Memorize the note to stop at the end of the sustain pedal action
   midi::off note_off;
 
-public:
-
+ public:
   /// All the parameters behind this sound generator
   struct param_t {
     using owner_t = dco_envelope;
+
+    /// The DCO parameters
+    dco::param_t dco;
 
     /// The envelop parameters
     envelope::param_t env;
@@ -38,7 +42,9 @@ public:
   envelope env { param.env };
 
   /// Create a sound from its parameters
-  dco_envelope(const param_t& p) : param { p } {}
+  dco_envelope(const param_t& p)
+      : dco { p.dco }
+      , param { p } {}
 
   /** Start a note
 
@@ -55,7 +61,6 @@ public:
     std::cout << to_string(env) << std::endl;
     return *this;
   }
-
 
   /** Stop the current note
 
@@ -75,12 +80,8 @@ public:
     return *this;
   }
 
-
   /// Return the running status
-  bool is_running() {
-    return env.is_running();
-  }
-
+  bool is_running() { return env.is_running(); }
 
   /** Update the envelope at the frame frequency
 
@@ -95,8 +96,7 @@ public:
     if (!is_running())
       dco::stop(note_off);
   }
-
 };
 
-}
+} // namespace musycl
 #endif // MUSYCL_SOUND_GENERATOR_DCO_ENVELOPE_HPP

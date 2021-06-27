@@ -65,7 +65,7 @@ class envelope : public clock::follow<envelope> {
   };
 
   // Shared parameter between all copies of this envelope generator
-  using param_t = control::param<param_detail>;
+  using param_t = control::param<param_detail, envelope>;
 
   /// Current parameters of the envelope shape
   param_t param;

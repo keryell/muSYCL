@@ -359,6 +359,18 @@ class controller {
     control_item top_right_knob_9 { this, control_item::type::knob,
                                     control_item::cc { 0x11 } };
 
+    control_item attack_ch_1 { this, control_item::type::slider,
+                               control_item::cc { 0x49 } };
+
+    control_item decay_ch_2 { this, control_item::type::slider,
+                              control_item::cc { 0x4b } };
+
+    control_item sustain_ch_3 { this, control_item::type::slider,
+                                control_item::cc { 0x4f } };
+
+    control_item release_ch_4 { this, control_item::type::slider,
+                                control_item::cc { 0x48 } };
+
     control_item attack_ch_5 { this, control_item::type::slider,
                                control_item::cc { 0x50 } };
 

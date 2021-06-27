@@ -11,6 +11,7 @@
 #include "config.hpp"
 
 #include "audio.hpp"
+#include "control.hpp"
 #include "midi.hpp"
 #include "modulation_actuator.hpp"
 #include "pitch_bend.hpp"
@@ -35,14 +36,43 @@ class dco {
   musycl::midi::on note;
 
  public:
-  struct param_t {
-    using owner_t = dco;
+  /// Parameters of the DCO sound
+  class param_detail {
+   public:
+    /// Level of the square signal
+    control::item<control::level<float>> square_volume { 1,
+                                                         "Square volume",
+                                                         { 0, 1 } };
+
+    /// Level of triangle signal
+    control::item<control::level<float>> triangle_volume { 0,
+                                                           "Triangle volume",
+                                                           { 0, 1 } };
+
+    /// Low level ratio of triangle signal, before the signal start raising
+    control::item<control::level<float>> triangle_low_level_ratio {
+      0, "Triangle low level ratio", { 0, 1 }
+    };
+
+    /// Ratio of the fall part of the triangle signal, 1 triangle, 0
+    /// saw-tooth
+    control::item<control::level<float>> triangle_fall_ratio {
+      1, "Triangle low level ratio", { 0, 1 }
+    };
   };
+
+  // Shared parameter between all copies of this envelope generator
+  using param_t = control::param<param_detail, dco>;
+
+  /// Current parameters of the DCO
+  param_t param;
 
   /// Output volume of the note
   float volume { 1 };
 
-  dco(const param_t& p) {}
+  /// Create a sound from its parameters
+  dco(const param_t& p)
+      : param { p } {}
 
   dco() = default;
 
@@ -83,10 +113,11 @@ class dco {
       dphase = frequency(note, 24 * pitch_bend::value()) / sample_frequency;
       /// Modulate the PWM with the modulation actuator starting from square
       float pwm = modulation_actuator::value() * 0.5f + 0.5f;
+      float final_volume = velocity * volume * param->square_volume;
       for (auto& e : f) {
         // Generate a square waveform with an amplitude directly
         // proportional to the velocity
-        e = (2 * (phase > pwm) - 1) * velocity * volume;
+        e = (2 * (phase > pwm) - 1) * final_volume;
         phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)

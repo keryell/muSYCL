@@ -16,8 +16,7 @@ namespace musycl {
 
 class control {
  public:
-  template <typename ValueType>
-  class level {
+  template <typename ValueType> class level {
    public:
     using value_type = ValueType;
 
@@ -27,12 +26,10 @@ class control {
 
     level(auto min, auto max)
         : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) }
-    {}
+        , max_value { static_cast<value_type>(max) } {}
   };
 
-  template <typename ValueType>
-  class time {
+  template <typename ValueType> class time {
    public:
     using value_type = ValueType;
 
@@ -42,8 +39,7 @@ class control {
 
     time(auto min, auto max)
         : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) }
-    {}
+        , max_value { static_cast<value_type>(max) } {}
   };
 
   class group {
@@ -56,16 +52,29 @@ class control {
         : name { n } {}
   };
 
-  template <typename ParamDetail>
+  /** A parameter set shared across various owner instance with a
+      shared pointer façades
+
+      \param[in] ParamDetail is the real implementation of the
+      parameter set
+
+      \param[in] Owner is the class owning the parameter set, just to
+      be introspected by sound_generator::from_param through owner_t
+  */
+  template <typename ParamDetail, typename Owner>
   class param
-      : public trisycl::detail::shared_ptr_implementation<param<ParamDetail>,
-                                                          ParamDetail> {
+      : public trisycl::detail::shared_ptr_implementation<
+            param<ParamDetail, Owner>, ParamDetail> {
    public:
+    /// The real implementation of the parameter set
     using param_detail = ParamDetail;
+
+    /// The class using this parameter set
+    using owner_t = Owner;
 
     /// The type encapsulating the implementation
     using implementation_t =
-        trisycl::detail::shared_ptr_implementation<param<param_detail>,
+        trisycl::detail::shared_ptr_implementation<param<param_detail, owner_t>,
                                                    param_detail>;
 
     /// Import the constructors
@@ -109,8 +118,8 @@ class control {
     }
 
     void set_127(int v) {
-      set(midi::control_change::get_value_in
-          (v, control_type.min_value, control_type.max_value));
+      set(midi::control_change::get_value_in(v, control_type.min_value,
+                                             control_type.max_value));
     }
 
     value_type& operator=(const value_type& v) {
