@@ -201,8 +201,8 @@ int main() {
   controller.attack_ch_1.connect(dco3->square_volume);
   controller.decay_ch_2.connect(dcoe1.dco->triangle_volume);
   controller.decay_ch_2.connect(dco3->triangle_volume);
-  controller.sustain_ch_3.connect(dcoe1.dco->triangle_low_level_ratio);
-  controller.sustain_ch_3.connect(dco3->triangle_low_level_ratio);
+  controller.sustain_ch_3.connect(dcoe1.dco->triangle_ratio);
+  controller.sustain_ch_3.connect(dco3->triangle_ratio);
   controller.release_ch_4.connect(dcoe1.dco->triangle_fall_ratio);
   controller.release_ch_4.connect(dco3->triangle_fall_ratio);
 

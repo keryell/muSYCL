@@ -21,20 +21,33 @@ namespace musycl {
 /// A digitally controlled oscillator
 class dco {
   /// Track if the DCO is generating a signal or just 0
+  /// \todo should be -1 to avoid a pop for triangle?
   bool running = false;
 
-  /// The phase in the waveform, between 0 and 1
+  /// The base note
+  musycl::midi::on note;
+
+  /// The current phase in the waveform, between 0 and 1
   float phase {};
 
   /// The phase increment per clock to generate the right frequency
   float dphase {};
 
-  /// Initial velocity of the note
-  float velocity;
+  /// Amplitude factor for the square waveform: 1 for maximal volume, 0 muted
+  float final_square_volume {};
 
-  /// The base note
-  musycl::midi::on note;
+  /// The PWM for the square waveform, 0.5 for a symmetrical square signal
+  float square_pwm {};
 
+  /// Amplitude factor for the triangle waveform: 1 for maximal volume, 0 muted
+  float final_triangle_volume {};
+
+  /// Part of the period occupied by triangle waveform
+  float triangle_ratio {};
+
+  /// Position in the period of the triangle peak
+  float triangle_peak_phase {};
+ 
  public:
   /// Parameters of the DCO sound
   class param_detail {
@@ -49,15 +62,15 @@ class dco {
                                                            "Triangle volume",
                                                            { 0, 1 } };
 
-    /// Low level ratio of triangle signal, before the signal start raising
-    control::item<control::level<float>> triangle_low_level_ratio {
-      0, "Triangle low level ratio", { 0, 1 }
-    };
+    /// The part of the signal  where the triangle is, the rest is low level
+    control::item<control::level<float>> triangle_ratio { 1,
+                                                          "Triangle ratio",
+                                                          { 0, 1 } };
 
-    /// Ratio of the fall part of the triangle signal, 1 triangle, 0
-    /// saw-tooth
+    /// Ratio of the triangle occupied by the fall part of the triangle signal
+    /// 0.5 is symmetrical triangle, 0 is a saw-tooth
     control::item<control::level<float>> triangle_fall_ratio {
-      1, "Triangle low level ratio", { 0, 1 }
+      0.5, "Triangle fall ratio", { 0, 0.5 }
     };
   };
 
@@ -84,8 +97,6 @@ class dco {
   */
   auto& start(const musycl::midi::on& on) {
     note = on;
-    velocity = on.velocity_1();
-    std::cout << "Velocity " << velocity << std::endl;
     running = true;
     return *this;
   }
@@ -111,13 +122,10 @@ class dco {
       // Update the output frequency from the note ± 24 semitones from
       // the pitch bend
       dphase = frequency(note, 24 * pitch_bend::value()) / sample_frequency;
-      /// Modulate the PWM with the modulation actuator starting from square
-      float pwm = modulation_actuator::value() * 0.5f + 0.5f;
-      float final_volume = velocity * volume * param->square_volume;
+      set_square_waveform_parameter();
+      set_triangle_waveform_parameter();
       for (auto& e : f) {
-        // Generate a square waveform with an amplitude directly
-        // proportional to the velocity
-        e = (2 * (phase > pwm) - 1) * final_volume;
+        e = square_signal() + triangle_signal();
         phase += dphase;
         // The phase is cyclic modulo 1
         if (phase > 1)
@@ -127,6 +135,46 @@ class dco {
       // If the DCO is not running, the output is 0
       ranges::fill(f, 0);
     return f;
+  }
+
+ private:
+  /// Compute current value of square signal
+  float square_signal() {
+    // -1 or +1 according to current phase ratio compared to PWM ratio
+    return final_square_volume * (2 * (phase > square_pwm) - 1);
+  }
+
+  /// Set once the square waveform parameters to speed up computation
+  void set_square_waveform_parameter() {
+    /// Modulate the PWM with the modulation actuator starting from square
+    square_pwm = modulation_actuator::value() * 0.5f + 0.5f;
+    // Generate a square waveform with an amplitude directly
+    // proportional to the velocity
+    final_square_volume = note.velocity_1() * volume * param->square_volume;
+  }
+
+  /// Compute current value of triangle signal
+  float triangle_signal() {
+    if (phase > triangle_ratio)
+      // Low level after the triangle part of the period
+      return -final_triangle_volume;
+    if (phase < triangle_peak_phase)
+      // Ramp up
+      return final_triangle_volume * (2 * phase / triangle_peak_phase - 1);
+    // Ramp down
+    return final_triangle_volume *
+           (1 -
+            2 * (phase - triangle_peak_phase) / (triangle_ratio - triangle_peak_phase));
+  }
+
+  /// Set once the triangle waveform parameters to speed up computation
+  void set_triangle_waveform_parameter() {
+    /// Cache more locally the value
+    triangle_ratio = param->triangle_ratio;
+    triangle_peak_phase = triangle_ratio * (1 - param->triangle_fall_ratio);
+    // Generate a square waveform with an amplitude directly
+    // proportional to the velocity
+    final_triangle_volume = note.velocity_1() * volume * param->triangle_volume;
   }
 };
 
