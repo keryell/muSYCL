@@ -1,7 +1,9 @@
 #ifndef MUSYCL_MIDI_CONTROLLER_KEYLAB_ESSENTIAL_HPP
 #define MUSYCL_MIDI_CONTROLLER_KEYLAB_ESSENTIAL_HPP
 
-/** \file Represent a MIDI controller like the Arturia KeyLab49 Essential
+/** \file
+
+    Represent a MIDI controller like the Arturia KeyLab49 Essential
  */
 
 #include <chrono>
@@ -116,157 +118,6 @@ class controller {
     pad_8_blue_ter = 0x7f,
   };
 
-  /// \todo refactor with concern separation
-  class control_item {
-   public:
-    enum class type : std::uint8_t { button, knob, slider };
-
-    class cc {
-     public:
-      std::int8_t value;
-
-      cc(std::int8_t v)
-          : value(v) {}
-    };
-
-    class cc_inc {
-     public:
-      std::int8_t value;
-
-      cc_inc(std::int8_t v)
-          : value(v) {}
-    };
-
-    class note {
-     public:
-      std::int8_t value = false;
-
-      note(std::int8_t v)
-          : value(v) {}
-    };
-
-    class pad {
-     public:
-      std::int8_t value = false;
-      button_out red_bo;
-      button_out green_bo;
-      button_out blue_bo;
-
-      pad(std::int8_t v, button_out r, button_out g, button_out b)
-          : value(v)
-          , red_bo { r }
-          , green_bo { g }
-          , blue_bo { b } {}
-    };
-
-    std::optional<cc> cc_v;
-    std::optional<cc_inc> cc_inc_v;
-    std::optional<note> note_v;
-    std::optional<pad> pad_v;
-
-    midi::control_change::value_type value;
-
-    bool connected = false;
-
-    std::string current_name;
-
-    std::vector<std::function<void(midi::control_change::value_type)>>
-        listeners;
-
-    template <typename... Features>
-    control_item(void*, type t, Features... features) {
-      // Parse the features
-      (
-          [&](auto&& f) {
-            using f_t = std::remove_cvref_t<decltype(f)>;
-            if constexpr (std::is_same_v<f_t, cc>) {
-              cc_v = f;
-              midi_in::cc_action(f.value,
-                                 [&](midi::control_change::value_type v) {
-                                   value = v;
-                                   dispatch();
-                                 });
-            } else if constexpr (std::is_same_v<f_t, cc_inc>)
-              // \todo
-              cc_inc_v = f;
-            else if constexpr (std::is_same_v<f_t, note>) {
-              note_v = f;
-              // Listen a note from port 1 and channel 0
-              midi_in::add_action(1, midi::on_header { 0, f.value },
-                                  [&](const midi::msg& m) {
-                                    // Recycle value as a bool for now
-                                    value = !value;
-                                    dispatch();
-                                  });
-            } else if constexpr (std::is_same_v<f_t, pad>) {
-              pad_v = f;
-              // Listen a note from port 0 and channel 10
-              midi_in::add_action(0, midi::on_header { 9, f.value },
-                                  [&](const midi::msg& m) {
-                                    // Recycle value as a bool for now
-                                    value = !value;
-                                    dispatch();
-                                    // button_light(f.red_bo, value*127);
-                                    // button_light(f.green_bo, value*127);
-                                    // button_light(f.blue_bo, value*127);
-                                  });
-            }
-          }(std::forward<Features>(features)),
-          ...);
-    }
-
-    void dispatch() {
-      std::cout << "Dispatch" << std::endl;
-      for (auto& l : listeners)
-        l(value);
-    }
-
-    /// Name the control_item
-    auto& name(const std::string& new_name) {
-      current_name = new_name;
-      return *this;
-    }
-
-    /// Add an action to the control_item
-    template <typename Callable> auto& add_action(Callable&& action) {
-      using arg0_t =
-          std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
-      // Register an action producing the right value for the action
-      if constexpr (std::is_floating_point_v<arg0_t>)
-        // If we have a floating point type, scale the value in [0, 1]
-        listeners.push_back([action = std::forward<Callable>(action)](
-                                midi::control_change::value_type v) {
-          action(midi::control_change::get_value_as<arg0_t>(v));
-        });
-      else
-        // Just provides the CC value directly to the action
-        listeners.push_back(action);
-      return *this;
-    }
-
-    /** Associate a variable to an item
-
-        \param[out] variable is the variable to set to the value
-        returned by the controller. If the variable has a floating point
-        type, the value is scaled to [0, 1] first.
-    */
-    template <typename T> auto& set_variable(T& variable) {
-      add_action([&](T v) { variable = v; });
-      return *this;
-    }
-
-    /// The value normalized in [ 0, 1 ]
-    float value_1() const {
-      return midi::control_change::get_value_as<float>(value);
-    }
-
-    /// Connect this control to the real parameter
-    template <typename ControlItem> auto& connect(ControlItem& ci) {
-      add_action([&](int v) { ci.set_127(v); });
-      return *this;
-    }
-  };
-
   /** An Arturia KeyLab MIDI controller
 
       This is made by gathering some information on-line, such as
@@ -321,80 +172,101 @@ class controller {
 
    public:
     /// List all the control items
-    // std::vector<control_item> inputs;
+    // std::vector<control::control_item> inputs;
 
-    control_item cutoff_pan_1 { this, control_item::type::knob,
-                                control_item::cc { 0x4a },
-                                control_item::cc_inc { 0x10 } };
+    control::control_item cutoff_pan_1 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x4a }, control::control_item::cc_inc { 0x10 }
+    };
 
-    control_item resonance_pan_2 { this, control_item::type::knob,
-                                   control_item::cc { 0x47 },
-                                   control_item::cc_inc { 0x11 } };
+    control::control_item resonance_pan_2 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x47 }, control::control_item::cc_inc { 0x11 }
+    };
 
-    control_item lfo_rate_pan_3 { this, control_item::type::knob,
-                                  control_item::cc { 0x4c },
-                                  control_item::cc_inc { 0x12 } };
+    control::control_item lfo_rate_pan_3 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x4c }, control::control_item::cc_inc { 0x12 }
+    };
 
-    control_item lfo_amt_pan_4 { this, control_item::type::knob,
-                                 control_item::cc { 0x4d },
-                                 control_item::cc_inc { 0x13 } };
+    control::control_item lfo_amt_pan_4 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x4d }, control::control_item::cc_inc { 0x13 }
+    };
 
-    control_item param_1_pan_5 { this, control_item::type::knob,
-                                 control_item::cc { 0x5d },
-                                 control_item::cc_inc { 0x14 } };
+    control::control_item param_1_pan_5 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x5d }, control::control_item::cc_inc { 0x14 }
+    };
 
-    control_item param_2_pan_6 { this, control_item::type::knob,
-                                 control_item::cc { 0x12 },
-                                 control_item::cc_inc { 0x15 } };
+    control::control_item param_2_pan_6 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x12 }, control::control_item::cc_inc { 0x15 }
+    };
 
-    control_item param_3_pan_7 { this, control_item::type::knob, this,
-                                 control_item::cc { 0x13 },
-                                 control_item::cc_inc { 0x16 } };
+    control::control_item param_3_pan_7 {
+      this, control::control_item::type::knob, this,
+      control::control_item::cc { 0x13 }, control::control_item::cc_inc { 0x16 }
+    };
 
-    control_item param_4_pan_8 { this, control_item::type::knob,
-                                 control_item::cc { 0x10 },
-                                 control_item::cc_inc { 0x17 } };
+    control::control_item param_4_pan_8 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x10 }, control::control_item::cc_inc { 0x17 }
+    };
 
     // The unnamed knob on the top right, non mapped in DAW mode
-    control_item top_right_knob_9 { this, control_item::type::knob,
-                                    control_item::cc { 0x11 } };
+    control::control_item top_right_knob_9 {
+      this, control::control_item::type::knob,
+      control::control_item::cc { 0x11 }
+    };
 
-    control_item attack_ch_1 { this, control_item::type::slider,
-                               control_item::cc { 0x49 } };
+    control::control_item attack_ch_1 { this,
+                                        control::control_item::type::slider,
+                                        control::control_item::cc { 0x49 } };
 
-    control_item decay_ch_2 { this, control_item::type::slider,
-                              control_item::cc { 0x4b } };
+    control::control_item decay_ch_2 { this,
+                                       control::control_item::type::slider,
+                                       control::control_item::cc { 0x4b } };
 
-    control_item sustain_ch_3 { this, control_item::type::slider,
-                                control_item::cc { 0x4f } };
+    control::control_item sustain_ch_3 { this,
+                                         control::control_item::type::slider,
+                                         control::control_item::cc { 0x4f } };
 
-    control_item release_ch_4 { this, control_item::type::slider,
-                                control_item::cc { 0x48 } };
+    control::control_item release_ch_4 { this,
+                                         control::control_item::type::slider,
+                                         control::control_item::cc { 0x48 } };
 
-    control_item attack_ch_5 { this, control_item::type::slider,
-                               control_item::cc { 0x50 } };
+    control::control_item attack_ch_5 { this,
+                                        control::control_item::type::slider,
+                                        control::control_item::cc { 0x50 } };
 
-    control_item decay_ch_6 { this, control_item::type::slider,
-                              control_item::cc { 0x51 } };
+    control::control_item decay_ch_6 { this,
+                                       control::control_item::type::slider,
+                                       control::control_item::cc { 0x51 } };
 
-    control_item sustain_ch_7 { this, control_item::type::slider,
-                                control_item::cc { 0x52 } };
+    control::control_item sustain_ch_7 { this,
+                                         control::control_item::type::slider,
+                                         control::control_item::cc { 0x52 } };
 
-    control_item release_ch_8 { this, control_item::type::slider,
-                                control_item::cc { 0x53 } };
+    control::control_item release_ch_8 { this,
+                                         control::control_item::type::slider,
+                                         control::control_item::cc { 0x53 } };
 
-    control_item play_pause { this, control_item::type::button,
-                              control_item::note { 0x5e } };
+    control::control_item play_pause { this,
+                                       control::control_item::type::button,
+                                       control::control_item::note { 0x5e } };
 
-    control_item pad_1 = { this, control_item::type::button,
-                           control_item::pad { 0x24, button_out::pad_1_red,
-                                               button_out::pad_1_blue,
-                                               button_out::pad_1_green } };
+    control::control_item pad_1 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x24, button_out::pad_1_red,
+                                        button_out::pad_1_blue,
+                                        button_out::pad_1_green } };
 
-    control_item pad_2 = { this, control_item::type::button,
-                           control_item::pad { 0x25, button_out::pad_2_red,
-                                               button_out::pad_2_blue,
-                                               button_out::pad_2_green } };
+    control::control_item pad_2 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x25, button_out::pad_2_red,
+                                        button_out::pad_2_blue,
+                                        button_out::pad_2_green } };
 
     /// Start the KeyLab controller
     keylab_essential() {
