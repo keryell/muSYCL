@@ -40,7 +40,7 @@ https://apt.llvm.org/
 
 To install these packages on Debian or Ubuntu, try::
 
-  sudo install clang-13 librange-v3-dev librtmidi-dev librtaudio-dev \
+  sudo install clang-14 librange-v3-dev librtmidi-dev librtaudio-dev \
   jackd2 qjackctl
 
 and clone triSYCL somewhere.
@@ -49,7 +49,7 @@ In the top directory of the repository::
 
   mkdir build
   # Configure the project with the triSYCL repository somewhere
-  CXX=clang++-13 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
+  CXX=clang++-14 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   # Build the project
   make --build . --parallel `nproc` --verbose

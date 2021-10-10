@@ -1,0 +1,59 @@
+#ifndef MUSYCL_USER_INTERFACE_HPP
+#define MUSYCL_USER_INTERFACE_HPP
+
+/** \file
+
+    Represent the user interface of the synthesizer
+*/
+
+#include <algorithm>
+#include <functional>
+//#include <ranges>
+#include <vector>
+
+#include <range/v3/all.hpp>
+
+#include "control.hpp"
+
+namespace musycl {
+
+class user_interface {
+  /** The user interface is made of a stack of active layers
+
+      For a given \c control_item, the current action is the first
+      control_item found in the active layers
+
+      The top layer (the most visible) is the back of the vector and
+      the bottom layer is the front of the vector.
+  */
+  std::vector<const group*> active_layers;
+
+ public:
+  /** Add a layer on top of the user interface
+
+      \param[in] g is the layer to add
+  */
+  void add_layer(const group& g) { active_layers.emplace_back(&g); }
+
+  /** Remove a layer from the user interface
+
+      \param[in] g is the layer to remove
+  */
+  void remove_layer(const group& g) { ranges::remove(active_layers, &g); }
+
+  /** Process an action on a control_item into the current user interface
+
+      \param[in] ci is the control_item to process
+  */
+  void dispatch(control::control_item& ci) {
+    // Dispatch the control_item with the first matching dispatcher
+    // across the layer stack
+    for (auto layer : active_layers | ranges::views::reverse)
+      if (layer->try_dispatch(ci))
+        break;
+  }
+};
+
+} // namespace musycl
+
+#endif // MUSYCL_USER_INTERFACE_HPP

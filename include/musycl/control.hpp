@@ -7,9 +7,12 @@
 
 #include <cmath>
 #include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 #include "triSYCL/detail/shared_ptr_implementation.hpp"
 
@@ -17,7 +20,9 @@ namespace musycl {
 
 class control {
  public:
-  template <typename ValueType> class level {
+  /// Represent basic API of various type of physical values like time or level
+  template <typename ValueType, typename FinalPhysicalValue>
+  class physical_value {
    public:
     using value_type = ValueType;
 
@@ -25,22 +30,33 @@ class control {
 
     const value_type max_value;
 
-    level(auto min, auto max)
+    value_type value;
+
+    physical_value(auto min, auto max, value_type default_value = {})
         : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) } {}
+        , max_value { static_cast<value_type>(max) }
+        , value { default_value } {}
+
+    void set(const value_type& v) { value = v; }
+
+    void set_from_controller(midi::control_change::value_type cc_value) {
+      // auto final_physical_value = static_cast<FinalPhysicalValue&>(*this);
+      set(midi::control_change::get_value_in(cc_value, min_value, max_value));
+    }
   };
 
-  template <typename ValueType> class time {
+  template <typename ValueType>
+  class level : public physical_value<ValueType, level<ValueType>> {
    public:
     using value_type = ValueType;
+    using physical_value<value_type, level>::physical_value;
+  };
 
-    const value_type min_value;
-
-    const value_type max_value;
-
-    time(auto min, auto max)
-        : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) } {}
+  template <typename ValueType>
+  class time : public physical_value<ValueType, time<ValueType>> {
+   public:
+    using value_type = ValueType;
+    using physical_value<value_type, time>::physical_value;
   };
 
   /// \todo refactor with concern separation
@@ -191,18 +207,9 @@ class control {
 
     /// Connect this control to the real parameter
     template <typename ControlItem> auto& connect(ControlItem& ci) {
-      add_action([&](int v) { ci.set_127(v); });
+      add_action([&](int v) { ci.set_from_controller(v); });
       return *this;
     }
-  };
-  class group {
-
-    std::string name;
-
-    //  controls
-   public:
-    group(const std::string& n)
-        : name { n } {}
   };
 
   /** A parameter set shared across various owner instance with a
@@ -243,36 +250,47 @@ class control {
     auto& operator->() const { return implementation; }
   };
 
-  template <typename ControlType> class item {
+  template <typename PhysicalValue> class item {
    public:
-    using value_type = typename ControlType::value_type;
+    using physical_value_type = PhysicalValue;
 
-    value_type value;
+    physical_value_type physical_value;
+
+    using value_type = typename physical_value_type::value_type;
 
     std::string user_name;
 
-    ControlType control_type;
+    std::optional<std::reference_wrapper<control_item>> c_i;
 
-    item(const value_type& default_value, const std::string& name,
-         const ControlType& ct)
-        : value { default_value }
+    item(const std::string& name, const physical_value_type& a_physical_value)
+        : physical_value { a_physical_value }
+        , user_name { name } {}
+
+    template <typename Group>
+    item(Group* g, control_item& ci, const std::string& name,
+         const physical_value_type& a_physical_value)
+        : physical_value { a_physical_value }
         , user_name { name }
-        , control_type { ct } {}
+        , c_i { ci } {
+      g->assign(ci, [&] { physical_value.set_from_controller(ci.value); });
+    }
 
-    operator value_type&() { return value; }
+    value_type& value() { return physical_value.value; }
+
+    operator value_type&() { return value(); }
 
     void update_display() {
-      std::cout << "Control " << user_name << " set to " << value << std::endl;
+      std::cout << "Control " << user_name << " set to " << value()
+                << std::endl;
     }
 
     void set(const value_type& v) {
-      value = v;
+      physical_value.set(v);
       update_display();
     }
 
-    void set_127(int v) {
-      set(midi::control_change::get_value_in(v, control_type.min_value,
-                                             control_type.max_value));
+    void set_from_controller(midi::control_change::value_type v) {
+      physical_value.set_from_controller(v);
     }
 
     value_type& operator=(const value_type& v) {

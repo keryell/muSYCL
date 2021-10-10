@@ -20,5 +20,6 @@
 #include "resonance_filter.hpp"
 #include "sound_generator.hpp"
 #include "sustain.hpp"
+#include "user_interface.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP

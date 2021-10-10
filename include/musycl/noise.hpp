@@ -21,8 +21,8 @@ namespace musycl {
 
 /// A digitally controlled oscillator
 class noise {
-  /// 
-  control::group cg { "Noise generator" };
+  ///
+  //  group cg { "Noise generator" };
 
   /// Track if the noise generator is generating a signal or just 0
   bool running = false;
@@ -48,8 +48,7 @@ class noise {
   /// Initial frequency of the note
   float frequency;
 
-public:
-
+ public:
   struct param_t {
     using owner_t = noise;
   };
@@ -68,7 +67,7 @@ public:
     rf_env.param->release_time = 0.01;
   }
 
-/// \todo
+  /// \todo
   noise(const param_t& p) {}
 
   /** Start a note
@@ -84,7 +83,6 @@ public:
     return *this;
   }
 
-
   /** Stop the current note
 
       \param[in] off is the "note off" MIDI event to stop with
@@ -97,38 +95,33 @@ public:
     return *this;
   }
 
-
   /// Return the running status
-  bool is_running() {
-    return running;
-  }
-
+  bool is_running() { return running; }
 
   /// Generate an audio sample
   musycl::audio::frame audio() {
-    lpf_filter.set_cutoff_frequency(frequency*lpf_env.out());
-    res_filter.set_resonance(0.99).set_frequency(2*frequency*rf_env.out());
-   running = lpf_env.is_running() || rf_env.is_running();
+    lpf_filter.set_cutoff_frequency(frequency * lpf_env.out());
+    res_filter.set_resonance(0.99).set_frequency(2 * frequency * rf_env.out());
+    running = lpf_env.is_running() || rf_env.is_running();
 
     musycl::audio::frame f;
     if (running) {
       for (auto& e : f) {
         // A random number between -1 and 1
         auto random =
-          rng()*2./std::numeric_limits<decltype(rng)::value_type>::max() - 1;
+            rng() * 2. / std::numeric_limits<decltype(rng)::value_type>::max() -
+            1;
         // Generate a filtered noise sample with an amplitude directly
         // proportional to the velocity
-        e = lpf_filter.filter(random)*10*res_filter.filter(random)
-          * velocity*volume;
+        e = lpf_filter.filter(random) * 10 * res_filter.filter(random) *
+            velocity * volume;
       }
-    }
-    else
+    } else
       // If the DCO is not running, the output is 0
       ranges::fill(f, 0);
     return f;
   }
-
 };
 
-}
+} // namespace musycl
 #endif // MUSYCL_NOISE_HPP
