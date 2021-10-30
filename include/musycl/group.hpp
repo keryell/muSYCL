@@ -24,7 +24,7 @@ class group {
   std::string name;
 
   /// Action to dispatch from a control item
-  std::map<control::control_item*, std::function<void()>> control_items;
+  std::map<control::physical_item*, std::function<void()>> physical_items;
 
   /// A cache to the already created groups
   // static trisycl::detail::cache<std::string, detail::group> cache;
@@ -42,8 +42,8 @@ class group {
   group() = default;
 
   /// Assign an action to a control item
-  void assign(control::control_item& ci, std::function<void()> f) {
-    control_items.emplace(&ci, f);
+  void assign(control::physical_item& ci, std::function<void()> f) {
+    physical_items.emplace(&ci, f);
   }
 
   /** Try to dispatch an action associate to a control item
@@ -51,7 +51,7 @@ class group {
       \return true if the dispatch was successful or false if there is
       no action for this control item
    */
-  template <typename ControlItem> bool try_dispatch(ControlItem& ci) const {
+  bool try_dispatch(const control::physical_item& ci) const {
     return false;
   }
 };

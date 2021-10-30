@@ -173,98 +173,98 @@ class controller {
 
    public:
     /// List all the control items
-    // std::vector<control::control_item> inputs;
+    // std::vector<control::physical_item> inputs;
 
-    control::control_item cutoff_pan_1 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4a }, control::control_item::cc_inc { 0x10 }
+    control::physical_item cutoff_pan_1 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4a }, control::physical_item::cc_inc { 0x10 }
     };
 
-    control::control_item resonance_pan_2 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x47 }, control::control_item::cc_inc { 0x11 }
+    control::physical_item resonance_pan_2 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x47 }, control::physical_item::cc_inc { 0x11 }
     };
 
-    control::control_item lfo_rate_pan_3 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4c }, control::control_item::cc_inc { 0x12 }
+    control::physical_item lfo_rate_pan_3 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4c }, control::physical_item::cc_inc { 0x12 }
     };
 
-    control::control_item lfo_amt_pan_4 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4d }, control::control_item::cc_inc { 0x13 }
+    control::physical_item lfo_amt_pan_4 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4d }, control::physical_item::cc_inc { 0x13 }
     };
 
-    control::control_item param_1_pan_5 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x5d }, control::control_item::cc_inc { 0x14 }
+    control::physical_item param_1_pan_5 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x5d }, control::physical_item::cc_inc { 0x14 }
     };
 
-    control::control_item param_2_pan_6 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x12 }, control::control_item::cc_inc { 0x15 }
+    control::physical_item param_2_pan_6 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x12 }, control::physical_item::cc_inc { 0x15 }
     };
 
-    control::control_item param_3_pan_7 {
-      this, control::control_item::type::knob, this,
-      control::control_item::cc { 0x13 }, control::control_item::cc_inc { 0x16 }
+    control::physical_item param_3_pan_7 {
+      this, control::physical_item::type::knob, this,
+      control::physical_item::cc { 0x13 }, control::physical_item::cc_inc { 0x16 }
     };
 
-    control::control_item param_4_pan_8 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x10 }, control::control_item::cc_inc { 0x17 }
+    control::physical_item param_4_pan_8 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x10 }, control::physical_item::cc_inc { 0x17 }
     };
 
     // The unnamed knob on the top right, non mapped in DAW mode
-    control::control_item top_right_knob_9 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x11 }
+    control::physical_item top_right_knob_9 {
+      this, control::physical_item::type::knob,
+      control::physical_item::cc { 0x11 }
     };
 
-    control::control_item attack_ch_1 { this,
-                                        control::control_item::type::slider,
-                                        control::control_item::cc { 0x49 } };
+    control::physical_item attack_ch_1 { this,
+                                        control::physical_item::type::slider,
+                                        control::physical_item::cc { 0x49 } };
 
-    control::control_item decay_ch_2 { this,
-                                       control::control_item::type::slider,
-                                       control::control_item::cc { 0x4b } };
+    control::physical_item decay_ch_2 { this,
+                                       control::physical_item::type::slider,
+                                       control::physical_item::cc { 0x4b } };
 
-    control::control_item sustain_ch_3 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x4f } };
+    control::physical_item sustain_ch_3 { this,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x4f } };
 
-    control::control_item release_ch_4 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x48 } };
+    control::physical_item release_ch_4 { this,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x48 } };
 
-    control::control_item attack_ch_5 { this,
-                                        control::control_item::type::slider,
-                                        control::control_item::cc { 0x50 } };
+    control::physical_item attack_ch_5 { this,
+                                        control::physical_item::type::slider,
+                                        control::physical_item::cc { 0x50 } };
 
-    control::control_item decay_ch_6 { this,
-                                       control::control_item::type::slider,
-                                       control::control_item::cc { 0x51 } };
+    control::physical_item decay_ch_6 { this,
+                                       control::physical_item::type::slider,
+                                       control::physical_item::cc { 0x51 } };
 
-    control::control_item sustain_ch_7 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x52 } };
+    control::physical_item sustain_ch_7 { this,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x52 } };
 
-    control::control_item release_ch_8 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x53 } };
+    control::physical_item release_ch_8 { this,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x53 } };
 
-    control::control_item play_pause { this,
-                                       control::control_item::type::button,
-                                       control::control_item::note { 0x5e } };
+    control::physical_item play_pause { this,
+                                       control::physical_item::type::button,
+                                       control::physical_item::note { 0x5e } };
 
-    control::control_item pad_1 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_1 = { this, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x24, button_out::pad_1_red,
                                         button_out::pad_1_blue,
                                         button_out::pad_1_green } };
 
-    control::control_item pad_2 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_2 = { this, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x25, button_out::pad_2_red,
                                         button_out::pad_2_blue,
                                         button_out::pad_2_green } };

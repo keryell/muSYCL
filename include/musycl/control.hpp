@@ -61,7 +61,7 @@ class control {
 
     /// A representation of a physical control item in a controller
   /// \todo refactor with concern separation
-  class control_item {
+  class physical_item {
    public:
     enum class type : std::uint8_t { button, knob, slider };
 
@@ -121,7 +121,7 @@ class control {
         listeners;
 
     template <typename... Features>
-    control_item(void*, type t, Features... features) {
+    physical_item(void*, type t, Features... features) {
       // Parse the features
       (
           [&](auto&& f) {
@@ -168,13 +168,13 @@ class control {
         l(value);
     }
 
-    /// Name the control_item
+    /// Name the physical_item
     auto& name(const std::string& new_name) {
       current_name = new_name;
       return *this;
     }
 
-    /// Add an action to the control_item
+    /// Add an action to the physical_item
     template <typename Callable> auto& add_action(Callable&& action) {
       using arg0_t =
           std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
@@ -262,14 +262,14 @@ class control {
 
     std::string user_name;
 
-    std::optional<std::reference_wrapper<control_item>> c_i;
+    std::optional<std::reference_wrapper<physical_item>> c_i;
 
     item(const std::string& name, const physical_value_type& a_physical_value)
         : physical_value { a_physical_value }
         , user_name { name } {}
 
     template <typename Group>
-    item(Group* g, control_item& ci, const std::string& name,
+    item(Group* g, physical_item& ci, const std::string& name,
          const physical_value_type& a_physical_value)
         : physical_value { a_physical_value }
         , user_name { name }

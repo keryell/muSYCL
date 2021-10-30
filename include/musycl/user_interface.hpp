@@ -14,14 +14,15 @@
 #include <range/v3/all.hpp>
 
 #include "control.hpp"
+#include "group.hpp"
 
 namespace musycl {
 
 class user_interface {
   /** The user interface is made of a stack of active layers
 
-      For a given \c control_item, the current action is the first
-      control_item found in the active layers
+      For a given \c physical_item, the current action is the first
+      physical_item found in the active layers
 
       The top layer (the most visible) is the back of the vector and
       the bottom layer is the front of the vector.
@@ -41,12 +42,12 @@ class user_interface {
   */
   void remove_layer(const group& g) { ranges::remove(active_layers, &g); }
 
-  /** Process an action on a control_item into the current user interface
+  /** Process an action on a physical_item into the current user interface
 
-      \param[in] ci is the control_item to process
+      \param[in] ci is the physical_item to process
   */
-  void dispatch(control::control_item& ci) {
-    // Dispatch the control_item with the first matching dispatcher
+  void dispatch(control::physical_item& ci) {
+    // Dispatch the physical_item with the first matching dispatcher
     // across the layer stack
     for (auto layer : active_layers | ranges::views::reverse)
       if (layer->try_dispatch(ci))
