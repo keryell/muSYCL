@@ -23,12 +23,14 @@ class group {
   /// User-facing name
   std::string name;
 
+  /// Action to dispatch from a control item
   std::map<control::control_item*, std::function<void()>> control_items;
 
   /// A cache to the already created groups
   // static trisycl::detail::cache<std::string, detail::group> cache;
 
  protected:
+  /// The controller associated to the group
   musycl::controller::keylab_essential* controller;
 
   //  controls
@@ -39,12 +41,17 @@ class group {
 
   group() = default;
 
+  /// Assign an action to a control item
   void assign(control::control_item& ci, std::function<void()> f) {
     control_items.emplace(&ci, f);
   }
 
-  template <typename T> bool try_dispatch(T& ci) const {
-    //    bool try_dispatch(control::control_item& ci) const {
+  /** Try to dispatch an action associate to a control item
+
+      \return true if the dispatch was successful or false if there is
+      no action for this control item
+   */
+  template <typename ControlItem> bool try_dispatch(ControlItem& ci) const {
     return false;
   }
 };

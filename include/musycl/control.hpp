@@ -59,6 +59,7 @@ class control {
     using physical_value<value_type, time>::physical_value;
   };
 
+    /// A representation of a physical control item in a controller
   /// \todo refactor with concern separation
   class control_item {
    public:
@@ -104,6 +105,7 @@ class control {
           , blue_bo { static_cast<std::int8_t>(b) } {}
     };
 
+    // \todo Replace by a variant?
     std::optional<cc> cc_v;
     std::optional<cc_inc> cc_inc_v;
     std::optional<note> note_v;
