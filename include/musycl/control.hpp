@@ -60,7 +60,7 @@ class control {
   };
 
     /// A representation of a physical control item in a controller
-  /// \todo refactor with concern separation
+  /// \todo refactor with concern separation?
   class physical_item {
    public:
     enum class type : std::uint8_t { button, knob, slider };
@@ -162,6 +162,8 @@ class control {
           ...);
     }
 
+    /// Dispatch to the client of this controller
+    /// \todo Remove and move to group
     void dispatch() {
       std::cout << "Dispatch" << std::endl;
       for (auto& l : listeners)
@@ -209,6 +211,7 @@ class control {
 
     /// Connect this control to the real parameter
     template <typename ControlItem> auto& connect(ControlItem& ci) {
+      // \todo Should be done by the item & group instead?
       add_action([&](int v) { ci.set_from_controller(v); });
       return *this;
     }
@@ -252,6 +255,7 @@ class control {
     auto& operator->() const { return implementation; }
   };
 
+  /// A logical control item to be connected from a group to a physical item
   template <typename PhysicalValue> class item {
    public:
     using physical_value_type = PhysicalValue;
@@ -260,21 +264,23 @@ class control {
 
     using value_type = typename physical_value_type::value_type;
 
+    /// The name of the logical item
     std::string user_name;
 
-    std::optional<std::reference_wrapper<physical_item>> c_i;
+    /// The physical control item behind the logical control item
+    std::optional<std::reference_wrapper<physical_item>> phys_item;
 
     item(const std::string& name, const physical_value_type& a_physical_value)
         : physical_value { a_physical_value }
         , user_name { name } {}
 
     template <typename Group>
-    item(Group* g, physical_item& ci, const std::string& name,
+    item(Group* g, physical_item& pi, const std::string& name,
          const physical_value_type& a_physical_value)
         : physical_value { a_physical_value }
         , user_name { name }
-        , c_i { ci } {
-      g->assign(ci, [&] { physical_value.set_from_controller(ci.value); });
+        , phys_item { pi } {
+      g->assign(pi, [&] { physical_value.set_from_controller(pi.value); });
     }
 
     value_type& value() { return physical_value.value; }
