@@ -14,9 +14,14 @@
 #include <range/v3/all.hpp>
 
 #include "control.hpp"
-#include "group.hpp"
+// Forward declare for now
+//#include "group.hpp"
 
 namespace musycl {
+
+// Forward declare for now
+class group;
+bool try_dispatch(const group*, control::physical_item&);
 
 class user_interface {
   /** The user interface is made of a stack of active layers
@@ -50,7 +55,7 @@ class user_interface {
     // Dispatch the physical_item with the first matching dispatcher
     // across the layer stack
     for (auto layer : active_layers | ranges::views::reverse)
-      if (layer->try_dispatch(ci))
+      if (try_dispatch(layer, ci))
         break;
   }
 };

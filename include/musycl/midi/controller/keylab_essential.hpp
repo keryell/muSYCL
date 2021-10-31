@@ -23,6 +23,7 @@
 #include "musycl/control.hpp"
 #include "musycl/midi.hpp"
 #include "musycl/midi/midi_out.hpp"
+#include "musycl/user_interface.hpp"
 
 namespace musycl {
 
@@ -147,6 +148,9 @@ class controller {
 
     static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
                                                   '\x1' };
+
+    /// The user interface logic
+    user_interface ui;
 
     /** Button light fuzzing
 

@@ -56,5 +56,10 @@ class group {
   }
 };
 
+// To break a cycle from user_interface.hpp
+bool inline try_dispatch(const group* g, control::physical_item& pi) {
+  return g->try_dispatch(pi);
+};
+
 } // namespace musycl
 #endif // MUSYCL_GROUP_HPP
