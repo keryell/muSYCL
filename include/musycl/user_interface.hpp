@@ -49,17 +49,22 @@ class user_interface {
 
   /** Process an action on a physical_item into the current user interface
 
-      \param[in] ci is the physical_item to process
+      \param[in] pi is the physical_item to process
   */
-  void dispatch(control::physical_item& ci) {
+  void dispatch(control::physical_item& pi) {
     // Dispatch the physical_item with the first matching dispatcher
     // across the layer stack
     for (auto layer : active_layers | ranges::views::reverse)
-      if (try_dispatch(layer, ci))
+      if (try_dispatch(layer, pi))
         break;
   }
 };
 
+/// Break an inclusion cycle in control.hpp
+void inline user_interface_dispach_physical_item(user_interface& ui,
+                                                 control::physical_item& pi) {
+  ui.dispatch(pi);
+}
 } // namespace musycl
 
 #endif // MUSYCL_USER_INTERFACE_HPP

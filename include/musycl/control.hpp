@@ -16,7 +16,13 @@
 
 #include "triSYCL/detail/shared_ptr_implementation.hpp"
 
+#include "musycl/midi.hpp"
+#include "musycl/midi/midi_in.hpp"
+
 namespace musycl {
+
+// Break an inclusion cycle
+class user_interface;
 
 class control {
  public:
@@ -59,7 +65,7 @@ class control {
     using physical_value<value_type, time>::physical_value;
   };
 
-    /// A representation of a physical control item in a controller
+  /// A representation of a physical control item in a controller
   /// \todo refactor with concern separation?
   class physical_item {
    public:
@@ -120,8 +126,16 @@ class control {
     std::vector<std::function<void(midi::control_change::value_type)>>
         listeners;
 
+    std::function<void(physical_item&)> user_interface_dispatcher;
+
     template <typename... Features>
-    physical_item(void*, type t, Features... features) {
+    physical_item(user_interface& ui, type t, Features... features) {
+      user_interface_dispatcher = [=](physical_item& pi) mutable {
+        // Break an inclusion cycle
+        void user_interface_dispach_physical_item(user_interface&,
+                                                  physical_item&);
+        user_interface_dispach_physical_item(ui, pi);
+      };
       // Parse the features
       (
           [&](auto&& f) {
@@ -165,9 +179,10 @@ class control {
     /// Dispatch to the client of this controller
     /// \todo Remove and move to group
     void dispatch() {
-      std::cout << "Dispatch" << std::endl;
+      std::cout << "Dispatch from physical item" << std::endl;
       for (auto& l : listeners)
         l(value);
+      user_interface_dispatcher(*this);
     }
 
     /// Name the physical_item
@@ -280,7 +295,10 @@ class control {
         : physical_value { a_physical_value }
         , user_name { name }
         , phys_item { pi } {
-      g->assign(pi, [&] { physical_value.set_from_controller(pi.value); });
+      g->assign(pi, [&] {
+        std::cout << "Assign from group " << std::endl;
+        physical_value.set_from_controller(pi.value);
+      });
     }
 
     value_type& value() { return physical_value.value; }

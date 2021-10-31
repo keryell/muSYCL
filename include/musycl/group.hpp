@@ -37,7 +37,11 @@ class group {
  public:
   group(musycl::controller::keylab_essential& c, const std::string& n)
       : name { n }
-      , controller { &c } {}
+      , controller { &c } {
+    // Add the group to the user-interface
+    // \todo refactor/clean-up
+    c.add_control_group(*this);
+  }
 
   group() = default;
 
