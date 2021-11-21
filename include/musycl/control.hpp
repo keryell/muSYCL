@@ -270,7 +270,8 @@ class control {
     auto& operator->() const { return implementation; }
   };
 
-  /// A logical control item to be connected from a group to a physical item
+  /// A logical control \c item to be connected from a \c group to a
+  /// \c physical_item and dispatch from the \c user_interface
   template <typename PhysicalValue> class item {
    public:
     using physical_value_type = PhysicalValue;

@@ -60,7 +60,13 @@ class group {
       \return true if the dispatch was successful or false if there is
       no action for this control item
    */
-  bool try_dispatch(const control::physical_item& ci) const { return false; }
+  bool try_dispatch(control::physical_item& ci) const {
+    auto v = physical_items.find(&ci);
+    if (v == physical_items.end())
+      return false;
+    v->second();
+    return true;
+  }
 };
 
 // To break a cycle from user_interface.hpp
