@@ -23,6 +23,9 @@ class group {
   /// User-facing name
   std::string name;
 
+  /// A group can be associated to a MIDI channel
+  std::optional<midi::channel_type> channel;
+
   /// Action to dispatch from a control item
   std::map<control::physical_item*, std::function<void()>> physical_items;
 
@@ -35,8 +38,10 @@ class group {
 
   //  controls
  public:
-  group(musycl::controller::keylab_essential& c, const std::string& n)
+  group(musycl::controller::keylab_essential& c, const std::string& n,
+        std::optional<midi::channel_type> midi_channel = {})
       : name { n }
+      , channel { midi_channel }
       , controller { &c } {
     // Add the group to the user-interface
     // \todo refactor/clean-up
@@ -55,9 +60,7 @@ class group {
       \return true if the dispatch was successful or false if there is
       no action for this control item
    */
-  bool try_dispatch(const control::physical_item& ci) const {
-    return false;
-  }
+  bool try_dispatch(const control::physical_item& ci) const { return false; }
 };
 
 // To break a cycle from user_interface.hpp
