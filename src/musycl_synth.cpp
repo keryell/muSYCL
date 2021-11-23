@@ -174,17 +174,24 @@ int main() {
   controller.param_4_pan_8.name("Delay line ratio")
     .set_variable(delay_line_ratio);
 
-  musycl::dco_envelope::param_t dcoe1;
+  auto ui = controller.user_interface();
+  musycl::dco_envelope::param_t dcoe1 { ui, 0 };
   dcoe1.env->attack_time = 0.1;
   dcoe1.env->decay_time = 0.4;
   dcoe1.env->sustain_level = 0.3;
   dcoe1.env->release_time = 0.5;
 
-  musycl::dco_envelope::param_t dcoe2;
+  musycl::dco_envelope::param_t dcoe2 { ui, 1 };
   dcoe2.env->decay_time = .1;
   dcoe2.env->sustain_level = .1;
 
-  musycl::dco::param_t dco3;
+  musycl::dco::param_t dco3 { ui, 2 };
+
+  musycl::noise::param_t noise { ui, 3 };
+
+  musycl::dco::param_t dco5 { ui, 4 };
+
+  musycl::dco::param_t dco6 { ui, 5 };
 
   // MIDI channel mapping
   musycl::sound_generator::param_t channel_assign[] {

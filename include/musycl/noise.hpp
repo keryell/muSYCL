@@ -49,9 +49,18 @@ class noise {
   float frequency;
 
  public:
-  struct param_t {
-    using owner_t = noise;
+  /// Parameters of the noise sound
+  class param_detail : public group {
+   public:
+    /// The user-interface group name for the component
+    std::string group_name { "noise" };
   };
+
+  // Shared parameter between all copies of this noise generator
+  using param_t = control::param<param_detail, noise>;
+
+  /// Current parameters of the noise
+  param_t param;
 
   /// Output volume of the note
   float volume { 1 };

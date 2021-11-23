@@ -78,7 +78,7 @@ class dco {
     };
   };
 
-  // Shared parameter between all copies of this envelope generator
+  // Shared parameter between all copies of this DCO generator
   using param_t = control::param<param_detail, dco>;
 
   /// Current parameters of the DCO

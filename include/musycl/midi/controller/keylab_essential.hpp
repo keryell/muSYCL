@@ -274,7 +274,8 @@ class controller {
                                         button_out::pad_2_green } };
 
     /// Start the KeyLab controller
-    keylab_essential() {
+    keylab_essential()
+        : ui { *this } {
       display("Salut les petits amis");
       // button_light_fuzzing();
       // Refresh the LCD display because it is garbled by various information
@@ -298,6 +299,9 @@ class controller {
       midi_out::write(sysex_message);
       return sysex_message;
     }
+
+    /// Return the underlying user interface
+    user_interface& user_interface() { return ui; }
 
     void button_light(std::int8_t button, std::int8_t level) {
       static auto constexpr sysex_button_light = { '\x2', '\0', '\x10' };
@@ -350,11 +354,6 @@ class controller {
       auto light_level = (ct.midi_clock_index < midi::clock_per_quarter / 4) *
                          (32 + 95 * (ct.beat_index == 0));
       button_light((int)button_out::metro, light_level);
-    }
-
-    /// Add a control group to the user-interface
-    void add_control_group(group &g) {
-      ui.add_layer(g);
     }
   };
 };

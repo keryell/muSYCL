@@ -35,10 +35,19 @@ class user_interface {
   std::vector<const group*> active_layers;
 
  public:
+
+  /// The \c controller associated to the \c user_interface
+  void* controller;
+
   /** Add a layer on top of the user interface
 
       \param[in] g is the layer to add
   */
+
+  user_interface(auto& controller)
+    : controller { &controller } {}
+
+  /// Add a control group to the user-interface
   void add_layer(const group& g) { active_layers.emplace_back(&g); }
 
   /** Remove a layer from the user interface
@@ -65,6 +74,11 @@ void inline user_interface_dispach_physical_item(user_interface& ui,
                                                  control::physical_item& pi) {
   ui.dispatch(pi);
 }
+
+  /// Break an inclusion cycle in control.hpp
+  static auto get_controller(user_interface& ui) {
+    return ui.controller;
+  }
 } // namespace musycl
 
 #endif // MUSYCL_USER_INTERFACE_HPP

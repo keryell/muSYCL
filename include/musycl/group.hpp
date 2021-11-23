@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <vector>
 
 //#include "triSYCL/detail/cache.hpp"
 
@@ -29,23 +30,29 @@ class group {
   /// Action to dispatch from a control item
   std::map<control::physical_item*, std::function<void()>> physical_items;
 
+  /// A group can also have subgroup to have controllers associated
+  std::vector<group*> subgroups;
+
   /// A cache to the already created groups
   // static trisycl::detail::cache<std::string, detail::group> cache;
 
  protected:
-  /// The controller associated to the group
+  /// The \c user_interface associated to the \c group
+  musycl::user_interface* user_interface;
+
+  /// The \c controller associated to the \c group
   musycl::controller::keylab_essential* controller;
 
-  //  controls
  public:
-  group(musycl::controller::keylab_essential& c, const std::string& n,
+  group(musycl::user_interface& ui, const std::string& n,
         std::optional<midi::channel_type> midi_channel = {})
       : name { n }
       , channel { midi_channel }
-      , controller { &c } {
+      , user_interface { &ui }
+      , controller { static_cast<musycl::controller::keylab_essential*>(get_controller(ui)) } {
     // Add the group to the user-interface
     // \todo refactor/clean-up
-    c.add_control_group(*this);
+    ui.add_layer(*this);
   }
 
   group() = default;

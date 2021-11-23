@@ -253,17 +253,17 @@ class control {
     using owner_t = Owner;
 
     /// The type encapsulating the implementation
-    using implementation_t =
-        trisycl::detail::shared_ptr_implementation<param<param_detail, owner_t>,
-                                                   param_detail>;
+    using implementation_t = typename param::shared_ptr_implementation;
 
     /// Import the constructors
-    using implementation_t::implementation_t;
+//    using implementation_t::implementation_t;
 
     // Make the implementation member directly accessible in this class
     using implementation_t::implementation;
 
-    param()
+    param(auto... args)
+//        : implementation_t { new param_detail(
+//              std::forward<decltype(args)>(args)...) } {}
         : implementation_t { new param_detail } {}
 
     // Forward everything to the implementation detail

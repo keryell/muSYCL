@@ -28,6 +28,8 @@ class dco_envelope
   struct param_t {
     using owner_t = dco_envelope;
 
+    param_t(auto... args) : dco { args...}, env { args...} {}
+
     /// The DCO parameters
     dco::param_t dco;
 
