@@ -74,7 +74,7 @@ int main() {
       controller.display("Arpeggiator running: "
                          + std::to_string(v));
     });
-  musycl::arpeggiator arp_bass { 0, 0, [] (auto& self) {
+  musycl::arpeggiator arp_bass { 0, -1, [] (auto& self) {
     static trisycl::vendor::trisycl::random::xorshift<> rng;
     if (self.current_clock_time.beat) {
       /// Insert a C0 note on each beat

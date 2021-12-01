@@ -80,7 +80,7 @@ public:
   auto& start(const midi::on& on) {
     velocity = on.velocity_1();
     frequency = midi::frequency(on);
-    running = lpf_env.start().is_running() | rf_env.start().is_running();
+    running = lpf_env.start().is_running() || rf_env.start().is_running();
     return *this;
   }
 

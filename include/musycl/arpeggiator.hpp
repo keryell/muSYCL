@@ -18,16 +18,17 @@
 #include "clock.hpp"
 #include "midi.hpp"
 #include "midi/midi_in.hpp"
+#include "music_theory.hpp"
 
 namespace musycl {
 
 class arpeggiator : public clock::follow<arpeggiator> {
  public:
-  /// Ignore lower note than this one
-  midi::note_type low_input_limit;
+  /// Ignore note lower than this one
+  midi::note_type low_input_limit = 0;
 
-  /// Ignore upper note than this one
-  midi::note_type high_input_limit;
+  /// Ignore note equal to or higher than this one
+  midi::note_type high_input_end = 60;
 
   /// The notes to play with
   std::vector<midi::on> notes;
@@ -57,11 +58,10 @@ class arpeggiator : public clock::follow<arpeggiator> {
       \input[in] c is a callable implementing the arpeggiato or use a
       default one
   */
-  arpeggiator(midi::note_type low, midi::note_type high, callable_t c = {}) {
-    low_input_limit = low;
-    high_input_limit = high;
-    callable = c;
-  }
+  arpeggiator(midi::note_type low, midi::note_type high, callable_t c = {})
+      : low_input_limit { low }
+      , high_input_end { high }
+      , callable { c } {}
 
   /** Handle MIDI note events
 
@@ -72,11 +72,12 @@ class arpeggiator : public clock::follow<arpeggiator> {
   auto& midi(const midi::msg& m) {
     std::visit(trisycl::detail::overloaded {
                    [&](const midi::on& on) {
-                     if (on.note < 60)
+                     if (low_input_limit <= on.note && on.note < high_input_end)
                        notes.push_back(on);
                    },
                    [&](const midi::off& off) {
-                     if (off.note < 60)
+                     if (low_input_limit <= off.note &&
+                         off.note < high_input_end)
                        // Remove the same note without looking at the velocity
                        std::erase_if(notes, [&](const auto& n) {
                          return n.channel == off.channel && n.note == off.note;
