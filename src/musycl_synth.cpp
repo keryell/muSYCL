@@ -90,6 +90,34 @@ int main() {
       controller.display("Bass arpeggiator running: "
                          + std::to_string(v));
     });
+  musycl::arpeggiator arp_low_high {
+    60, 127, [&, start = false, octave = 0, index = 0](auto& self) mutable {
+    // Otherwise use a default arpeggiator, work on the 16th of note
+    if (self.current_clock_time.midi_clock_index %
+            (musycl::midi::clock_per_quarter / 4) ==
+        0) {
+      start = !start;
+      if (!start)
+        self.stop_current_note();
+      else if (!self.notes.empty()) {
+        std::ranges::sort(self.notes);
+        if (--index < 0 || index >= self.notes.size())
+          index = self.notes.size() - 1;
+        auto n = self.notes[index];
+        n.channel = 2;
+        octave = !octave;
+        n.note += 12 - octave*48;
+        self.current_note = n;
+        musycl::midi_in::insert(0, n);
+        std::cout << "Insert " << n << std::endl;
+      }
+   }}};
+  controller.pad_3.name("Arpeggiator low & high Start/Stop")
+    .add_action([&](bool v) {
+      arp_low_high.run(v);
+      controller.display("Low & high arpeggiator running: "
+                         + std::to_string(v));
+    });
 
   // The master of time
   musycl::clock::set_tempo_bpm(120);
@@ -234,6 +262,7 @@ int main() {
     // Process all the potential incoming MIDI messages on port 0
     while (musycl::midi_in::try_read(0, m)) {
       arp.midi(m);
+      arp_low_high.midi(m);
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
