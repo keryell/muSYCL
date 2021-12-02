@@ -274,6 +274,36 @@ class controller {
                                         button_out::pad_3_blue,
                                         button_out::pad_3_green } };
 
+    control::control_item pad_4 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x27, button_out::pad_4_red,
+                                        button_out::pad_4_blue,
+                                        button_out::pad_4_green } };
+
+    control::control_item pad_5 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x28, button_out::pad_5_red,
+                                        button_out::pad_5_blue,
+                                        button_out::pad_5_green } };
+
+    control::control_item pad_6 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x29, button_out::pad_6_red,
+                                        button_out::pad_6_blue,
+                                        button_out::pad_6_green } };
+
+    control::control_item pad_7 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x2a, button_out::pad_7_red,
+                                        button_out::pad_7_blue,
+                                        button_out::pad_7_green } };
+
+    control::control_item pad_8 = { this, control::control_item::type::button,
+                                    control::control_item::pad {
+                                        0x2b, button_out::pad_8_red,
+                                        button_out::pad_8_blue,
+                                        button_out::pad_8_green } };
+
     /// Start the KeyLab controller
     keylab_essential() {
       display("Salut les petits amis");
