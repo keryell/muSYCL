@@ -72,12 +72,13 @@ class arpeggiator : public clock::follow<arpeggiator> {
   auto& midi(const midi::msg& m) {
     std::visit(trisycl::detail::overloaded {
                    [&](const midi::on& on) {
-                     if (low_input_limit <= on.note && on.note < high_input_end)
+                     if (low_input_limit <= on.note &&
+                         on.note < high_input_end && 0 == on.channel)
                        notes.push_back(on);
                    },
                    [&](const midi::off& off) {
                      if (low_input_limit <= off.note &&
-                         off.note < high_input_end)
+                         off.note < high_input_end && 0 == off.channel)
                        // Remove the same note without looking at the velocity
                        std::erase_if(notes, [&](const auto& n) {
                          return n.channel == off.channel && n.note == off.note;
@@ -131,7 +132,7 @@ class arpeggiator : public clock::follow<arpeggiator> {
           note_index = 0;
         auto n = notes[ct.measure ? bass : note_index];
         // Replay this note on channel 2 except the first one going on 3
-        n.channel = ct.measure ? 2 : ct.beat_index == 2 ? 3 : +1;
+        n.channel = ct.measure ? 2 : ct.beat_index == 2 ? 3 : 1;
         n.note += 24 - 36 * ct.measure;
         if (ct.beat_index == 2)
           n.velocity = 127;
