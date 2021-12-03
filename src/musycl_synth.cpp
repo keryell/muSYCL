@@ -78,7 +78,7 @@ int main() {
     static trisycl::vendor::trisycl::random::xorshift<> rng;
     if (self.current_clock_time.beat) {
       /// Insert a C0 note on each beat
-      self.current_note = musycl::midi::on { 0, 24, (rng() & 63) + 64 };
+      self.current_note = musycl::midi::on { 5, 24, (rng() & 63) + 64 };
       musycl::midi_in::insert(0, *self.current_note);
     }
     else
@@ -157,7 +157,7 @@ int main() {
   controller.pad_5.name("Arpeggiator with 4 basses Start/Stop")
       .add_action([&](bool v) {
         arp_bass_4.run(v);
-        controller.display("Arpeggiator 4 basses running: " +
+        controller.display(" 4 bass arpeggiator running: " +
                            std::to_string(v));
       });
 
@@ -259,6 +259,13 @@ int main() {
   dco3->square_volume = 0;
   dco3->triangle_volume = 1;
 
+  // Triangle wave with fast decay
+  musycl::dco_envelope::param_t triangle6_fast_decay;
+  triangle6_fast_decay.dco->square_volume = 0;
+  triangle6_fast_decay.dco->triangle_volume = 1;
+  triangle6_fast_decay.env->decay_time = .1;
+  triangle6_fast_decay.env->sustain_level = .1;
+
   // MIDI channel mapping
   musycl::sound_generator::param_t channel_assign[] {
     dcoe1,
@@ -266,7 +273,7 @@ int main() {
     dco3,
     musycl::noise::param_t {},
     musycl::dco::param_t {},
-    musycl::dco_envelope::param_t {}
+    triangle6_fast_decay
   };
 
   // Control the DCO 1 & 3 parameters
