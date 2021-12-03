@@ -5,6 +5,7 @@
 /// audio frame tick, beat tick, measure tick
 
 #include <functional>
+#include <iostream>
 #include <map>
 #include <utility>
 
@@ -31,11 +32,11 @@ class clock {
 
   /// Describe the type of tick
   struct type {
-    int midi_clock_index; ///< Current MIDI beat in current beat
     int beat_index;       ///< Current beat in current measure (bar)
-    bool midi_clock;      ///< True if this is the start of a MIDI clock
+    int midi_clock_index; ///< Current MIDI clock in current beat
     bool measure;         ///< True if this is the start of a measure
     bool beat;            ///< True if this is the start of a beat
+    bool midi_clock;      ///< True if this is the start of a MIDI clock
   };
 
  private:
@@ -142,6 +143,14 @@ class clock {
       if (++tick_type.beat_index == meter)
         tick_type.beat_index = 0;
     }
+  }
+
+  /// Display current time
+  static void display() {
+    std::cout << "beat_index=" << tick_type.beat_index
+              << " midi_clock_index=" << tick_type.midi_clock_index
+              << " measure=" << tick_type.measure << " beat=" << tick_type.beat
+              << " midi_clock=" << tick_type.midi_clock << std::endl;
   }
 
   /// To receive a clocks, a class just needs to inherit from this CRTP class
