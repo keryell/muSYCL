@@ -47,7 +47,7 @@ class dco {
 
   /// Position in the period of the triangle peak
   float triangle_peak_phase {};
- 
+
  public:
   /// Parameters of the DCO sound
   class param_detail {

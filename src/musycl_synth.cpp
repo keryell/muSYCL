@@ -254,7 +254,10 @@ int main() {
   dcoe2.env->decay_time = .1;
   dcoe2.env->sustain_level = .1;
 
+  // Triangle wave
   musycl::dco::param_t dco3;
+  dco3->square_volume = 0;
+  dco3->triangle_volume = 1;
 
   // MIDI channel mapping
   musycl::sound_generator::param_t channel_assign[] {
