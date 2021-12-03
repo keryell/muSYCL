@@ -113,43 +113,53 @@ int main() {
       }
    }}};
   controller.pad_3.name("Arpeggiator low & high Start/Stop")
-    .add_action([&](bool v) {
-      arp_low_high.run(v);
-      controller.display("Low & high arpeggiator running: "
-                         + std::to_string(v));
-    });
+      .add_action([&](bool v) {
+        arp_low_high.run(v);
+        controller.display("Low & high arpeggiator running: " +
+                           std::to_string(v));
+      });
 
   musycl::arpeggiator arp_bass_4 {
-    60, 127, [&, start = false, index = 0, n = std::optional<musycl::midi::on>{}](auto& self) mutable {
-    // Otherwise use a default arpeggiator, work on the 16th of note
-    if (self.current_clock_time.midi_clock_index %
-            (musycl::midi::clock_per_quarter / 8) ==
-        0) {
-      start = !start;
-      if (!start)
-        self.stop_current_note();
-      else {
-        if (!self.notes.empty()) {
-          std::ranges::sort(self.notes);
-          n = self.notes[0];
-          n->channel = 2;
-          n->note -= 36;
-        }
-        if (++index > 16)
-          index = 0;
-        if (index < 4 && n) {
-          self.current_note = n;
+    60, 127,
+    [&, start = false, running = false, measure = 0,
+     n = std::optional<musycl::midi::on> {}](auto& self) mutable {
+      // Cycle through 2 consecutive measures
+      measure = (measure + self.current_clock_time.measure) % 2;
+      // Run only during the first 2 beats of the first measure
+      if (0 == measure) {
+        if (self.current_clock_time.measure)
+          running = true;
+        else if (2 == self.current_clock_time.beat_index)
+          running = false;
+      }
+      // Register the currently played lowest note
+      if (!self.notes.empty()) {
+        std::ranges::sort(self.notes);
+        n = self.notes[0];
+        n->channel = 2;
+        n->note -= 36;
+      }
+      if (running && self.current_clock_time.midi_clock_index %
+                             (musycl::midi::clock_per_quarter / 8) ==
+                         0) {
+        // Toggle between starting the note and stopping it
+        start = !start;
+        if (!start)
+          self.stop_current_note();
+        else if (n) {
           musycl::midi_in::insert(0, *n);
+          self.current_note = n;
           std::cout << "Insert " << *n << std::endl;
         }
       }
-   }}};
+    }
+  };
   controller.pad_5.name("Arpeggiator with 4 basses Start/Stop")
-    .add_action([&](bool v) {
-      arp_bass_4.run(v);
-      controller.display("Arpeggiator with 4 basses running: "
-                         + std::to_string(v));
-    });
+      .add_action([&](bool v) {
+        arp_bass_4.run(v);
+        controller.display("Arpeggiator 4 basses running: " +
+                           std::to_string(v));
+      });
 
   // The master of time
   musycl::clock::set_tempo_bpm(120);
