@@ -162,6 +162,40 @@ int main() {
                            std::to_string(v));
       });
 
+  musycl::arpeggiator arp_jupiter_8 {
+    60, 127,
+    [&, start = false, index = 0,
+     n = std::optional<musycl::midi::on> {}](auto& self) mutable {
+      if (self.running && self.current_clock_time.midi_clock_index %
+                             (musycl::midi::clock_per_quarter / 4) ==
+                         0) {
+        // Toggle between starting the note and stopping it
+        start = !start;
+        if (!start)
+          self.stop_current_note();
+        else if (!self.notes.empty()) {
+          std::ranges::sort(self.notes);
+          if (index >= self.notes.size()*4)
+            index = 0;
+          auto n = self.notes[index % self.notes.size()];
+          n.channel = 1;
+          n.note += 12 * (index / self.notes.size()) - 24;
+          n.velocity = 100;
+          musycl::midi_in::insert(0, n);
+          self.current_note = n;
+          std::cout << "Insert " << n << " at index " << index << std::endl;
+          ++index;
+        }
+      }
+    }
+  };
+  controller.pad_6.name("Jupiter 8 Arpeggiator Start/Stop")
+      .add_action([&](bool v) {
+        arp_jupiter_8.run(v);
+        controller.display("Jupiter 8 arpeggiator running: " +
+                           std::to_string(v));
+      });
+
   // The master of time
   musycl::clock::set_tempo_bpm(120);
   // The rotary on the extreme top right of Arturia KeyLab 49
@@ -320,6 +354,8 @@ int main() {
       arp.midi(m);
       arp_low_high.midi(m);
       arp_bass_4.midi(m);
+      arp_jupiter_8.midi(m);
+ 
       std::visit(trisycl::detail::overloaded {
           [&] (musycl::midi::on& on) {
             ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
