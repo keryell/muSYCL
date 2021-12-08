@@ -140,7 +140,7 @@ int main() {
         n->note -= 36;
       }
       if (running && self.current_clock_time.midi_clock_index %
-                             (musycl::midi::clock_per_quarter / 8) ==
+                             (musycl::midi::clock_per_quarter / 4) ==
                          0) {
         // Toggle between starting the note and stopping it
         start = !start;
