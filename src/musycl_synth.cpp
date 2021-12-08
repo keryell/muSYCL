@@ -108,6 +108,7 @@ int main() {
         octave = !octave;
         n.note += 12 - octave*48;
         self.current_note = n;
+        n.velocity = 60;
         musycl::midi_in::insert(0, n);
         std::cout << "Insert " << n << std::endl;
       }
