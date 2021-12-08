@@ -224,6 +224,7 @@ int main() {
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
   musycl::midi_in::cc_variable<85>(master_volume);
 
+  /// No reLU by default
   float rectication_ratio = 0;
   // Use MIDI CC 0x12 (Param 2/Pan 6) to set the rectification ratio
   controller.param_2_pan_6.name("Rectification ratio")
@@ -231,15 +232,17 @@ int main() {
 
   // Keep 5 seconds of delay
   constexpr auto frame_delay = static_cast<int>(5*musycl::frame_frequency);
-  std::array<musycl::audio::sample_type, frame_delay*musycl::frame_size>
-    delay {};
-  float delay_line_time = 0;
+  std::array<musycl::audio::sample_type, frame_delay * musycl::frame_size>
+      delay {};
+  /// Almost a 8th note of delay by default at 120 bpm sounds cool
+  float delay_line_time = 0.245;
   controller.param_3_pan_7.name("Delay line time")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      delay_line_time = v*v/127.f/127*2;
-      controller.display("Delay line time: "
-                         + std::to_string(delay_line_time) + 's');
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        delay_line_time = v * v / 127.f / 127 * 2;
+        controller.display(
+            "Delay line time: " + std::to_string(delay_line_time) + 's');
+      });
+  /// No delay by default
   float delay_line_ratio = 0;
   controller.param_4_pan_8.name("Delay line ratio")
     .set_variable(delay_line_ratio);
