@@ -14,6 +14,7 @@
 #include <range/v3/all.hpp>
 
 #include "control.hpp"
+
 // Forward declare for now
 //#include "group.hpp"
 
@@ -22,6 +23,9 @@ namespace musycl {
 // Forward declare for now
 class group;
 bool try_dispatch(const group*, control::physical_item&);
+namespace controller {
+  class keylab_essential;
+}
 
 class user_interface {
   /** The user interface is made of a stack of active layers
@@ -37,15 +41,7 @@ class user_interface {
  public:
 
   /// The \c controller associated to the \c user_interface
-  void* controller;
-
-  /** Add a layer on top of the user interface
-
-      \param[in] g is the layer to add
-  */
-
-  user_interface(auto& controller)
-    : controller { &controller } {}
+  controller::keylab_essential* c;
 
   /// Add a control group to the user-interface
   void add_layer(const group& g) { active_layers.emplace_back(&g); }
@@ -67,6 +63,10 @@ class user_interface {
       if (try_dispatch(layer, pi))
         break;
   }
+
+  void set_controller(controller::keylab_essential& cont) {
+    c = &cont;
+  }
 };
 
 /// Break an inclusion cycle in control.hpp
@@ -75,10 +75,6 @@ void inline user_interface_dispach_physical_item(user_interface& ui,
   ui.dispatch(pi);
 }
 
-  /// Break an inclusion cycle in control.hpp
-  static auto get_controller(user_interface& ui) {
-    return ui.controller;
-  }
 } // namespace musycl
 
 #endif // MUSYCL_USER_INTERFACE_HPP

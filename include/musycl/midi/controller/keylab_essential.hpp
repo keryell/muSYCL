@@ -25,12 +25,65 @@
 #include "musycl/midi/midi_out.hpp"
 #include "musycl/user_interface.hpp"
 
-namespace musycl {
+namespace musycl::controller {
 
 // To use time unit literals directly
 using namespace std::chrono_literals;
 
-class controller {
+  /** An Arturia KeyLab MIDI controller
+
+      This is made by gathering some information on-line, such as
+
+      https://forum.arturia.com/index.php?topic=90496.0
+      https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
+      https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
+
+      Some SysEx values can be seen in the MIDI console of the MIDI
+      Control Center from Arturia.
+  */
+  class keylab_essential : public clock::follow<keylab_essential> {
+    /** Arturia MIDI SysEx Id
+        https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
+    */
+    static auto constexpr sysex_id = { '\0', '\x20', '\x6b' };
+
+    /// The device ID seems just "broadcast"
+    static auto constexpr dev_id = { '\x7f' };
+
+    /// The sub device ID?
+    static auto constexpr sub_dev_id = { '\x42' };
+
+    static auto constexpr sysex_vegas_mode_off = { '\x2', '\0', '\x40', '\x50',
+                                                   '\0' };
+
+    static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
+                                                  '\x1' };
+
+    /// The user interface logic
+    user_interface& ui;
+
+    /** Button light fuzzing
+
+        Experiment with some light commands
+    */
+    void button_light_fuzzing() {
+      // Pick a button range to check
+      for (auto b = 0x00; b <= 0x0f; ++b) {
+        for (auto l = 0; l <= 127; ++l) {
+          button_light(b, l);
+          std::this_thread::sleep_for(10ms);
+        }
+        std::this_thread::sleep_for(2s);
+        button_light(b, 0);
+      }
+      /* Increase light level across all the buttons.
+         The problem is that it triggers the Vegas light show mode */
+      for (auto l = 0; l <= 127; ++l)
+        for (auto b = 0; b <= 127; ++b) {
+          button_light(b, l);
+          std::this_thread::sleep_for(10ms);
+        }
+    }
 
  public:
   /** Mapping of button light to SySex button light command
@@ -119,61 +172,6 @@ class controller {
     pad_7_blue_ter = 0x7e,
     pad_8_blue_ter = 0x7f,
   };
-
-  /** An Arturia KeyLab MIDI controller
-
-      This is made by gathering some information on-line, such as
-
-      https://forum.arturia.com/index.php?topic=90496.0
-      https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
-      https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
-
-      Some SysEx values can be seen in the MIDI console of the MIDI
-      Control Center from Arturia.
-  */
-  class keylab_essential : public clock::follow<keylab_essential> {
-    /** Arturia MIDI SysEx Id
-        https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
-    */
-    static auto constexpr sysex_id = { '\0', '\x20', '\x6b' };
-
-    /// The device ID seems just "broadcast"
-    static auto constexpr dev_id = { '\x7f' };
-
-    /// The sub device ID?
-    static auto constexpr sub_dev_id = { '\x42' };
-
-    static auto constexpr sysex_vegas_mode_off = { '\x2', '\0', '\x40', '\x50',
-                                                   '\0' };
-
-    static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
-                                                  '\x1' };
-
-    /// The user interface logic
-    user_interface ui;
-
-    /** Button light fuzzing
-
-        Experiment with some light commands
-    */
-    void button_light_fuzzing() {
-      // Pick a button range to check
-      for (auto b = 0x00; b <= 0x0f; ++b) {
-        for (auto l = 0; l <= 127; ++l) {
-          button_light(b, l);
-          std::this_thread::sleep_for(10ms);
-        }
-        std::this_thread::sleep_for(2s);
-        button_light(b, 0);
-      }
-      /* Increase light level across all the buttons.
-         The problem is that it triggers the Vegas light show mode */
-      for (auto l = 0; l <= 127; ++l)
-        for (auto b = 0; b <= 127; ++b) {
-          button_light(b, l);
-          std::this_thread::sleep_for(10ms);
-        }
-    }
 
    public:
     /// List all the control items
@@ -274,8 +272,9 @@ class controller {
                                         button_out::pad_2_green } };
 
     /// Start the KeyLab controller
-    keylab_essential()
-        : ui { *this } {
+    keylab_essential(user_interface& ui)
+        : ui { ui } {
+      ui.set_controller(*this);
       display("Salut les petits amis");
       // button_light_fuzzing();
       // Refresh the LCD display because it is garbled by various information
@@ -356,7 +355,6 @@ class controller {
       button_light((int)button_out::metro, light_level);
     }
   };
-};
 
 } // namespace musycl
 

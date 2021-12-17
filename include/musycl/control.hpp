@@ -233,7 +233,7 @@ class control {
   };
 
   /** A parameter set shared across various owner instance with a
-      shared pointer façades
+      shared pointer façade
 
       \param[in] ParamDetail is the real implementation of the
       parameter set

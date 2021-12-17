@@ -12,6 +12,7 @@
 #include "config.hpp"
 
 #include "audio.hpp"
+#include "group.hpp"
 #include "envelope.hpp"
 #include "low_pass_filter.hpp"
 #include "midi.hpp"

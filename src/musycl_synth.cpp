@@ -47,8 +47,18 @@ int main() {
   musycl::midi_out midi_out;
   midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
 
+  musycl::user_interface ui;
+
   // Assume an Arturia KeyLab essential as a MIDI controller
-  musycl::controller::keylab_essential controller;
+  musycl::controller::keylab_essential controller { ui };
+
+  /** The (MIDI) channel mapping to the sound parameter
+
+      Note that there might be more channels than the 16 real MIDI
+      channels for convenience, for example to have more sounds for
+      arpeggiators
+  */
+  std::map<int, musycl::sound_generator::param_t> channel_assign;
 
   // The sound generators producing the music, 1 per running note & MIDI channel
   std::map<musycl::midi::note_base_header, musycl::sound_generator> sounds;
@@ -67,68 +77,65 @@ int main() {
 
   // An arpeggiator
   musycl::arpeggiator arp;
-  //controller.play_pause.name("Arpeggiator Start/Stop")
-  controller.pad_2.name("Arpeggiator Start/Stop")
-    .add_action([&](bool v) {
-      arp.run(v);
-      controller.display("Arpeggiator running: "
-                         + std::to_string(v));
-    });
-  musycl::arpeggiator arp_bass { 0, 0, [] (auto& self) {
-    static trisycl::vendor::trisycl::random::xorshift<> rng;
-    if (self.current_clock_time.beat) {
-      /// Insert a C0 note on each beat
-      self.current_note = musycl::midi::on { 0, 24, (rng() & 63) + 64 };
-      musycl::midi_in::insert(0, *self.current_note);
+  // controller.play_pause.name("Arpeggiator Start/Stop")
+  controller.pad_2.name("Arpeggiator Start/Stop").add_action([&](bool v) {
+    arp.run(v);
+    controller.display("Arpeggiator running: " + std::to_string(v));
+  });
+  musycl::arpeggiator arp_bass {
+    0, 0,
+    [](auto& self) {
+      static trisycl::vendor::trisycl::random::xorshift<> rng;
+      if (self.current_clock_time.beat) {
+        /// Insert a C0 note on each beat
+        self.current_note = musycl::midi::on { 0, 24, (rng() & 63) + 64 };
+        musycl::midi_in::insert(0, *self.current_note);
+      } else
+        self.stop_current_note();
     }
-    else
-      self.stop_current_note();
-   }};
-  controller.pad_1.name("Bass arpeggiator Start/Stop")
-    .add_action([&](bool v) {
-      arp_bass.run(v);
-      controller.display("Bass arpeggiator running: "
-                         + std::to_string(v));
-    });
+  };
+  controller.pad_1.name("Bass arpeggiator Start/Stop").add_action([&](bool v) {
+    arp_bass.run(v);
+    controller.display("Bass arpeggiator running: " + std::to_string(v));
+  });
 
   // The master of time
   musycl::clock::set_tempo_bpm(120);
   // The rotary on the extreme top right of Arturia KeyLab 49
   controller.top_right_knob_9.name("Tempo rate")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      auto tempo = int { v } * 2;
-      musycl::clock::set_tempo_bpm(tempo);
-      controller.display("Tempo rate: "
-                         + std::to_string(tempo) + " bpm");
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        auto tempo = int { v } * 2;
+        musycl::clock::set_tempo_bpm(tempo);
+        controller.display("Tempo rate: " + std::to_string(tempo) + " bpm");
+      });
 
   // The low pass filters for the output channels
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
-    low_pass_filter;
+      low_pass_filter;
 
   // The resonance filters for the output channels
   std::array<musycl::resonance_filter, musycl::audio::channel_number>
-    resonance_filter;
+      resonance_filter;
 
   // Use "Cutoff" on Arturia KeyLab 49 to set the resonance frequency
   controller.cutoff_pan_1.name("Cutoff frequency")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      auto cut_off_freq =
-        musycl::midi::control_change::get_log_scale_value_in(v, 20, 10000);
-      for (auto& f : resonance_filter)
-         f.set_frequency(cut_off_freq);
-      controller.display("Resonance filter: "
-                         + std::to_string(cut_off_freq) + " Hz");
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        auto cut_off_freq =
+            musycl::midi::control_change::get_log_scale_value_in(v, 20, 10000);
+        for (auto& f : resonance_filter)
+          f.set_frequency(cut_off_freq);
+        controller.display("Resonance filter: " + std::to_string(cut_off_freq) +
+                           " Hz");
+      });
 
   // Use "Resonance" on Arturia KeyLab 49 to set the resonance
   controller.resonance_pan_2.name("Resonance factor")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      auto resonance = std::log(v + 1.f)/std::log(128.f);
-      for (auto& f : resonance_filter)
-        f.set_resonance(resonance);
-      controller.display("Resonance factor: " + std::to_string(resonance));
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        auto resonance = std::log(v + 1.f) / std::log(128.f);
+        for (auto& f : resonance_filter)
+          f.set_resonance(resonance);
+        controller.display("Resonance factor: " + std::to_string(resonance));
+      });
 
   // Create an LFO and start it
   musycl::lfo lfo;
@@ -136,20 +143,20 @@ int main() {
 
   // Use MIDI CC 76 (LFO Rate on Arturia KeyLab 49) to set the LFO frequency
   controller.lfo_rate_pan_3.name("LFO rate")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      auto frequency =
-        musycl::midi::control_change::get_log_scale_value_in(v, 0.1, 20);
-      lfo.set_frequency(frequency);
-      controller.display("LFO rate: " + std::to_string(frequency));
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        auto frequency =
+            musycl::midi::control_change::get_log_scale_value_in(v, 0.1, 20);
+        lfo.set_frequency(frequency);
+        controller.display("LFO rate: " + std::to_string(frequency));
+      });
 
   // Use MIDI CC 77 (LFO Amt on Arturia KeyLab 49) to set the LFO low level
   controller.lfo_amt_pan_4.name("LFO amount")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      auto low = musycl::midi::control_change::get_value_as<float>(v);
-      lfo.set_low(low);
-      controller.display("LFO low bar: " + std::to_string(low));
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        auto low = musycl::midi::control_change::get_value_as<float>(v);
+        lfo.set_low(low);
+        controller.display("LFO low bar: " + std::to_string(low));
+      });
 
   // Use MIDI CC 85 (master volume) to set the value of the... master_volume!
   musycl::midi_in::cc_variable<85>(master_volume);
@@ -157,24 +164,23 @@ int main() {
   float rectication_ratio = 0;
   // Use MIDI CC 0x12 (Param 2/Pan 6) to set the rectification ratio
   controller.param_2_pan_6.name("Rectification ratio")
-    .set_variable(rectication_ratio);
+      .set_variable(rectication_ratio);
 
   // Keep 5 seconds of delay
-  constexpr auto frame_delay = static_cast<int>(5*musycl::frame_frequency);
-  std::array<musycl::audio::sample_type, frame_delay*musycl::frame_size>
-    delay {};
+  constexpr auto frame_delay = static_cast<int>(5 * musycl::frame_frequency);
+  std::array<musycl::audio::sample_type, frame_delay * musycl::frame_size>
+      delay {};
   float delay_line_time = 0;
   controller.param_3_pan_7.name("Delay line time")
-    .add_action([&](musycl::midi::control_change::value_type v) {
-      delay_line_time = v*v/127.f/127*2;
-      controller.display("Delay line time: "
-                         + std::to_string(delay_line_time) + 's');
-    });
+      .add_action([&](musycl::midi::control_change::value_type v) {
+        delay_line_time = v * v / 127.f / 127 * 2;
+        controller.display(
+            "Delay line time: " + std::to_string(delay_line_time) + 's');
+      });
   float delay_line_ratio = 0;
   controller.param_4_pan_8.name("Delay line ratio")
-    .set_variable(delay_line_ratio);
+      .set_variable(delay_line_ratio);
 
-  auto ui = controller.user_interface();
   musycl::dco_envelope::param_t dcoe1 { ui, 0 };
   dcoe1.env->attack_time = 0.1;
   dcoe1.env->decay_time = 0.4;
@@ -193,16 +199,6 @@ int main() {
 
   musycl::dco::param_t dco6 { ui, 5 };
 
-  // MIDI channel mapping
-  musycl::sound_generator::param_t channel_assign[] {
-    dcoe1,
-    dcoe2,
-    dco3,
-    musycl::noise::param_t {},
-    musycl::dco::param_t {},
-    musycl::dco_envelope::param_t {}
-  };
-
   // Control the DCO 1 & 3 parameters
   controller.attack_ch_1.connect(dcoe1.dco->square_volume);
   controller.attack_ch_1.connect(dco3->square_volume);
@@ -220,58 +216,63 @@ int main() {
   controller.release_ch_8.connect(dcoe1.env->release_time);
 
   // Connect the sustain pedal to its MIDI event
-  musycl::midi_in::cc_action<64>([](std::int8_t v) {
-    musycl::sustain::value(v);
-  });
+  musycl::midi_in::cc_action<64>(
+      [](std::int8_t v) { musycl::sustain::value(v); });
 
   controller.param_1_pan_5.name("Low pass filter").add_action([&](float a) {
     /* Use a frequency logarithmic scale between 1 Hz and half the
        sampling frequency */
-    auto cut_off_freq = std::exp((a*std::log(0.5*musycl::sample_frequency)));
+    auto cut_off_freq =
+        std::exp((a * std::log(0.5 * musycl::sample_frequency)));
     for (auto& f : low_pass_filter)
       f.set_cutoff_frequency(cut_off_freq);
-    controller.display("Low pass filter: "
-                       + std::to_string(cut_off_freq) + " Hz");
+    controller.display("Low pass filter: " + std::to_string(cut_off_freq) +
+                       " Hz");
   });
   // The forever time loop
-  for(;;) {
-   /* Dispatch here all the potential incoming MIDI registered
-      actions, so they will not cause race condition */
+  for (;;) {
+    /* Dispatch here all the potential incoming MIDI registered
+       actions, so they will not cause race condition */
     musycl::midi_in::dispatch_registered_actions();
     // Process all the potential incoming MIDI messages on port 0
     while (musycl::midi_in::try_read(0, m)) {
       arp.midi(m);
       std::visit(trisycl::detail::overloaded {
-          [&] (musycl::midi::on& on) {
-            ts::pipe::cout::stream() << "MIDI on " << (int)on.note << std::endl;
-            if (on.channel < std::size(channel_assign))
-              sounds.insert_or_assign
-                (on.base_header(),
-                 musycl::sound_generator { channel_assign[on.channel] })
-                .first->second.start(on);
-            else
-              std::cerr << "Note on to unassigned MIDI channel "
-                        << on.channel + 1 << std::endl;
-          },
-          [&] (musycl::midi::off& off) {
-            ts::pipe::cout::stream() << "MIDI off "
-                                     << (int)off.note << std::endl;
-            if (off.channel < std::size(channel_assign))
-              sounds[off.base_header()].stop(off);
-            else
-              std::cerr << "Note off to unassigned MIDI channel "
-                        << off.channel + 1 << std::endl;
-          },
-          [&] (musycl::midi::control_change& cc) {
-            ts::pipe::cout::stream() << "MIDI cc "
-                                     << (int)cc.number << std::endl;
-            // Attack/CH1 on Arturia Keylab 49 Essential
-            if (cc.number == 73) {
-            }
-          },
-          [&] (auto &&other) { ts::pipe::cout::stream() << "other: "
-                                                        << m << std::endl; }
-        }, m);
+                     [&](musycl::midi::on& on) {
+                       ts::pipe::cout::stream()
+                           << "MIDI on " << (int)on.note << std::endl;
+                       if (auto sp = channel_assign.find(on.channel);
+                           sp != channel_assign.end())
+                         sounds
+                             .insert_or_assign(
+                                 on.base_header(),
+                                 musycl::sound_generator { sp->second })
+                             .first->second.start(on);
+                       else
+                         std::cerr << "Note on to unassigned MIDI channel "
+                                   << on.channel + 1 << std::endl;
+                     },
+                     [&](musycl::midi::off& off) {
+                       ts::pipe::cout::stream()
+                           << "MIDI off " << (int)off.note << std::endl;
+                       if (auto s = sounds.find(off.base_header());
+                           s != sounds.end())
+                         s->second.stop(off);
+                       else
+                         std::cerr << "No note to stop here on MIDI channel "
+                                   << off.channel + 1 << std::endl;
+                     },
+                     [&](musycl::midi::control_change& cc) {
+                       ts::pipe::cout::stream()
+                           << "MIDI cc " << (int)cc.number << std::endl;
+                       // Attack/CH1 on Arturia Keylab 49 Essential
+                       if (cc.number == 73) {
+                       }
+                     },
+                     [&](auto&& other) {
+                       ts::pipe::cout::stream() << "other: " << m << std::endl;
+                     } },
+                 m);
     }
 
     // Propagate the clocks to the consumers

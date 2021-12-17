@@ -15,6 +15,7 @@
 
 #include "musycl/control.hpp"
 #include <musycl/midi/controller/keylab_essential.hpp>
+#include <musycl/user_interface.hpp>
 
 namespace musycl {
 
@@ -38,18 +39,18 @@ class group {
 
  protected:
   /// The \c user_interface associated to the \c group
-  musycl::user_interface* user_interface;
+  user_interface* ui;
 
   /// The \c controller associated to the \c group
-  musycl::controller::keylab_essential* controller;
+  controller::keylab_essential* controller;
 
  public:
-  group(musycl::user_interface& ui, const std::string& n,
+  group(user_interface& ui, const std::string& n,
         std::optional<midi::channel_type> midi_channel = {})
       : name { n }
       , channel { midi_channel }
-      , user_interface { &ui }
-      , controller { static_cast<musycl::controller::keylab_essential*>(get_controller(ui)) } {
+      , ui { &ui }
+      , controller { ui.c } {
     // Add the group to the user-interface
     // \todo refactor/clean-up
     ui.add_layer(*this);
