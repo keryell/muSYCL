@@ -47,18 +47,11 @@ int main() {
   musycl::midi_out midi_out;
   midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
 
-  musycl::user_interface ui;
+  midi::channel_assignment ca;
+  musycl::user_interface ui { ca };
 
   // Assume an Arturia KeyLab essential as a MIDI controller
   musycl::controller::keylab_essential controller { ui };
-
-  /** The (MIDI) channel mapping to the sound parameter
-
-      Note that there might be more channels than the 16 real MIDI
-      channels for convenience, for example to have more sounds for
-      arpeggiators
-  */
-  std::map<int, musycl::sound_generator::param_t> channel_assign;
 
   // The sound generators producing the music, 1 per running note & MIDI channel
   std::map<musycl::midi::note_base_header, musycl::sound_generator> sounds;

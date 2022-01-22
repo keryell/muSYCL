@@ -5,6 +5,7 @@
 
 #include "arpeggiator.hpp"
 #include "audio.hpp"
+#include "channel_assignment.hpp"
 #include "clock.hpp"
 #include "control.hpp"
 #include "dco.hpp"

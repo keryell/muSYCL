@@ -262,9 +262,11 @@ class control {
     using implementation_t::implementation;
 
     /// Create a param_detail from the arguments
-    param(auto&&... args)
+    param(user_interface& ui, auto&&... args)
         : implementation_t { new param_detail {
-              std::forward<decltype(args)>(args)... } } {}
+              ui, std::forward<decltype(args)>(args)... } } {
+      connect(ui, this);
+    }
 
     // Forward everything to the implementation detail
     auto& operator->() const { return implementation; }

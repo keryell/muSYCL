@@ -53,7 +53,7 @@ class group {
       , controller { ui.c } {
     // Add the group to the user-interface
     // \todo refactor/clean-up
-    ui.add_layer(*this);
+    ui.add_layer(*this, midi_channel);
   }
 
   group() = default;
