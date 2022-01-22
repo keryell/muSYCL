@@ -271,6 +271,42 @@ using namespace std::chrono_literals;
                                         button_out::pad_2_blue,
                                         button_out::pad_2_green } };
 
+    control::physical_item pad_3 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x26, button_out::pad_3_red,
+                                        button_out::pad_3_blue,
+                                        button_out::pad_3_green } };
+
+    control::physical_item pad_4 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x27, button_out::pad_4_red,
+                                        button_out::pad_4_blue,
+                                        button_out::pad_4_green } };
+
+    control::physical_item pad_5 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x28, button_out::pad_5_red,
+                                        button_out::pad_5_blue,
+                                        button_out::pad_5_green } };
+
+    control::physical_item pad_6 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x29, button_out::pad_6_red,
+                                        button_out::pad_6_blue,
+                                        button_out::pad_6_green } };
+
+    control::physical_item pad_7 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x2a, button_out::pad_7_red,
+                                        button_out::pad_7_blue,
+                                        button_out::pad_7_green } };
+
+    control::physical_item pad_8 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
+                                        0x2b, button_out::pad_8_red,
+                                        button_out::pad_8_blue,
+                                        button_out::pad_8_green } };
+
     /// Start the KeyLab controller
     keylab_essential(user_interface& ui)
         : ui { ui } {
