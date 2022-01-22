@@ -11,8 +11,10 @@
 
 #include <triSYCL/detail/overloaded.hpp>
 
-#include "clock.hpp"
 #include "config.hpp"
+
+#include "clock.hpp"
+#include "group.hpp"
 
 namespace musycl {
 
@@ -45,8 +47,10 @@ class envelope : public clock::follow<envelope> {
 
  public:
   /// Parameters of the envelope shape
-  class param_detail {
+  class param_detail : public group {
    public:
+    using group::group;
+
     /// Attack time, immediate sound by default
     control::item<control::time<float>> attack_time { "Attack", { 0, 10, 0 } };
 
@@ -98,7 +102,7 @@ class envelope : public clock::follow<envelope> {
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p)
+  envelope(const param_t& p)
       : param { p } {}
 
   /** Start the envelope generator from the beginning

@@ -261,10 +261,10 @@ class control {
     // Make the implementation member directly accessible in this class
     using implementation_t::implementation;
 
-    param(auto... args)
-//        : implementation_t { new param_detail(
-//              std::forward<decltype(args)>(args)...) } {}
-        : implementation_t { new param_detail } {}
+    /// Create a param_detail from the arguments
+    param(auto&&... args)
+        : implementation_t { new param_detail {
+              std::forward<decltype(args)>(args)... } } {}
 
     // Forward everything to the implementation detail
     auto& operator->() const { return implementation; }

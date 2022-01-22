@@ -8,6 +8,9 @@
 #include "../config.hpp"
 
 #include "../audio.hpp"
+#include "../dco.hpp"
+#include "../envelope.hpp"
+#include "../group.hpp"
 #include "../midi.hpp"
 #include "../sustain.hpp"
 
@@ -25,10 +28,13 @@ class dco_envelope
 
  public:
   /// All the parameters behind this sound generator
-  struct param_t {
-    using owner_t = dco_envelope;
+  class param_detail : public group {
+   public:
+    using group::group;
 
-    param_t(auto... args) : dco { args...}, env { args...} {}
+    param_detail(auto&&... args)
+        : dco { std::forward<decltype(args)>(args)... }
+        , env { std::forward<decltype(args)>(args)... } {}
 
     /// The DCO parameters
     dco::param_t dco;
@@ -37,15 +43,18 @@ class dco_envelope
     envelope::param_t env;
   };
 
+  // Shared parameter between all copies of this envelope generator
+  using param_t = control::param<param_detail, dco_envelope>;
+
   /// The sound parameters
   param_t param;
 
   /// Control the volume evolution of the sound
-  envelope env { param.env };
+  envelope env { param->env };
 
   /// Create a sound from its parameters
   dco_envelope(const param_t& p)
-      : dco { p.dco }
+      : dco { p->dco }
       , param { p } {}
 
   /** Start a note

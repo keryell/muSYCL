@@ -53,8 +53,7 @@ class noise {
   /// Parameters of the noise sound
   class param_detail : public group {
    public:
-    /// The user-interface group name for the component
-    std::string group_name { "noise" };
+    using group::group;
   };
 
   // Shared parameter between all copies of this noise generator

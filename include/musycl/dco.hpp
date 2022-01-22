@@ -53,8 +53,7 @@ class dco {
   /// Parameters of the DCO sound
   class param_detail : public group {
    public:
-    /// The user-interface group name for the component
-    std::string group_name { "DCO" };
+    using group::group;
 
     /// Level of the square signal
     control::item<control::level<float>> square_volume {
