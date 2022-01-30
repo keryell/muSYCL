@@ -23,6 +23,7 @@ namespace musycl {
 
 // Break an inclusion cycle
 class user_interface;
+class group;
 
 class control {
  public:
@@ -255,18 +256,14 @@ class control {
     /// The type encapsulating the implementation
     using implementation_t = typename param::shared_ptr_implementation;
 
-    /// Import the constructors
-//    using implementation_t::implementation_t;
-
     // Make the implementation member directly accessible in this class
     using implementation_t::implementation;
 
-    /// Create a param_detail from the arguments
-    param(user_interface& ui, auto&&... args)
-        : implementation_t { new param_detail {
-              ui, std::forward<decltype(args)>(args)... } } {
-      connect(ui, this);
-    }
+    param() = default;
+
+    param(user_interface& ui, const std::string& n,
+          std::optional<midi::channel_type> midi_channel = {})
+        : implementation_t { new param_detail { ui, n, midi_channel } } {}
 
     // Forward everything to the implementation detail
     auto& operator->() const { return implementation; }

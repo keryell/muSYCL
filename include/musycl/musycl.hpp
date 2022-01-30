@@ -5,7 +5,6 @@
 
 #include "arpeggiator.hpp"
 #include "audio.hpp"
-#include "channel_assignment.hpp"
 #include "clock.hpp"
 #include "control.hpp"
 #include "dco.hpp"
@@ -13,6 +12,7 @@
 #include "lfo.hpp"
 #include "low_pass_filter.hpp"
 #include "midi.hpp"
+#include "midi/channel_assignment.hpp"
 #include "midi/midi_in.hpp"
 #include "midi/midi_out.hpp"
 #include "modulation_actuator.hpp"

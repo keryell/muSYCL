@@ -33,7 +33,7 @@ class dco_envelope
     using group::group;
 
     param_detail(auto&&... args)
-        : dco { std::forward<decltype(args)>(args)... }
+       : dco { std::forward<decltype(args)>(args)... }
         , env { std::forward<decltype(args)>(args)... } {}
 
     /// The DCO parameters

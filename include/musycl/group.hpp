@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,7 +26,7 @@ class group {
   /// User-facing name
   std::string name;
 
-  /// A group can be associated to a MIDI channel
+  /// A group can be associated to a MIDI channel \todo unused?
   std::optional<midi::channel_type> channel;
 
   /// Action to dispatch from a control item
@@ -52,8 +53,7 @@ class group {
       , ui { &ui }
       , controller { ui.c } {
     // Add the group to the user-interface
-    // \todo refactor/clean-up
-    ui.add_layer(*this, midi_channel);
+    ui.add_layer(*this);
   }
 
   group() = default;

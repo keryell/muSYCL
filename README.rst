@@ -50,7 +50,7 @@ In the top directory of the repository::
   mkdir build
   # Configure the project with the triSYCL repository somewhere
   CXX=clang++-14 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Debug
   # Build the project
   make --build . --parallel `nproc` --verbose
 

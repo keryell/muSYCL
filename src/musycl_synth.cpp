@@ -47,8 +47,11 @@ int main() {
   musycl::midi_out midi_out;
   midi_out.open("muSYCL", "output", RtMidi::UNIX_JACK);
 
-  midi::channel_assignment ca;
-  musycl::user_interface ui { ca };
+  // The (channel mapping to the sound parameter
+  musycl::midi::channel_assignment channel_assignment;
+
+  // The user interface abstraction
+  musycl::user_interface ui;
 
   // Assume an Arturia KeyLab essential as a MIDI controller
   musycl::controller::keylab_essential controller { ui };
@@ -285,28 +288,34 @@ int main() {
       .set_variable(delay_line_ratio);
 
   musycl::dco_envelope::param_t dcoe1 { ui, "DCO envelope 1", 0 };
+  channel_assignment.assign(0, dcoe1);
   dcoe1->env->attack_time = 0.1;
   dcoe1->env->decay_time = 0.4;
   dcoe1->env->sustain_level = 0.3;
   dcoe1->env->release_time = 0.5;
 
   musycl::dco_envelope::param_t dcoe2 { ui, "DCO envelope 1", 1 };
+  channel_assignment.assign(1, dcoe2);
   dcoe2->env->decay_time = .1;
   dcoe2->env->sustain_level = .1;
 
   // Triangle wave
   musycl::dco::param_t dco3 { ui, "Triangle wave", 2 };
+  channel_assignment.assign(2, dco3);
   dco3->square_volume = 0;
   dco3->triangle_volume = 1;
 
   musycl::noise::param_t noise { ui, "Noise", 3 };
+  channel_assignment.assign(3, noise);
 
   musycl::dco::param_t dco5 { ui, "Plain DCO", 4 };
+  channel_assignment.assign(4, dco5);
 
   // Triangle wave with fast decay
   musycl::dco_envelope::param_t triangle6_fast_decay { ui,
                                                        "Triangle fast decay",
                                                        5 };
+  channel_assignment.assign(5, triangle6_fast_decay);
   triangle6_fast_decay->dco->square_volume = 0;
   triangle6_fast_decay->dco->triangle_volume = 1;
   triangle6_fast_decay->env->decay_time = .1;
@@ -358,8 +367,8 @@ int main() {
                      [&](musycl::midi::on& on) {
                        ts::pipe::cout::stream()
                            << "MIDI on " << (int)on.note << std::endl;
-                       if (auto sp = channel_assign.find(on.channel);
-                           sp != channel_assign.end())
+                       if (auto sp = channel_assignment.channels.find(on.channel);
+                           sp != channel_assignment.channels.end())
                          sounds
                              .insert_or_assign(
                                  on.base_header(),
