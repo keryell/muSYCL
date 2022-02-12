@@ -30,11 +30,14 @@ class dco_envelope
   /// All the parameters behind this sound generator
   class param_detail : public group {
    public:
-    using group::group;
-
     param_detail(auto&&... args)
-       : dco { std::forward<decltype(args)>(args)... }
-        , env { std::forward<decltype(args)>(args)... } {}
+        : dco { std::forward<decltype(args)>(args)... }
+        , env { std::forward<decltype(args)>(args)... } {
+            std::cerr << "param_detail dco_enveloppe created\n";
+            std::cerr << "dco name " << dco->name << '\n';
+            std::cerr << "env name " << env->name << '\n';
+            std::cerr << "param_detail dco_enveloppe created\n";
+    }
 
     /// The DCO parameters
     dco::param_t dco;
@@ -50,12 +53,13 @@ class dco_envelope
   param_t param;
 
   /// Control the volume evolution of the sound
-  envelope env { param->env };
+  envelope env;
 
   /// Create a sound from its parameters
   dco_envelope(const param_t& p)
       : dco { p->dco }
-      , param { p } {}
+      , param { p }
+      , env { p->env } {}
 
   /** Start a note
 

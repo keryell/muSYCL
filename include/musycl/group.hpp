@@ -22,13 +22,14 @@ namespace musycl {
 
 /// Represent a set of control which can be activated on the user-interface
 class group {
-
+ public:
   /// User-facing name
   std::string name;
 
   /// A group can be associated to a MIDI channel \todo unused?
   std::optional<midi::channel_type> channel;
 
+ private:
   /// Action to dispatch from a control item
   std::map<control::physical_item*, std::function<void()>> physical_items;
 
