@@ -8,6 +8,7 @@
 
 #include "audio.hpp"
 #include "dco.hpp"
+#include "group.hpp"
 #include "midi.hpp"
 #include "noise.hpp"
 #include "sound_generator/dco_envelope.hpp"
@@ -51,8 +52,21 @@ class sound_generator {
     }
 
     // Get the name of a sound parameter set
-    std::string name() const {
-      return std::visit([&](const auto& s) { return s->name; }, param);
+    const std::string& name() const {
+      return std::visit(
+          [&](const auto& s) -> const std::string& { return s->name; }, param);
+    }
+
+    // Get the controlling group of a sound parameter set
+    const group& group() const {
+      return std::visit(
+          // Need "class" here to avoid conflict with the member function
+          // around.
+          [&](const auto& s) -> const class group& {
+            // Get the group parent of the sound parameter
+            return *s.implementation;
+          },
+          param);
     }
   };
 

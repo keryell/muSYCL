@@ -295,7 +295,7 @@ int main() {
   dcoe1->env->sustain_level = 0.3;
   dcoe1->env->release_time = 0.5;
 
-  musycl::dco_envelope::param_t dcoe2 { ui, "DCO envelope 1", 1 };
+  musycl::dco_envelope::param_t dcoe2 { ui, "DCO envelope 2", 1 };
   channel_assignment.assign(1, dcoe2);
   dcoe2->env->decay_time = .1;
   dcoe2->env->sustain_level = .1;
@@ -403,19 +403,29 @@ int main() {
                                                        0x18, 0x7f }) {
                   // backward button on Arturia Keylab 49 Essential
                   channel_assignment.select_previous_channel();
+                  auto sound_param =
+                      channel_assignment.channels
+                          [channel_assignment.current_selected_channel];
                   controller.display(
                       "Channel:" +
                       std::to_string(
                           channel_assignment.current_selected_channel) +
-                      " " +
-                      channel_assignment
-                          .channels[channel_assignment.current_selected_channel]
-                          .name());
+                      " " + sound_param.name());
+                  ui.prioritize_layer(sound_param.group());
                 } else if (s.v == std::vector<std::uint8_t> {
                                       0x00, 0x20, 0x6b, 0x7f, 0x42, 0x02, 0x00,
                                       0x00, 0x19, 0x7f }) {
                   // forward button on Arturia Keylab 49 Essential
                   channel_assignment.select_next_channel();
+                  auto sound_param =
+                      channel_assignment.channels
+                          [channel_assignment.current_selected_channel];
+                  controller.display(
+                      "Channel:" +
+                      std::to_string(
+                          channel_assignment.current_selected_channel) +
+                      " " + sound_param.name());
+                  ui.prioritize_layer(sound_param.group());
                 }
               },
               [&](auto&& other) {
@@ -451,7 +461,8 @@ int main() {
       /// Dive into each (stereo) channel of the sample...
         // Insert a low pass filter in the output
       for (auto&& [s, f] : ranges::views::zip(a, low_pass_filter))
-        // Insert a low pass filter in the output
+        // Insert a low pass filter in the output with amplitude
+        // controlled by an LFO
         s = f.filter(s*lfo.out());
       // Insert a resonance filter in the output
       for (auto&& [s, f] : ranges::views::zip(a, resonance_filter))

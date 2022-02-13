@@ -61,6 +61,21 @@ class user_interface {
   */
   void remove_layer(const group& g) { ranges::remove(active_layers, &g); }
 
+  /** Move a layer at the first place
+
+      \param[in] g is the layer to prioritize
+  */
+  void prioritize_layer(const group& g) {
+    std::cerr << "UI: prioritize_layer group " << (void*)&g << std::endl;
+    auto i = ranges::find(active_layers, &g);
+    if (i == active_layers.end())
+      return;
+    std::cerr << "swapping " << (void*)*i << " with "
+              << (void*)*active_layers.rbegin() << std::endl;
+    // Exchange the group with the last element
+    std::swap(*i, *active_layers.rbegin());
+  }
+
   /** Process an action on a physical_item into the current user interface
 
       \param[in] pi is the physical_item to process
