@@ -14,6 +14,9 @@
 #include <cstdint>
 #include <string>
 #include <variant>
+#include <vector>
+
+#include <range/v3/all.hpp>
 
 namespace musycl::midi {
 
@@ -316,10 +319,54 @@ class pitch_bend : public pitch_bend_header {
   }
 };
 
+/// The MIDI "System Exclusive" message header
+class sysex_header {
+  /// Not clear what to put in the header for this. A vendor ID, command?
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const sysex_header&) {
+    // Nothing to output for now
+    return os;
+  }
+
+  /// Use default lexicographic comparison
+  friend auto operator<=>(const sysex_header&,
+                          const sysex_header&) = default;
+};
+
+/// The MIDI "System Exclusive" message
+class sysex : public sysex_header {
+ public:
+  using value_type = std::vector<std::uint8_t>;
+
+  /// The value associated to this control change
+  value_type v;
+
+  /// Construct the SysEx from 2 iterators
+  template <typename Iterator1, typename Iterator2>
+  sysex(Iterator1 begin, Iterator2 end) : v { begin, end } {}
+
+  /// Get the header of this message
+  const sysex_header& header() const { return *this; }
+
+  /// Output the object value to a standard output stream
+  template <class CharT, class Traits>
+  friend std::basic_ostream<CharT, Traits>&
+  operator<<(std::basic_ostream<CharT, Traits>& os, const sysex& s) {
+    return os << "sysex: " << s.header()
+              << " value: " << ranges::views::all(s.v);
+  }
+
+  /// The raw value
+  value_type value() { return v; }
+};
+
 /** A MIDI message can be one of different types, including the
     monostate for empty message at initialization */
 using msg = std::variant<std::monostate, midi::on, midi::off,
-                         midi::control_change, midi::pitch_bend>;
+                         midi::control_change, midi::pitch_bend, midi::sysex>;
 
 /// Output the MIDI message value to a standard output stream
 template <class CharT, class Traits>
@@ -341,7 +388,8 @@ operator<<(std::basic_ostream<CharT, Traits>& os, const msg& m) {
 class msg_header {
   using variant_t =
       std::variant<std::monostate, midi::on_header, midi::off_header,
-                   midi::control_change_header, midi::pitch_bend_header>;
+                   midi::control_change_header, midi::pitch_bend_header,
+                   midi::sysex_header>;
   variant_t variant;
 
  public:
@@ -433,6 +481,10 @@ msg parse(const std::vector<std::uint8_t>& midi_message) {
         m = midi::pitch_bend { channel(midi_message[0]),
                                midi_message[1] | (midi_message[2] << 7) };
     }
+    // A SysEx message start with 0xf0 and ends with 0xf7
+    else if (midi_message[0] == 0xf0 && *std::prev(midi_message.end()) == 0xf7)
+      m = midi::sysex { &midi_message[1],
+                        &midi_message[midi_message.size() - 1] };
   }
   return m;
 }
