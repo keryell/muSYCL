@@ -7,17 +7,29 @@
 
 #include <cmath>
 #include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 #include "triSYCL/detail/shared_ptr_implementation.hpp"
 
+#include "musycl/midi.hpp"
+#include "musycl/midi/midi_in.hpp"
+
 namespace musycl {
+
+// Break an inclusion cycle
+class user_interface;
+class group;
 
 class control {
  public:
-  template <typename ValueType> class level {
+  /// Represent basic API of various type of physical values like time or level
+  template <typename ValueType, typename FinalPhysicalValue>
+  class physical_value {
    public:
     using value_type = ValueType;
 
@@ -25,26 +37,38 @@ class control {
 
     const value_type max_value;
 
-    level(auto min, auto max)
+    value_type value;
+
+    physical_value(auto min, auto max, value_type default_value = {})
         : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) } {}
+        , max_value { static_cast<value_type>(max) }
+        , value { default_value } {}
+
+    void set(const value_type& v) { value = v; }
+
+    void set_from_controller(midi::control_change::value_type cc_value) {
+      // auto final_physical_value = static_cast<FinalPhysicalValue&>(*this);
+      set(midi::control_change::get_value_in(cc_value, min_value, max_value));
+    }
   };
 
-  template <typename ValueType> class time {
+  template <typename ValueType>
+  class level : public physical_value<ValueType, level<ValueType>> {
    public:
     using value_type = ValueType;
-
-    const value_type min_value;
-
-    const value_type max_value;
-
-    time(auto min, auto max)
-        : min_value { static_cast<value_type>(min) }
-        , max_value { static_cast<value_type>(max) } {}
+    using physical_value<value_type, level>::physical_value;
   };
 
-  /// \todo refactor with concern separation
-  class control_item {
+  template <typename ValueType>
+  class time : public physical_value<ValueType, time<ValueType>> {
+   public:
+    using value_type = ValueType;
+    using physical_value<value_type, time>::physical_value;
+  };
+
+  /// A representation of a physical control item in a controller
+  /// \todo refactor with concern separation?
+  class physical_item {
    public:
     enum class type : std::uint8_t { button, knob, slider };
 
@@ -88,6 +112,7 @@ class control {
           , blue_bo { static_cast<std::int8_t>(b) } {}
     };
 
+    // \todo Replace by a variant?
     std::optional<cc> cc_v;
     std::optional<cc_inc> cc_inc_v;
     std::optional<note> note_v;
@@ -102,8 +127,16 @@ class control {
     std::vector<std::function<void(midi::control_change::value_type)>>
         listeners;
 
+    std::function<void(physical_item&)> user_interface_dispatcher;
+
     template <typename... Features>
-    control_item(void*, type t, Features... features) {
+    physical_item(user_interface& ui, type t, Features... features) {
+      user_interface_dispatcher = [=](physical_item& pi) mutable {
+        // Break an inclusion cycle
+        void user_interface_dispach_physical_item(user_interface&,
+                                                  physical_item&);
+        user_interface_dispach_physical_item(ui, pi);
+      };
       // Parse the features
       (
           [&](auto&& f) {
@@ -144,19 +177,22 @@ class control {
           ...);
     }
 
+    /// Dispatch to the client of this controller
+    /// \todo Remove and move to group
     void dispatch() {
-      std::cout << "Dispatch" << std::endl;
+      std::cout << "Dispatch from physical item" << std::endl;
       for (auto& l : listeners)
         l(value);
+      user_interface_dispatcher(*this);
     }
 
-    /// Name the control_item
+    /// Name the physical_item
     auto& name(const std::string& new_name) {
       current_name = new_name;
       return *this;
     }
 
-    /// Add an action to the control_item
+    /// Add an action to the physical_item
     template <typename Callable> auto& add_action(Callable&& action) {
       using arg0_t =
           std::tuple_element_t<0, boost::callable_traits::args_t<Callable>>;
@@ -191,22 +227,14 @@ class control {
 
     /// Connect this control to the real parameter
     template <typename ControlItem> auto& connect(ControlItem& ci) {
-      add_action([&](int v) { ci.set_127(v); });
+      // \todo Should be done by the item & group instead?
+      add_action([&](int v) { ci.set_from_controller(v); });
       return *this;
     }
   };
-  class group {
-
-    std::string name;
-
-    //  controls
-   public:
-    group(const std::string& n)
-        : name { n } {}
-  };
 
   /** A parameter set shared across various owner instance with a
-      shared pointer façades
+      shared pointer façade
 
       \param[in] ParamDetail is the real implementation of the
       parameter set
@@ -226,53 +254,69 @@ class control {
     using owner_t = Owner;
 
     /// The type encapsulating the implementation
-    using implementation_t =
-        trisycl::detail::shared_ptr_implementation<param<param_detail, owner_t>,
-                                                   param_detail>;
-
-    /// Import the constructors
-    using implementation_t::implementation_t;
+    using implementation_t = typename param::shared_ptr_implementation;
 
     // Make the implementation member directly accessible in this class
     using implementation_t::implementation;
 
-    param()
-        : implementation_t { new param_detail } {}
+    param() = default;
+
+    param(user_interface& ui, const std::string& n,
+          std::optional<midi::channel_type> midi_channel = {})
+        : implementation_t { new param_detail { ui, n, midi_channel } } {}
 
     // Forward everything to the implementation detail
     auto& operator->() const { return implementation; }
   };
 
-  template <typename ControlType> class item {
+  /// A logical control \c item to be connected from a \c group to a
+  /// \c physical_item and dispatch from the \c user_interface
+  template <typename PhysicalValue> class item {
    public:
-    using value_type = typename ControlType::value_type;
+    using physical_value_type = PhysicalValue;
 
-    value_type value;
+    physical_value_type physical_value;
 
+    using value_type = typename physical_value_type::value_type;
+
+    /// The name of the logical item
     std::string user_name;
 
-    ControlType control_type;
+    /// The physical control item behind the logical control item
+    std::optional<std::reference_wrapper<physical_item>> phys_item;
 
-    item(const value_type& default_value, const std::string& name,
-         const ControlType& ct)
-        : value { default_value }
+    item(const std::string& name, const physical_value_type& a_physical_value)
+        : physical_value { a_physical_value }
+        , user_name { name } {}
+
+    template <typename Group>
+    item(Group* g, physical_item& pi, const std::string& name,
+         const physical_value_type& a_physical_value)
+        : physical_value { a_physical_value }
         , user_name { name }
-        , control_type { ct } {}
+        , phys_item { pi } {
+      g->assign(pi, [&] {
+        std::cout << "Assign from group " << std::endl;
+        physical_value.set_from_controller(pi.value);
+      });
+    }
 
-    operator value_type&() { return value; }
+    value_type& value() { return physical_value.value; }
+
+    operator value_type&() { return value(); }
 
     void update_display() {
-      std::cout << "Control " << user_name << " set to " << value << std::endl;
+      std::cout << "Control " << user_name << " set to " << value()
+                << std::endl;
     }
 
     void set(const value_type& v) {
-      value = v;
+      physical_value.set(v);
       update_display();
     }
 
-    void set_127(int v) {
-      set(midi::control_change::get_value_in(v, control_type.min_value,
-                                             control_type.max_value));
+    void set_from_controller(midi::control_change::value_type v) {
+      physical_value.set_from_controller(v);
     }
 
     value_type& operator=(const value_type& v) {

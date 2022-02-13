@@ -20,15 +20,70 @@
 
 #include <range/v3/all.hpp>
 
+#include "musycl/control.hpp"
 #include "musycl/midi.hpp"
 #include "musycl/midi/midi_out.hpp"
+#include "musycl/user_interface.hpp"
 
-namespace musycl {
+namespace musycl::controller {
 
 // To use time unit literals directly
 using namespace std::chrono_literals;
 
-class controller {
+  /** An Arturia KeyLab MIDI controller
+
+      This is made by gathering some information on-line, such as
+
+      https://forum.arturia.com/index.php?topic=90496.0
+      https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
+      https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
+
+      Some SysEx values can be seen in the MIDI console of the MIDI
+      Control Center from Arturia.
+  */
+  class keylab_essential : public clock::follow<keylab_essential> {
+    /** Arturia MIDI SysEx Id
+        https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
+    */
+    static auto constexpr sysex_id = { '\0', '\x20', '\x6b' };
+
+    /// The device ID seems just "broadcast"
+    static auto constexpr dev_id = { '\x7f' };
+
+    /// The sub device ID?
+    static auto constexpr sub_dev_id = { '\x42' };
+
+    static auto constexpr sysex_vegas_mode_off = { '\x2', '\0', '\x40', '\x50',
+                                                   '\0' };
+
+    static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
+                                                  '\x1' };
+
+    /// The user interface logic
+    user_interface& ui;
+
+    /** Button light fuzzing
+
+        Experiment with some light commands
+    */
+    void button_light_fuzzing() {
+      // Pick a button range to check
+      for (auto b = 0x00; b <= 0x0f; ++b) {
+        for (auto l = 0; l <= 127; ++l) {
+          button_light(b, l);
+          std::this_thread::sleep_for(10ms);
+        }
+        std::this_thread::sleep_for(2s);
+        button_light(b, 0);
+      }
+      /* Increase light level across all the buttons.
+         The problem is that it triggers the Vegas light show mode */
+      for (auto l = 0; l <= 127; ++l)
+        for (auto b = 0; b <= 127; ++b) {
+          button_light(b, l);
+          std::this_thread::sleep_for(10ms);
+        }
+    }
 
  public:
   /** Mapping of button light to SySex button light command
@@ -118,194 +173,144 @@ class controller {
     pad_8_blue_ter = 0x7f,
   };
 
-  /** An Arturia KeyLab MIDI controller
-
-      This is made by gathering some information on-line, such as
-
-      https://forum.arturia.com/index.php?topic=90496.0
-      https://forum.renoise.com/t/tool-development-arturia-keylab-mkii-49-61-mcu-midi-messages/57343
-      https://community.cantabilesoftware.com/t/questions-about-expressions-in-sysex-data/5175
-
-      Some SysEx values can be seen in the MIDI console of the MIDI
-      Control Center from Arturia.
-  */
-  class keylab_essential : public clock::follow<keylab_essential> {
-    /** Arturia MIDI SysEx Id
-        https://www.midi.org/specifications/midi-reference-tables/manufacturer-sysex-id-numbers
-    */
-    static auto constexpr sysex_id = { '\0', '\x20', '\x6b' };
-
-    /// The device ID seems just "broadcast"
-    static auto constexpr dev_id = { '\x7f' };
-
-    /// The sub device ID?
-    static auto constexpr sub_dev_id = { '\x42' };
-
-    static auto constexpr sysex_vegas_mode_off = { '\x2', '\0', '\x40', '\x50',
-                                                   '\0' };
-
-    static auto constexpr sysex_vegas_mode_on = { '\x2', '\0', '\x40', '\x50',
-                                                  '\x1' };
-
-    /** Button light fuzzing
-
-        Experiment with some light commands
-    */
-    void button_light_fuzzing() {
-      // Pick a button range to check
-      for (auto b = 0x00; b <= 0x0f; ++b) {
-        for (auto l = 0; l <= 127; ++l) {
-          button_light(b, l);
-          std::this_thread::sleep_for(10ms);
-        }
-        std::this_thread::sleep_for(2s);
-        button_light(b, 0);
-      }
-      /* Increase light level across all the buttons.
-         The problem is that it triggers the Vegas light show mode */
-      for (auto l = 0; l <= 127; ++l)
-        for (auto b = 0; b <= 127; ++b) {
-          button_light(b, l);
-          std::this_thread::sleep_for(10ms);
-        }
-    }
-
    public:
     /// List all the control items
-    // std::vector<control::control_item> inputs;
+    // std::vector<control::physical_item> inputs;
 
-    control::control_item cutoff_pan_1 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4a }, control::control_item::cc_inc { 0x10 }
+    control::physical_item cutoff_pan_1 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4a }, control::physical_item::cc_inc { 0x10 }
     };
 
-    control::control_item resonance_pan_2 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x47 }, control::control_item::cc_inc { 0x11 }
+    control::physical_item resonance_pan_2 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x47 }, control::physical_item::cc_inc { 0x11 }
     };
 
-    control::control_item lfo_rate_pan_3 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4c }, control::control_item::cc_inc { 0x12 }
+    control::physical_item lfo_rate_pan_3 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4c }, control::physical_item::cc_inc { 0x12 }
     };
 
-    control::control_item lfo_amt_pan_4 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x4d }, control::control_item::cc_inc { 0x13 }
+    control::physical_item lfo_amt_pan_4 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x4d }, control::physical_item::cc_inc { 0x13 }
     };
 
-    control::control_item param_1_pan_5 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x5d }, control::control_item::cc_inc { 0x14 }
+    control::physical_item param_1_pan_5 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x5d }, control::physical_item::cc_inc { 0x14 }
     };
 
-    control::control_item param_2_pan_6 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x12 }, control::control_item::cc_inc { 0x15 }
+    control::physical_item param_2_pan_6 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x12 }, control::physical_item::cc_inc { 0x15 }
     };
 
-    control::control_item param_3_pan_7 {
-      this, control::control_item::type::knob, this,
-      control::control_item::cc { 0x13 }, control::control_item::cc_inc { 0x16 }
+    control::physical_item param_3_pan_7 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x13 }, control::physical_item::cc_inc { 0x16 }
     };
 
-    control::control_item param_4_pan_8 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x10 }, control::control_item::cc_inc { 0x17 }
+    control::physical_item param_4_pan_8 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x10 }, control::physical_item::cc_inc { 0x17 }
     };
 
     // The unnamed knob on the top right, non mapped in DAW mode
-    control::control_item top_right_knob_9 {
-      this, control::control_item::type::knob,
-      control::control_item::cc { 0x11 }
+    control::physical_item top_right_knob_9 {
+      ui, control::physical_item::type::knob,
+      control::physical_item::cc { 0x11 }
     };
 
-    control::control_item attack_ch_1 { this,
-                                        control::control_item::type::slider,
-                                        control::control_item::cc { 0x49 } };
+    control::physical_item attack_ch_1 { ui,
+                                        control::physical_item::type::slider,
+                                        control::physical_item::cc { 0x49 } };
 
-    control::control_item decay_ch_2 { this,
-                                       control::control_item::type::slider,
-                                       control::control_item::cc { 0x4b } };
+    control::physical_item decay_ch_2 { ui,
+                                       control::physical_item::type::slider,
+                                       control::physical_item::cc { 0x4b } };
 
-    control::control_item sustain_ch_3 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x4f } };
+    control::physical_item sustain_ch_3 { ui,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x4f } };
 
-    control::control_item release_ch_4 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x48 } };
+    control::physical_item release_ch_4 { ui,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x48 } };
 
-    control::control_item attack_ch_5 { this,
-                                        control::control_item::type::slider,
-                                        control::control_item::cc { 0x50 } };
+    control::physical_item attack_ch_5 { ui,
+                                        control::physical_item::type::slider,
+                                        control::physical_item::cc { 0x50 } };
 
-    control::control_item decay_ch_6 { this,
-                                       control::control_item::type::slider,
-                                       control::control_item::cc { 0x51 } };
+    control::physical_item decay_ch_6 { ui,
+                                       control::physical_item::type::slider,
+                                       control::physical_item::cc { 0x51 } };
 
-    control::control_item sustain_ch_7 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x52 } };
+    control::physical_item sustain_ch_7 { ui,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x52 } };
 
-    control::control_item release_ch_8 { this,
-                                         control::control_item::type::slider,
-                                         control::control_item::cc { 0x53 } };
+    control::physical_item release_ch_8 { ui,
+                                         control::physical_item::type::slider,
+                                         control::physical_item::cc { 0x53 } };
 
-    control::control_item play_pause { this,
-                                       control::control_item::type::button,
-                                       control::control_item::note { 0x5e } };
+    control::physical_item play_pause { ui,
+                                       control::physical_item::type::button,
+                                       control::physical_item::note { 0x5e } };
 
-    control::control_item pad_1 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_1 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x24, button_out::pad_1_red,
                                         button_out::pad_1_blue,
                                         button_out::pad_1_green } };
 
-    control::control_item pad_2 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_2 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x25, button_out::pad_2_red,
                                         button_out::pad_2_blue,
                                         button_out::pad_2_green } };
 
-    control::control_item pad_3 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_3 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x26, button_out::pad_3_red,
                                         button_out::pad_3_blue,
                                         button_out::pad_3_green } };
 
-    control::control_item pad_4 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_4 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x27, button_out::pad_4_red,
                                         button_out::pad_4_blue,
                                         button_out::pad_4_green } };
 
-    control::control_item pad_5 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_5 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x28, button_out::pad_5_red,
                                         button_out::pad_5_blue,
                                         button_out::pad_5_green } };
 
-    control::control_item pad_6 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_6 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x29, button_out::pad_6_red,
                                         button_out::pad_6_blue,
                                         button_out::pad_6_green } };
 
-    control::control_item pad_7 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_7 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x2a, button_out::pad_7_red,
                                         button_out::pad_7_blue,
                                         button_out::pad_7_green } };
 
-    control::control_item pad_8 = { this, control::control_item::type::button,
-                                    control::control_item::pad {
+    control::physical_item pad_8 = { ui, control::physical_item::type::button,
+                                    control::physical_item::pad {
                                         0x2b, button_out::pad_8_red,
                                         button_out::pad_8_blue,
                                         button_out::pad_8_green } };
 
     /// Start the KeyLab controller
-    keylab_essential() {
+    keylab_essential(user_interface& ui)
+        : ui { ui } {
+      ui.set_controller(*this);
       display("Salut les petits amis");
       // button_light_fuzzing();
       // Refresh the LCD display because it is garbled by various information
@@ -329,6 +334,9 @@ class controller {
       midi_out::write(sysex_message);
       return sysex_message;
     }
+
+    /// Return the underlying user interface
+    user_interface& user_interface() { return ui; }
 
     void button_light(std::int8_t button, std::int8_t level) {
       static auto constexpr sysex_button_light = { '\x2', '\0', '\x10' };
@@ -383,7 +391,6 @@ class controller {
       button_light((int)button_out::metro, light_level);
     }
   };
-};
 
 } // namespace musycl
 

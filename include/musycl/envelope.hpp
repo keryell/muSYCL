@@ -11,8 +11,10 @@
 
 #include <triSYCL/detail/overloaded.hpp>
 
-#include "clock.hpp"
 #include "config.hpp"
+
+#include "clock.hpp"
+#include "group.hpp"
 
 namespace musycl {
 
@@ -45,23 +47,23 @@ class envelope : public clock::follow<envelope> {
 
  public:
   /// Parameters of the envelope shape
-  class param_detail {
+  class param_detail : public group {
    public:
+    using group::group;
+
     /// Attack time, immediate sound by default
-    control::item<control::time<float>> attack_time { 0, "Attack", { 0, 10 } };
+    control::item<control::time<float>> attack_time { "Attack", { 0, 10, 0 } };
 
     /// Decay time, go immediately to sustain phase by default
-    control::item<control::time<float>> decay_time { 0, "Decay", { 0, 10 } };
+    control::item<control::time<float>> decay_time { "Decay", { 0, 10, 0 } };
 
     /// Sustain level, maximum level by default in the sustain phase
-    control::item<control::level<float>> sustain_level { 1,
-                                                         "Sustain",
-                                                         { 0, 1 } };
+    control::item<control::level<float>> sustain_level { "Sustain",
+                                                         { 0, 1, 1 } };
 
     /// Release time, go immediately to off by default
-    control::item<control::time<float>> release_time { 0,
-                                                       "Release",
-                                                       { 0, 10 } };
+    control::item<control::time<float>> release_time { "Release",
+                                                       { 0, 10, 0 } };
   };
 
   // Shared parameter between all copies of this envelope generator
@@ -88,10 +90,10 @@ class envelope : public clock::follow<envelope> {
   */
   friend std::string to_string(const envelope& e) {
     std::ostringstream s;
-    s << "Envelope attack = " << e.param->attack_time.value
-      << ", release = " << e.param->release_time.value
-      << ", sustain = " << e.param->sustain_level.value
-      << ", decay = " << e.param->decay_time.value
+    s << "Envelope attack = " << e.param->attack_time.value()
+      << ", release = " << e.param->release_time.value()
+      << ", sustain = " << e.param->sustain_level.value()
+      << ", decay = " << e.param->decay_time.value()
       << ", current volume = " << e.output;
     return s.str();
   }
@@ -100,7 +102,7 @@ class envelope : public clock::follow<envelope> {
   envelope() = default;
 
   /// Create an envelope with some specific parameters
-  envelope(param_t p)
+  envelope(const param_t& p)
       : param { p } {}
 
   /** Start the envelope generator from the beginning

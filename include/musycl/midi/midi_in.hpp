@@ -199,8 +199,8 @@ class midi_in {
   template <typename Callable>
   static void add_action(std::int8_t port, const midi::msg_header& header,
                          Callable&& action) {
-    std::cout << "add_action on port " << int { port } << " for" << header
-              << std::endl;
+    std::cout << "midi_in::add_action on port " << int { port } << " for "
+              << header << std::endl;
     midi_actions.emplace(port_msg_header { port, header }, action);
   }
 

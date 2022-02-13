@@ -12,6 +12,7 @@
 
 #include "audio.hpp"
 #include "control.hpp"
+#include "group.hpp"
 #include "midi.hpp"
 #include "modulation_actuator.hpp"
 #include "pitch_bend.hpp"
@@ -50,31 +51,33 @@ class dco {
 
  public:
   /// Parameters of the DCO sound
-  class param_detail {
+  class param_detail : public group {
    public:
+    using group::group;
+
     /// Level of the square signal
-    control::item<control::level<float>> square_volume { 1,
-                                                         "Square volume",
-                                                         { 0, 1 } };
+    control::item<control::level<float>> square_volume {
+      this, controller->attack_ch_1, "Square volume", { 0, 1, 1 }
+    };
 
     /// Level of triangle signal
-    control::item<control::level<float>> triangle_volume { 0,
-                                                           "Triangle volume",
-                                                           { 0, 1 } };
+    control::item<control::level<float>> triangle_volume {
+      this, controller->decay_ch_2, "Triangle volume", { 0, 1, 0 }
+    };
 
     /// The part of the signal  where the triangle is, the rest is low level
-    control::item<control::level<float>> triangle_ratio { 1,
-                                                          "Triangle ratio",
-                                                          { 0, 1 } };
+    control::item<control::level<float>> triangle_ratio {
+      this, controller->sustain_ch_3, "Triangle ratio", { 0, 1, 1 }
+    };
 
     /// Ratio of the triangle occupied by the fall part of the triangle signal
     /// 0.5 is symmetrical triangle, 0 is a saw-tooth
     control::item<control::level<float>> triangle_fall_ratio {
-      0.5, "Triangle fall ratio", { 0, 0.5 }
+      this, controller->release_ch_4, "Triangle fall ratio", { 0, 0.5, 0.5 }
     };
   };
 
-  // Shared parameter between all copies of this envelope generator
+  // Shared parameter between all copies of this DCO generator
   using param_t = control::param<param_detail, dco>;
 
   /// Current parameters of the DCO
@@ -163,8 +166,8 @@ class dco {
       return final_triangle_volume * (2 * phase / triangle_peak_phase - 1);
     // Ramp down
     return final_triangle_volume *
-           (1 -
-            2 * (phase - triangle_peak_phase) / (triangle_ratio - triangle_peak_phase));
+           (1 - 2 * (phase - triangle_peak_phase) /
+                    (triangle_ratio - triangle_peak_phase));
   }
 
   /// Set once the triangle waveform parameters to speed up computation

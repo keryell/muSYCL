@@ -12,6 +12,7 @@
 #include "lfo.hpp"
 #include "low_pass_filter.hpp"
 #include "midi.hpp"
+#include "midi/channel_assignment.hpp"
 #include "midi/midi_in.hpp"
 #include "midi/midi_out.hpp"
 #include "modulation_actuator.hpp"
@@ -20,5 +21,6 @@
 #include "resonance_filter.hpp"
 #include "sound_generator.hpp"
 #include "sustain.hpp"
+#include "user_interface.hpp"
 
 #endif // MUSYCL_MUSYCL_HPP
