@@ -263,9 +263,7 @@ class control {
 
     param(user_interface& ui, const std::string& n,
           std::optional<midi::channel_type> midi_channel = {})
-        : implementation_t { new param_detail { ui, n, midi_channel } } {
-      std::cerr << "Create " << n << " control::param\n";
-    }
+        : implementation_t { new param_detail { ui, n, midi_channel } } {}
 
     // Forward everything to the implementation detail
     auto& operator->() const { return implementation; }

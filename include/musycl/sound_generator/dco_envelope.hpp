@@ -33,10 +33,8 @@ class dco_envelope
     param_detail(auto&&... args)
         : dco { std::forward<decltype(args)>(args)... }
         , env { std::forward<decltype(args)>(args)... } {
-            std::cerr << "param_detail dco_enveloppe created\n";
-            std::cerr << "dco name " << dco->name << '\n';
-            std::cerr << "env name " << env->name << '\n';
-            std::cerr << "param_detail dco_enveloppe created\n";
+      dco->add_as_sub_group_to(*this);
+      env->add_as_sub_group_to(*this);
     }
 
     /// The DCO parameters

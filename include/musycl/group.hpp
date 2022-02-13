@@ -34,7 +34,7 @@ class group {
   std::map<control::physical_item*, std::function<void()>> physical_items;
 
   /// A group can also have subgroup to have controllers associated
-  std::vector<group*> subgroups;
+  std::vector<group*> sub_groups;
 
   /// A cache to the already created groups
   // static trisycl::detail::cache<std::string, detail::group> cache;
@@ -62,6 +62,11 @@ class group {
   /// Assign an action to a control item
   void assign(control::physical_item& ci, std::function<void()> f) {
     physical_items.emplace(&ci, f);
+  }
+
+  /// Add a sub-group part of this group
+  void add_as_sub_group_to(group& group_owner) {
+    group_owner.sub_groups.push_back(this);
   }
 
   /** Try to dispatch an action associate to a control item
