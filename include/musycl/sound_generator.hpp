@@ -22,20 +22,34 @@ class sound_generator {
 
   sound_generator_t sg;
 
-public:
+ public:
+  ///  Parameter of the sound generators
+  class param_t {
+    /// \todo generate from sound_generator_t
+    using detail =
+        std::variant<dco::param_t, dco_envelope::param_t, noise::param_t>;
 
-  /// \todo generate from sound_generator_t
-  using param_t = std::variant<dco::param_t,
-                               dco_envelope::param_t,
-                               noise::param_t>;
+   public:
+    detail param;
 
-  static auto from_param(const param_t& param) {
-    return std::visit([&] (const auto &s) {
-      return sound_generator {
-        typename std::remove_cvref_t<decltype(s)>::owner_t { s }
-      };
-    }, param);
-  }
+    param_t() = default;
+
+    /// Construct from an object copy capable of generating sound
+    template <typename T>
+    param_t(T p)
+        : param { p } {}
+
+    // Create a sound_generator object from a sound parameter
+    auto from_param() const {
+      return std::visit(
+          [&](const auto& s) {
+            return sound_generator {
+              typename std::remove_cvref_t<decltype(s)>::owner_t { s }
+            };
+          },
+          param);
+    }
+  };
 
   sound_generator() = default;
 
@@ -47,8 +61,9 @@ public:
   {}
 
 
+  /// Create a sound generator from a parameter set
   sound_generator(const param_t& param)
-    : sound_generator { from_param(param) } {}
+    : sound_generator { param.from_param() } {}
 
   /// Get the underlying sound generator
   template <typename T>
@@ -91,7 +106,6 @@ public:
   bool is_running() {
     return std::visit([&] (auto &s) { return s.is_running(); }, sg);
   }
-
 };
 
 
