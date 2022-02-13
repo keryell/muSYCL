@@ -17,6 +17,7 @@
 auto constexpr debug_midi_input = true;
 
 #include <musycl/musycl.hpp>
+
 #include <musycl/midi/controller/keylab_essential.hpp>
 
 #include <range/v3/all.hpp>
@@ -73,52 +74,53 @@ int main() {
 
   // An arpeggiator
   musycl::arpeggiator arp;
-  //controller.play_pause.name("Arpeggiator Start/Stop")
-  controller.pad_2.name("Arpeggiator Start/Stop")
-    .add_action([&](bool v) {
-      arp.run(v);
-      controller.display("Arpeggiator running: "
-                         + std::to_string(v));
-    });
-  musycl::arpeggiator arp_bass { 0, -1, [] (auto& self) {
-    static trisycl::vendor::trisycl::random::xorshift<> rng;
-    if (self.current_clock_time.beat) {
-      /// Insert a C0 note on each beat
-      self.current_note = musycl::midi::on { 5, 24, (rng() & 63) + 64 };
-      musycl::midi_in::insert(0, *self.current_note);
-    }
-    else
-      self.stop_current_note();
-   }};
-  controller.pad_1.name("Bass arpeggiator Start/Stop")
-    .add_action([&](bool v) {
-      arp_bass.run(v);
-      controller.display("Bass arpeggiator running: "
-                         + std::to_string(v));
-    });
-  musycl::arpeggiator arp_low_high {
-    60, 127, [&, start = false, octave = 0, index = 0](auto& self) mutable {
-    // Otherwise use a default arpeggiator, work on the 16th of note
-    if (self.current_clock_time.midi_clock_index %
-            (musycl::midi::clock_per_quarter / 4) ==
-        0) {
-      start = !start;
-      if (!start)
+  // controller.play_pause.name("Arpeggiator Start/Stop")
+  controller.pad_2.name("Arpeggiator Start/Stop").add_action([&](bool v) {
+    arp.run(v);
+    controller.display("Arpeggiator running: " + std::to_string(v));
+  });
+  musycl::arpeggiator arp_bass {
+    0, -1,
+    [](auto& self) {
+      static trisycl::vendor::trisycl::random::xorshift<> rng;
+      if (self.current_clock_time.beat) {
+        /// Insert a C0 note on each beat
+        self.current_note = musycl::midi::on { 5, 24, (rng() & 63) + 64 };
+        musycl::midi_in::insert(0, *self.current_note);
+      } else
         self.stop_current_note();
-      else if (!self.notes.empty()) {
-        std::ranges::sort(self.notes);
-        if (--index < 0 || index >= self.notes.size())
-          index = self.notes.size() - 1;
-        auto n = self.notes[index];
-        n.channel = 1;
-        octave = !octave;
-        n.note += 12 - octave*48;
-        self.current_note = n;
-        n.velocity = 60;
-        musycl::midi_in::insert(0, n);
-        std::cout << "Insert " << n << std::endl;
+    }
+  };
+  controller.pad_1.name("Bass arpeggiator Start/Stop").add_action([&](bool v) {
+    arp_bass.run(v);
+    controller.display("Bass arpeggiator running: " + std::to_string(v));
+  });
+  musycl::arpeggiator arp_low_high {
+    60, 127,
+    [&, start = false, octave = 0, index = 0](auto& self) mutable {
+      // Otherwise use a default arpeggiator, work on the 16th of note
+      if (self.current_clock_time.midi_clock_index %
+              (musycl::midi::clock_per_quarter / 4) ==
+          0) {
+        start = !start;
+        if (!start)
+          self.stop_current_note();
+        else if (!self.notes.empty()) {
+          std::ranges::sort(self.notes);
+          if (--index < 0 || index >= self.notes.size())
+            index = self.notes.size() - 1;
+          auto n = self.notes[index];
+          n.channel = 1;
+          octave = !octave;
+          n.note += 12 - octave * 48;
+          self.current_note = n;
+          n.velocity = 60;
+          musycl::midi_in::insert(0, n);
+          std::cout << "Insert " << n << std::endl;
+        }
       }
-   }}};
+    }
+  };
   controller.pad_3.name("Arpeggiator low & high Start/Stop")
       .add_action([&](bool v) {
         arp_low_high.run(v);
@@ -164,8 +166,7 @@ int main() {
   controller.pad_5.name("Arpeggiator with 4 basses Start/Stop")
       .add_action([&](bool v) {
         arp_bass_4.run(v);
-        controller.display(" 4 bass arpeggiator running: " +
-                           std::to_string(v));
+        controller.display(" 4 bass arpeggiator running: " + std::to_string(v));
       });
 
   musycl::arpeggiator arp_jupiter_8 {
@@ -173,15 +174,15 @@ int main() {
     [&, start = false, index = 0,
      n = std::optional<musycl::midi::on> {}](auto& self) mutable {
       if (self.running && self.current_clock_time.midi_clock_index %
-                             (musycl::midi::clock_per_quarter / 4) ==
-                         0) {
+                                  (musycl::midi::clock_per_quarter / 4) ==
+                              0) {
         // Toggle between starting the note and stopping it
         start = !start;
         if (!start)
           self.stop_current_note();
         else if (!self.notes.empty()) {
           std::ranges::sort(self.notes);
-          if (index >= self.notes.size()*4)
+          if (index >= self.notes.size() * 4)
             index = 0;
           auto n = self.notes[index % self.notes.size()];
           n.channel = 1;
