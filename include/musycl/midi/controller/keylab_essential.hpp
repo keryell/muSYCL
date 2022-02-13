@@ -21,6 +21,7 @@
 #include <range/v3/all.hpp>
 
 #include "musycl/control.hpp"
+#include "musycl/clock.hpp"
 #include "musycl/midi.hpp"
 #include "musycl/midi/midi_out.hpp"
 #include "musycl/user_interface.hpp"

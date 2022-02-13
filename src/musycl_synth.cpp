@@ -364,42 +364,53 @@ int main() {
       arp_bass_4.midi(m);
       arp_jupiter_8.midi(m);
 
-      std::visit(trisycl::detail::overloaded {
-                     [&](musycl::midi::on& on) {
-                       ts::pipe::cout::stream()
-                           << "MIDI on " << (int)on.note << std::endl;
-                       if (auto sp = channel_assignment.channels.find(on.channel);
-                           sp != channel_assignment.channels.end())
-                         sounds
-                             .insert_or_assign(
-                                 on.base_header(),
-                                 musycl::sound_generator { sp->second })
-                             .first->second.start(on);
-                       else
-                         std::cerr << "Note on to unassigned MIDI channel "
-                                   << on.channel + 1 << std::endl;
-                     },
-                     [&](musycl::midi::off& off) {
-                       ts::pipe::cout::stream()
-                           << "MIDI off " << (int)off.note << std::endl;
-                       if (auto s = sounds.find(off.base_header());
-                           s != sounds.end())
-                         s->second.stop(off);
-                       else
-                         std::cerr << "No note to stop here on MIDI channel "
-                                   << off.channel + 1 << std::endl;
-                     },
-                     [&](musycl::midi::control_change& cc) {
-                       ts::pipe::cout::stream()
-                           << "MIDI cc " << (int)cc.number << std::endl;
-                       // Attack/CH1 on Arturia Keylab 49 Essential
-                       if (cc.number == 73) {
-                       }
-                     },
-                     [&](auto&& other) {
-                       ts::pipe::cout::stream() << "other: " << m << std::endl;
-                     } },
-                 m);
+      std::visit(
+          trisycl::detail::overloaded {
+              [&](musycl::midi::on& on) {
+                ts::pipe::cout::stream()
+                    << "MIDI on " << (int)on.note << std::endl;
+                if (auto sp = channel_assignment.channels.find(on.channel);
+                    sp != channel_assignment.channels.end())
+                  sounds
+                      .insert_or_assign(on.base_header(),
+                                        musycl::sound_generator { sp->second })
+                      .first->second.start(on);
+                else
+                  std::cerr << "Note on to unassigned MIDI channel "
+                            << on.channel + 1 << std::endl;
+              },
+              [&](musycl::midi::off& off) {
+                ts::pipe::cout::stream()
+                    << "MIDI off " << (int)off.note << std::endl;
+                if (auto s = sounds.find(off.base_header()); s != sounds.end())
+                  s->second.stop(off);
+                else
+                  std::cerr << "No note to stop here on MIDI channel "
+                            << off.channel + 1 << std::endl;
+              },
+              [&](musycl::midi::control_change& cc) {
+                ts::pipe::cout::stream()
+                    << "MIDI cc " << (int)cc.number << std::endl;
+                // Attack/CH1 on Arturia Keylab 49 Essential
+                if (cc.number == 73) {
+                }
+              },
+              [&](musycl::midi::sysex& s) {
+                // \todo find a better way
+                if (s.v == std::vector<std::uint8_t> { 0x00, 0x20, 0x6b, 0x7f,
+                                                       0x42, 0x02, 0x00, 0x00,
+                                                       0x18, 0x7f }) {
+                  std::cerr << "backward\n";
+                } else if (s.v == std::vector<std::uint8_t> {
+                                      0x00, 0x20, 0x6b, 0x7f, 0x42, 0x02, 0x00,
+                                      0x00, 0x19, 0x7f }) {
+                  std::cerr << "forward\n";
+                }
+              },
+              [&](auto&& other) {
+                ts::pipe::cout::stream() << "other: " << m << std::endl;
+              } },
+          m);
     }
 
     // Propagate the clocks to the consumers
