@@ -323,6 +323,7 @@ int main() {
   triangle6_fast_decay->env->sustain_level = .1;
 
   // Control the DCO 1 & 3 parameters
+#if 0  
   controller.attack_ch_1.connect(dcoe1->dco->square_volume);
   controller.attack_ch_1.connect(dco3->square_volume);
   controller.decay_ch_2.connect(dcoe1->dco->triangle_volume);
@@ -331,7 +332,7 @@ int main() {
   controller.sustain_ch_3.connect(dco3->triangle_ratio);
   controller.release_ch_4.connect(dcoe1->dco->triangle_fall_ratio);
   controller.release_ch_4.connect(dco3->triangle_fall_ratio);
-
+#endif
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
   controller.attack_ch_5.connect(dcoe1->env->attack_time);
   controller.decay_ch_6.connect(dcoe1->env->decay_time);
@@ -407,8 +408,9 @@ int main() {
                       std::to_string(
                           channel_assignment.current_selected_channel) +
                       " " +
-                      channel_assignment.channels
-                          [channel_assignment.current_selected_channel].name());
+                      channel_assignment
+                          .channels[channel_assignment.current_selected_channel]
+                          .name());
                 } else if (s.v == std::vector<std::uint8_t> {
                                       0x00, 0x20, 0x6b, 0x7f, 0x42, 0x02, 0x00,
                                       0x00, 0x19, 0x7f }) {

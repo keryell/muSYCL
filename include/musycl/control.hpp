@@ -131,7 +131,7 @@ class control {
 
     template <typename... Features>
     physical_item(user_interface& ui, type t, Features... features) {
-      user_interface_dispatcher = [=](physical_item& pi) mutable {
+      user_interface_dispatcher = [&](physical_item& pi) mutable {
         // Break an inclusion cycle
         void user_interface_dispach_physical_item(user_interface&,
                                                   physical_item&);
@@ -297,7 +297,7 @@ class control {
         , phys_item { pi } {
       g->assign(pi, [&] {
         std::cout << "Assign from group " << std::endl;
-        physical_value.set_from_controller(pi.value);
+        physical_value.set_from_controller(phys_item.value().get().value);
       });
     }
 

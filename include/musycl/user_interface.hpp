@@ -37,13 +37,23 @@ class user_interface {
   */
   std::vector<const group*> active_layers;
 
+  user_interface(const user_interface&) = delete;
+  user_interface(user_interface&&) = delete;
+
  public:
 
   /// The \c controller associated to the \c user_interface
   controller::keylab_essential* c;
 
+  user_interface() = default;
+
   /// Add a control group to the user-interface
-  void add_layer(const group& g) { active_layers.emplace_back(&g); }
+  void add_layer(const group& g) {
+    std::cerr << "UI: Add layer group " << (void*)&g << std::endl;
+    active_layers.push_back(&g);
+    std::cout << "UI " << (void*)this << " has now " << active_layers.size()
+              << " layers" << std::endl;
+  }
 
   /** Remove a layer from the user interface
 
@@ -56,6 +66,8 @@ class user_interface {
       \param[in] pi is the physical_item to process
   */
   void dispatch(control::physical_item& pi) {
+    std::cout << "Dispatch from UI " << (void*)this << " with "
+              << active_layers.size() << " layers" << std::endl;
     // Dispatch the physical_item with the first matching dispatcher
     // across the layer stack
     for (auto layer : active_layers | ranges::views::reverse)
@@ -69,8 +81,8 @@ class user_interface {
 };
 
 /// Break an inclusion cycle in control.hpp
-void inline user_interface_dispach_physical_item(user_interface& ui,
-                                                 control::physical_item& pi) {
+void user_interface_dispach_physical_item(user_interface& ui,
+                                          control::physical_item& pi) {
   ui.dispatch(pi);
 }
 

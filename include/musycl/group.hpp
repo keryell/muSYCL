@@ -54,6 +54,7 @@ class group {
       , ui { &ui }
       , controller { ui.c } {
     // Add the group to the user-interface
+    std::cerr << "Add group layer " << name << std::endl;
     ui.add_layer(*this);
   }
 
@@ -61,6 +62,8 @@ class group {
 
   /// Assign an action to a control item
   void assign(control::physical_item& ci, std::function<void()> f) {
+    std::cout << "Register assign group " << (void*)this << " PI "
+              << (void*)&ci << std::endl;
     physical_items.emplace(&ci, f);
   }
 
@@ -75,9 +78,12 @@ class group {
       no action for this control item
    */
   bool try_dispatch(control::physical_item& ci) const {
+    std::cout << "Try dispatch group " << (void*)this << " PI "
+              << (void*)&ci << std::endl;
     auto v = physical_items.find(&ci);
     if (v == physical_items.end())
       return false;
+    std::cerr << "Dispatch from group " << name << std::endl;
     v->second();
     return true;
   }

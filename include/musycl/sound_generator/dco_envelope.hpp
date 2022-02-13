@@ -31,9 +31,9 @@ class dco_envelope
   class param_detail : public group {
    public:
     param_detail(auto&&... args)
-        : dco { std::forward<decltype(args)>(args)... }
-        , env { std::forward<decltype(args)>(args)... }
-        , group { std::forward<decltype(args)>(args)... } {
+        : group { std::forward<decltype(args)>(args)... }
+        , dco { std::forward<decltype(args)>(args)... }
+        , env { std::forward<decltype(args)>(args)... } {
       dco->add_as_sub_group_to(*this);
       env->add_as_sub_group_to(*this);
     }
