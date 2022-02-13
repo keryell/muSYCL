@@ -49,6 +49,11 @@ class sound_generator {
           },
           param);
     }
+
+    // Get the name of a sound parameter set
+    std::string name() const {
+      return std::visit([&](const auto& s) { return s->name; }, param);
+    }
   };
 
   sound_generator() = default;
