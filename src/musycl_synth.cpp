@@ -400,11 +400,20 @@ int main() {
                 if (s.v == std::vector<std::uint8_t> { 0x00, 0x20, 0x6b, 0x7f,
                                                        0x42, 0x02, 0x00, 0x00,
                                                        0x18, 0x7f }) {
-                  std::cerr << "backward\n";
+                  // backward button on Arturia Keylab 49 Essential
+                  channel_assignment.select_previous_channel();
+                  controller.display(
+                      "Channel:" +
+                      std::to_string(
+                          channel_assignment.current_selected_channel) +
+                      " " +
+                      channel_assignment.channels
+                          [channel_assignment.current_selected_channel].name());
                 } else if (s.v == std::vector<std::uint8_t> {
                                       0x00, 0x20, 0x6b, 0x7f, 0x42, 0x02, 0x00,
                                       0x00, 0x19, 0x7f }) {
-                  std::cerr << "forward\n";
+                  // forward button on Arturia Keylab 49 Essential
+                  channel_assignment.select_next_channel();
                 }
               },
               [&](auto&& other) {
