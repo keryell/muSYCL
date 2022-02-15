@@ -15,7 +15,7 @@ namespace musycl {
 
   /// Frame frequency
   static constexpr auto frame_frequency =
-    static_cast<float>(sample_frequency/frame_size);
+      static_cast<float>(sample_frequency) / frame_size;
 
   /// Frame period
   static constexpr auto frame_period = 1/frame_frequency;
