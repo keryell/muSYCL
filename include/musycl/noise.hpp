@@ -22,9 +22,6 @@ namespace musycl {
 
 /// A digitally controlled oscillator
 class noise {
-  ///
-  //  group cg { "Noise generator" };
-
   /// Track if the noise generator is generating a signal or just 0
   bool running = false;
 
@@ -53,7 +50,19 @@ class noise {
   /// Parameters of the noise sound
   class param_detail : public group {
    public:
-    using group::group;
+    param_detail(auto&&... args)
+        : group { std::forward<decltype(args)>(args)... }
+        , lpf_env { std::forward<decltype(args)>(args)... }
+        , rf_env { std::forward<decltype(args)>(args)... } {
+      lpf_env->add_as_sub_group_to(*this);
+      rf_env->add_as_sub_group_to(*this);
+    }
+
+    /// The low pass filter envelope parameters
+    envelope::param_t lpf_env;
+
+    /// The resonance filter envelope parameters
+    envelope::param_t rf_env;
   };
 
   // Shared parameter between all copies of this noise generator
@@ -76,8 +85,10 @@ class noise {
     rf_env.param->release_time = 0.01;
   }
 
-  /// \todo
-  noise(const param_t& p) {}
+  noise(const param_t& p)
+      : lpf_env { p->lpf_env }
+      , rf_env { p->rf_env }
+      , param { p } {}
 
   /** Start a note
 
