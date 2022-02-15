@@ -54,8 +54,20 @@ class noise {
         : group { std::forward<decltype(args)>(args)... }
         , lpf_env { std::forward<decltype(args)>(args)... }
         , rf_env { std::forward<decltype(args)>(args)... } {
+      set_default_values();
       lpf_env->add_as_sub_group_to(*this);
       rf_env->add_as_sub_group_to(*this);
+    }
+
+    void set_default_values() {
+      lpf_env->attack_time = 0;
+      lpf_env->decay_time = 0.1;
+      lpf_env->sustain_level = 0.01;
+      lpf_env->release_time = 0.1;
+      rf_env->attack_time = 0.05;
+      rf_env->decay_time = 0.05;
+      rf_env->sustain_level = 0.1;
+      rf_env->release_time = 0.01;
     }
 
     /// The low pass filter envelope parameters
@@ -73,17 +85,6 @@ class noise {
 
   /// Output volume of the note
   float volume { 1 };
-
-  noise() {
-    lpf_env.param->attack_time = 0;
-    lpf_env.param->decay_time = 0.1;
-    lpf_env.param->sustain_level = 0.01;
-    lpf_env.param->release_time = 0.1;
-    rf_env.param->attack_time = 0.05;
-    rf_env.param->decay_time = 0.05;
-    rf_env.param->sustain_level = 0.1;
-    rf_env.param->release_time = 0.01;
-  }
 
   noise(const param_t& p)
       : lpf_env { p->lpf_env }
