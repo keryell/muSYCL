@@ -9,6 +9,7 @@
 #include "control.hpp"
 #include "dco.hpp"
 #include "envelope.hpp"
+#include "ladder_filter.hpp"
 #include "lfo.hpp"
 #include "low_pass_filter.hpp"
 #include "midi.hpp"

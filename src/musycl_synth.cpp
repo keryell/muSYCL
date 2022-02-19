@@ -218,7 +218,8 @@ int main() {
       low_pass_filter;
 
   // The resonance filters for the output channels
-  std::array<musycl::resonance_filter, musycl::audio::channel_number>
+  //std::array<musycl::resonance_filter, musycl::audio::channel_number>
+  std::array<musycl::ladder_filter, musycl::audio::channel_number>
       resonance_filter;
 
   // Use "Cutoff" on Arturia KeyLab 49 to set the resonance frequency
@@ -234,8 +235,9 @@ int main() {
 
   // Use "Resonance" on Arturia KeyLab 49 to set the resonance
   controller.resonance_pan_2.name("Resonance factor")
-      .add_action([&](musycl::midi::control_change::value_type v) {
-        auto resonance = std::log(v + 1.f) / std::log(128.f);
+      .add_action([&](float v) {
+        // auto resonance = 10*std::log(v + 1.f) / std::log(128.f);
+        auto resonance = 5*v;
         for (auto& f : resonance_filter)
           f.set_resonance(resonance);
         controller.display("Resonance factor: " + std::to_string(resonance));

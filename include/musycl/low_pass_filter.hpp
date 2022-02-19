@@ -4,7 +4,10 @@
 #define MUSYCL_LOW_PASS_FILTER_HPP
 
 #include <cmath>
+#include <iostream>
 #include <numbers>
+
+#include <musycl/config.hpp>
 
 namespace musycl {
 
