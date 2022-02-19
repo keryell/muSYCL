@@ -342,8 +342,9 @@ int main() {
   controller.release_ch_8.connect(dcoe1->env->release_time);
 
   // Connect the sustain pedal to its MIDI event
+  musycl::sustain sustain;
   musycl::midi_in::cc_action<64>(
-      [](std::int8_t v) { musycl::sustain::value(v); });
+      [&](std::int8_t v) { sustain.value(v); });
 
   controller.param_1_pan_5.name("Low pass filter").add_action([&](float a) {
     /* Use a frequency logarithmic scale between 1 Hz and half the
@@ -361,7 +362,7 @@ int main() {
        actions, so they will not cause race condition */
     musycl::midi_in::dispatch_registered_actions();
     // Process all the potential incoming MIDI messages on port 0
-    while (musycl::midi_in::try_read(0, m)) {
+    while (sustain.process(0, m)) {
       arp.midi(m);
       arp_low_high.midi(m);
       arp_bass_4.midi(m);

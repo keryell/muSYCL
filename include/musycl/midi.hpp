@@ -456,7 +456,7 @@ static inline std::int8_t channel(std::uint8_t first_byte) {
 }
 
 /// Parse a MIDI byte message into a specific MIDI instruction
-msg parse(const std::vector<std::uint8_t>& midi_message) {
+inline msg parse(const std::vector<std::uint8_t>& midi_message) {
   msg m;
   if (!midi_message.empty()) {
     auto sh = status_high(midi_message[0]);
