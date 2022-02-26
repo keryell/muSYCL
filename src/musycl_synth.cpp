@@ -467,11 +467,15 @@ int main() {
         // Insert a low pass filter in the output with amplitude
         // controlled by an LFO
         s = f.filter(s*lfo.out());
-      // Insert a resonance filter in the output
+      // Add a constant factor to avoid too much fading between 1 and 2 voices
+      a /= 4 + sounds.size();
+      // Insert a resonance filter in the output after volume
+      // normalization to avoid too much saturation
       for (auto&& [s, f] : ranges::views::zip(a, resonance_filter))
         s = f.filter(s);
-      // Add a constant factor to avoid too much fading between 1 and 2 voices
-      a *= master_volume/(4 + sounds.size());
+      // Put the master volume control at the end to take over filter
+      // loud oscillation
+      a *= master_volume;
     }
 
     std::shift_left(delay.begin(), delay.end(), musycl::frame_size);
