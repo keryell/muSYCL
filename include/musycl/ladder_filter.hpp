@@ -57,7 +57,7 @@ public:
        Clamp the output to avoid divergence for high resonance,=. */
     loop = std::clamp(filters[0].filter(filters[1].filter(filters[2].filter(
                           filters[3].filter(in - loop * resonance)))),
-                      -2.f, 2.f);
+                      -1.f, 1.f);
     return loop;
   }
 };
