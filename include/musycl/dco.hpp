@@ -8,6 +8,8 @@
 
 #include <range/v3/all.hpp>
 
+#include <triSYCL/vendor/triSYCL/random/xorshift.hpp>
+
 #include "config.hpp"
 
 #include "audio.hpp"
@@ -48,6 +50,12 @@ class dco {
 
   /// Position in the period of the triangle peak
   float triangle_peak_phase {};
+
+  // Tuning of the oscillator
+  float tune = 1;
+
+  /// Some fast random generator
+  static inline trisycl::vendor::trisycl::random::xorshift<> rng;
 
  public:
   /// Parameters of the DCO sound
@@ -100,6 +108,11 @@ class dco {
   */
   auto& start(const musycl::midi::on& on) {
     note = on;
+    // Add some random detuning for an analog mood
+    tune =
+        1 + 0.005 * (rng() * 2. /
+                       std::numeric_limits<decltype(rng)::value_type>::max() -
+                   1);
     running = true;
     return *this;
   }
@@ -124,14 +137,15 @@ class dco {
     if (running) {
       // Update the output frequency from the note ± 24 semitones from
       // the pitch bend
-      dphase = frequency(note, 24 * pitch_bend::value()) / sample_frequency;
+      dphase =
+          frequency(note, 24 * pitch_bend::value()) * tune / sample_frequency;
       set_square_waveform_parameter();
       set_triangle_waveform_parameter();
       for (auto& e : f) {
         e = square_signal() + triangle_signal();
         phase += dphase;
         // The phase is cyclic modulo 1
-        if (phase > 1)
+        if (phase >= 1)
           phase -= 1;
       }
     } else
@@ -158,7 +172,7 @@ class dco {
 
   /// Compute current value of triangle signal
   float triangle_signal() {
-    if (phase > triangle_ratio)
+    if (phase >= triangle_ratio)
       // Low level after the triangle part of the period
       return -final_triangle_volume;
     if (phase < triangle_peak_phase)
