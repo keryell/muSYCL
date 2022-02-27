@@ -77,22 +77,24 @@ class sustain {
     // Now we can process the MIDI input
     if (midi_in::try_read(0, m)) {
       // If the sustain is on and a not-off comes, just put it on hold
-      if (state && std::holds_alternative<midi::off>(m)) {
-        sustained_notes.insert_or_assign(std::get<midi::off>(m).base_header(),
-                                         m);
-        // Do not return the note-off message for now
-        return false;
-      }
-      if (state && std::holds_alternative<midi::on>(m)) {
-        // If we replay a sustained note, first stop the sustained note
-        if (auto it = sustained_notes.find(std::get<midi::on>(m).base_header());
-            it != sustained_notes.end()) {
-          postponed_note_on = m;
-          // Return the sustained note-off
-          m = it->second;
-          return true;
+      if (state && std::holds_alternative<midi::off>(m))
+        // Only handle first MIDI channel
+        if (auto off = std::get<midi::off>(m); off.channel == 0) {
+          sustained_notes.insert_or_assign(off.base_header(), m);
+          // Do not return the note-off message for now
+          return false;
         }
-      }
+      if (state && std::holds_alternative<midi::on>(m))
+        // Only handle first MIDI channel
+        if (auto on = std::get<midi::on>(m); on.channel == 0)
+          // If we replay a sustained note, first stop the sustained note
+          if (auto it = sustained_notes.find(on.base_header());
+              it != sustained_notes.end()) {
+            postponed_note_on = m;
+            // Return the sustained note-off
+            m = it->second;
+            return true;
+          }
       // Pass-through any other message
       return true;
     }
