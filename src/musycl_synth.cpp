@@ -325,7 +325,6 @@ int main() {
   triangle6_fast_decay->env->sustain_level = .1;
 
   // Control the DCO 1 & 3 parameters
-#if 0  
   controller.attack_ch_1.connect(dcoe1->dco->square_volume);
   controller.attack_ch_1.connect(dco3->square_volume);
   controller.decay_ch_2.connect(dcoe1->dco->triangle_volume);
@@ -334,7 +333,7 @@ int main() {
   controller.sustain_ch_3.connect(dco3->triangle_ratio);
   controller.release_ch_4.connect(dcoe1->dco->triangle_fall_ratio);
   controller.release_ch_4.connect(dco3->triangle_fall_ratio);
-#endif
+
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
   controller.attack_ch_5.connect(dcoe1->env->attack_time);
   controller.decay_ch_6.connect(dcoe1->env->decay_time);

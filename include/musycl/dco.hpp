@@ -51,7 +51,7 @@ class dco {
   /// Position in the period of the triangle peak
   float triangle_peak_phase {};
 
-  // Tuning of the oscillator
+  // Tuning factor of the oscillator, 1 for equal temperament
   float tune = 1;
 
   /// Some fast random generator
@@ -75,7 +75,7 @@ class dco {
 
     /// The part of the signal  where the triangle is, the rest is low level
     control::item<control::level<float>> triangle_ratio {
-      this, controller->sustain_ch_3, "Triangle ratio", { 0, 1, 1 }
+      this, controller->sustain_ch_3, "Triangle ratio", { 0.01, 1, 1 }
     };
 
     /// Ratio of the triangle occupied by the fall part of the triangle signal
@@ -164,7 +164,7 @@ class dco {
   /// Set once the square waveform parameters to speed up computation
   void set_square_waveform_parameter() {
     /// Modulate the PWM with the modulation actuator starting from square
-    square_pwm = modulation_actuator::value() * 0.5f + 0.5f;
+    square_pwm = modulation_actuator::value() * 0.49f + 0.5f;
     // Generate a square waveform with an amplitude directly
     // proportional to the velocity
     final_square_volume = note.velocity_1() * volume * param->square_volume;
@@ -175,7 +175,7 @@ class dco {
     if (phase >= triangle_ratio)
       // Low level after the triangle part of the period
       return -final_triangle_volume;
-    if (phase < triangle_peak_phase)
+    if (phase <= triangle_peak_phase)
       // Ramp up
       return final_triangle_volume * (2 * phase / triangle_peak_phase - 1);
     // Ramp down
@@ -187,7 +187,8 @@ class dco {
   /// Set once the triangle waveform parameters to speed up computation
   void set_triangle_waveform_parameter() {
     /// Cache more locally the value
-    triangle_ratio = param->triangle_ratio;
+    triangle_ratio = param->triangle_ratio; // In [0,1]
+    // In [0,1]
     triangle_peak_phase = triangle_ratio * (1 - param->triangle_fall_ratio);
     // Generate a square waveform with an amplitude directly
     // proportional to the velocity
