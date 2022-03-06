@@ -4,14 +4,14 @@ muSYCL
 Experimental muSYCaL framework around SYCL 2020
 -----------------------------------------------
 
-This is a small synthesizer to experiment with `C++20
+This is a small music synthesizer to experiment with `C++20
 <https://isocpp.org/>`_ programming, design patterns and acceleration
 on hardware accelerators like GPU, FPGA or CGRA with the `SYCL 2020
 <https://www.khronos.org/sycl/>`_ standard.
 
 It starts as a clean room implementation of a synthesizer to have a
-clean modern core architecture which can then be accelerated. So there
-is no low-level features like pointers, macros, raw loops, etc. used
+clean modern core architecture which can then be accelerated. So
+low-level features like pointers, macros, raw loops, etc. are avoided
 in the code as much as possible. Just mostly high-level generic and
 functional programming with C++20 ranges, concepts...
 
@@ -19,7 +19,9 @@ This can be seen as a small DSL to define synthesizers in a
 programmatic way on steroids comparable to modular synthesizers in an
 electronic way.
 
-This is a huge work-in-progress moving slowly...
+This is a huge work-in-progress moving slowly and the most complex
+part is actually not making the sounds themselves but interfacing with
+a MIDI controller to have a playful experience...
 
 Running the examples
 --------------------
@@ -30,10 +32,6 @@ JACK on Linux.
 
 It relies also on some extensions from
 https://github.com/triSYCL/triSYCL
-
-The `CsLibGuarded <https://github.com/copperspice/cs_libguarded>`_
-library is used as a Git submodule, so clone the muSYCL project with a
-``git clone --recurse-submodules``.
 
 To get the latest precompiled  Clang compiler you might look at
 https://apt.llvm.org/
