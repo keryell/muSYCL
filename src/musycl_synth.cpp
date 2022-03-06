@@ -33,16 +33,17 @@ int main() {
   // - Jack
   midi_in.open(application_name, "input", RtMidi::UNIX_JACK);
   // - ALSA
-  // audio.open_out(application_name, RtMidi::LINUX_ALSA);
+  // midi_in.open(application_name, "input", RtMidi::LINUX_ALSA);
 
   // The audio interface
-  musycl::audio audio;
-
+  musycl::audio audio_interface;
   /// The configuration part to adapt to the context
   // - Jack
-  audio.open(application_name, "output", application_name, RtAudio::UNIX_JACK);
+  audio_interface.open(application_name, "output", application_name,
+                       RtAudio::UNIX_JACK);
   // - ALSA
-  // audio.open(application_name, "output", RtAudio::LINUX_ALSA);
+  // audio_interface.open(application_name, "output", application_name,
+  // RtAudio::LINUX_ALSA);
 
   // The MIDI controller needs the MIDI output too to update the display/buttons
   musycl::midi_out midi_out;
