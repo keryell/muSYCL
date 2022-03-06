@@ -274,22 +274,16 @@ int main() {
   controller.param_2_pan_6.name("Rectification ratio")
       .set_variable(rectication_ratio);
 
-  // Keep 5 seconds of delay
-  constexpr auto frame_delay = static_cast<int>(5 * musycl::frame_frequency);
-  std::array<musycl::audio::sample_type, frame_delay * musycl::frame_size>
-      delay {};
-  /// Almost a 8th note of delay by default at 120 bpm sounds cool
-  float delay_line_time = 0.245;
+  // A simple stereo delay implemented with std::ranges
+  musycl::effect::range_delay range_delay;
   controller.param_3_pan_7.name("Delay line time")
       .add_action([&](musycl::midi::control_change::value_type v) {
-        delay_line_time = v * v / 127.f / 127 * 2;
-        controller.display(
-            "Delay line time: " + std::to_string(delay_line_time) + 's');
+        range_delay.delay_line_time = v * v / 127.f / 127 * 2;
+        controller.display("Delay line time: " +
+                           std::to_string(range_delay.delay_line_time) + 's');
       });
-  /// No delay by default
-  float delay_line_ratio = 0;
   controller.param_4_pan_8.name("Delay line ratio")
-      .set_variable(delay_line_ratio);
+      .set_variable(range_delay.delay_line_ratio);
 
   musycl::dco_envelope::param_t dcoe1 { ui, "DCO envelope 1", 0 };
   channel_assignment.assign(0, dcoe1);
@@ -479,19 +473,8 @@ int main() {
       a *= master_volume;
     }
 
-    std::shift_left(delay.begin(), delay.end(), musycl::frame_size);
-    std::ranges::copy(audio, delay.end() - musycl::frame_size);
-    int shift = delay_line_time*musycl::sample_frequency;
-    // Left channel
-    auto f = ranges::subrange(delay.end() - musycl::frame_size - shift,
-                              delay.end() - shift);
-    for (auto&& [a, d] : ranges::views::zip(audio, f))
-      a.x() += d.x()*delay_line_ratio;
-    // Right channel with twice the delay
-    f = ranges::subrange(delay.end() - musycl::frame_size - 2*shift,
-                         delay.end() - 2*shift);
-    for (auto&& [a, d] : ranges::views::zip(audio, f))
-      a.y() += d.y()*delay_line_ratio;
+    // Add some echo-like delay
+    range_delay.process(audio);
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);
