@@ -275,15 +275,15 @@ int main() {
       .set_variable(rectication_ratio);
 
   // A simple stereo delay implemented with std::ranges
-  musycl::effect::range_delay range_delay;
+  musycl::effect::delay delay;
   controller.param_3_pan_7.name("Delay line time")
       .add_action([&](musycl::midi::control_change::value_type v) {
-        range_delay.delay_line_time = v * v / 127.f / 127 * 2;
-        controller.display("Delay line time: " +
-                           std::to_string(range_delay.delay_line_time) + 's');
+        delay.delay_line_time = v * v / 127.f / 127 * 2;
+        controller.display(
+            "Delay line time: " + std::to_string(delay.delay_line_time) + 's');
       });
   controller.param_4_pan_8.name("Delay line ratio")
-      .set_variable(range_delay.delay_line_ratio);
+      .set_variable(delay.delay_line_ratio);
 
   musycl::dco_envelope::param_t dcoe1 { ui, "DCO envelope 1", 0 };
   channel_assignment.assign(0, dcoe1);
@@ -474,7 +474,7 @@ int main() {
     }
 
     // Add some echo-like delay
-    range_delay.process(audio);
+    delay.process(audio);
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);

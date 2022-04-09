@@ -9,6 +9,7 @@
 #include "control.hpp"
 #include "dco.hpp"
 #include "effect/range_delay.hpp"
+#include "effect/delay.hpp"
 #include "envelope.hpp"
 #include "ladder_filter.hpp"
 #include "lfo.hpp"
