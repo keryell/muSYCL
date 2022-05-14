@@ -10,6 +10,9 @@ auto constexpr audio_api = RtAudio::UNIX_JACK;
 // ALSA
 //auto constexpr audio_api = RtAudio::LINUX_ALSA;
 
+// Basic audio stereo sample
+struct sample_type { float left; float right; };
+
 auto check_error = [] (auto&& function) {
   try {
     return function();
@@ -26,15 +29,18 @@ auto seuil = -1.0;
 int callback(void *output_buffer, void *input_buffer,
              unsigned int frame_size, double stream_time,
              RtAudioStreamStatus status, void *user_data) {
-  auto buffer = static_cast<double*>(output_buffer);
-  auto& last_value = *static_cast<double *>(user_data);
+  auto buffer = static_cast<sample_type*>(output_buffer);
+  auto& last_value = *static_cast<float*>(user_data);
   if (status)
     std::cerr << "Stream underflow detected!" << std::endl;
   for (auto i = 0; i < frame_size; ++i) {
-      buffer[i] = last_value > seuil;
-      last_value += 0.01;
-      if (last_value >= 1.0)
-        last_value -= 2.0;
+    // An evolving PWM on the left
+    buffer[i].left = last_value > seuil;
+    // A saw-tooth on the right
+    buffer[i].right = last_value;
+    last_value += 0.01;
+    if (last_value >= 1.0)
+      last_value -= 2.0;
   }
   seuil += 0.001;
   if (seuil >= 0.95)
@@ -82,15 +88,15 @@ int main() {
   auto device = audio.getDefaultOutputDevice();
   RtAudio::StreamParameters parameters;
   parameters.deviceId = device;
-  parameters.nChannels = 1;
+  parameters.nChannels = 2;
   parameters.firstChannel = 0;
   RtAudio::StreamOptions options;
   options.streamName = "essai";
   auto sample_rate = audio.getDeviceInfo(device).preferredSampleRate;
   auto frame_size = 256U; // 256 sample frames
-  double data {};
+  float data {};
   check_error([&] {
-    audio.openStream(&parameters, nullptr, RTAUDIO_FLOAT64,
+    audio.openStream(&parameters, nullptr, RTAUDIO_FLOAT32,
                      sample_rate, &frame_size, callback, &data, &options,
                      [] (RtAudioError::Type type,
                          const std::string &error_text) {
