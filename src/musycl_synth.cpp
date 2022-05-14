@@ -73,7 +73,7 @@ int main() {
   /// Master modulation wheel on MIDI port 0 channel 0
   musycl::modulation_actuator ma { 0, 0 };
 
-  // An arpeggiator
+  // A default arpeggiator
   musycl::arpeggiator arp;
   // controller.play_pause.name("Arpeggiator Start/Stop")
   controller.pad_2.name("Arpeggiator Start/Stop").add_action([&](bool v) {

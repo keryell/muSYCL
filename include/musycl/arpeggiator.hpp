@@ -25,10 +25,10 @@ namespace musycl {
 class arpeggiator : public clock::follow<arpeggiator> {
  public:
   /// Ignore note lower than this one
-  midi::note_type low_input_limit = 0;
+  midi::note_type low_input_limit;
 
   /// Ignore note equal to or higher than this one
-  midi::note_type high_input_end = 60;
+  midi::note_type high_input_end;
 
   /// The notes to play with
   std::vector<midi::on> notes;
@@ -46,22 +46,21 @@ class arpeggiator : public clock::follow<arpeggiator> {
   bool running = false;
 
   /// Type of an arpeggiator procedure
-  using callable_t = std::function<void(arpeggiator&)>;
+  using arpeggiator_engine_t = std::function<void(arpeggiator&)>;
 
   /// User-provided arpeggiator procedure
-  callable_t callable;
-
-  arpeggiator() = default;
+  arpeggiator_engine_t arpeggiator_engine;
 
   /** Create an arpeggiator sensitive to notes between low and high inclusive
 
-      \input[in] c is a callable implementing the arpeggiato or use a
+      \input[in] c is a callable implementing the arpeggiator or use a
       default one
   */
-  arpeggiator(midi::note_type low, midi::note_type high, callable_t c = {})
+  arpeggiator(midi::note_type low = 0, midi::note_type high = 60,
+              arpeggiator_engine_t ae = default_arpeggiator)
       : low_input_limit { low }
       , high_input_end { high }
-      , callable { c } {}
+      , arpeggiator_engine { ae } {}
 
   /** Handle MIDI note events
 
@@ -114,37 +113,40 @@ class arpeggiator : public clock::follow<arpeggiator> {
       return;
 
     current_clock_time = ct;
-    if (callable) {
-      callable(*this);
-      return;
-    }
+    arpeggiator_engine(*this);
+  }
 
+  static void default_arpeggiator(arpeggiator& arp) {
     // Otherwise use a default arpeggiator, work on the 16th of note
-    if (ct.midi_clock_index % (midi::clock_per_quarter / 4) == 0) {
-      stop_current_note();
-      if (!notes.empty()) {
+    if (arp.current_clock_time.midi_clock_index %
+            (midi::clock_per_quarter / 4) ==
+        0) {
+      arp.stop_current_note();
+      if (!arp.notes.empty()) {
         // Find the lowest note
-        int bass =
-            std::distance(notes.begin(),
-                          std::ranges::min_element(notes, {}, &midi::on::note));
+        int bass = std::distance(
+            arp.notes.begin(),
+            std::ranges::min_element(arp.notes, {}, &midi::on::note));
         // Wrap around if we reached the end
-        if (note_index >= notes.size())
-          note_index = 0;
-        auto n = notes[ct.measure ? bass : note_index];
+        if (arp.note_index >= arp.notes.size())
+          arp.note_index = 0;
+        auto n =
+            arp.notes[arp.current_clock_time.measure ? bass : arp.note_index];
         // Replay this note on channel 2 except the first one going on 3
-        n.channel = ct.measure ? 2 : ct.beat_index == 2 ? 3 : 1;
-        n.note += 24 - 36 * ct.measure;
-        if (ct.beat_index == 2)
+        n.channel = arp.current_clock_time.measure           ? 2
+                    : arp.current_clock_time.beat_index == 2 ? 3
+                                                             : 1;
+        n.note += 24 - 36 * arp.current_clock_time.measure;
+        if (arp.current_clock_time.beat_index == 2)
           n.velocity = 127;
-        current_note = n;
+        arp.current_note = n;
         midi_in::insert(0, n);
         std::cout << "Insert " << n << std::endl;
-        ++note_index;
+        ++arp.note_index;
       }
     }
   }
 };
-
 } // namespace musycl
 
 #endif // MUSYCL_ARPEGGIATOR_HPP
