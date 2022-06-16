@@ -76,7 +76,7 @@ int main() {
   // A default arpeggiator
   musycl::arpeggiator arp;
   // controller.play_pause.name("Arpeggiator Start/Stop")
-  controller.pad_2.name("Arpeggiator Start/Stop").add_action([&](bool v) {
+  controller.pad_8.name("Arpeggiator Start/Stop").add_action([&](bool v) {
     arp.run(v);
     controller.display("Arpeggiator running: " + std::to_string(v));
   });
@@ -92,7 +92,7 @@ int main() {
         self.stop_current_note();
     }
   };
-  controller.pad_1.name("Bass arpeggiator Start/Stop").add_action([&](bool v) {
+  controller.pad_7.name("Bass arpeggiator Start/Stop").add_action([&](bool v) {
     arp_bass.run(v);
     controller.display("Bass arpeggiator running: " + std::to_string(v));
   });
@@ -122,7 +122,7 @@ int main() {
       }
     }
   };
-  controller.pad_3.name("Arpeggiator low & high Start/Stop")
+  controller.pad_1.name("Arpeggiator low & high Start/Stop")
       .add_action([&](bool v) {
         arp_low_high.run(v);
         controller.display("Low & high arpeggiator running: " +
@@ -164,7 +164,7 @@ int main() {
       }
     }
   };
-  controller.pad_5.name("Arpeggiator with 4 basses Start/Stop")
+  controller.pad_6.name("Arpeggiator with 4 basses Start/Stop")
       .add_action([&](bool v) {
         arp_bass_4.run(v);
         controller.display(" 4 bass arpeggiator running: " + std::to_string(v));
@@ -197,7 +197,7 @@ int main() {
       }
     }
   };
-  controller.pad_6.name("Jupiter 8 Arpeggiator Start/Stop")
+  controller.pad_2.name("Jupiter 8 Arpeggiator Start/Stop")
       .add_action([&](bool v) {
         arp_jupiter_8.run(v);
         controller.display("Jupiter 8 arpeggiator running: " +
