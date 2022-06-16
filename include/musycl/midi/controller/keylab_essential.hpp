@@ -337,7 +337,7 @@ using namespace std::chrono_literals;
     }
 
     /// Return the underlying user interface
-    user_interface& user_interface() { return ui; }
+    user_interface& get_user_interface() { return ui; }
 
     void button_light(std::int8_t button, std::int8_t level) {
       static auto constexpr sysex_button_light = { '\x2', '\0', '\x10' };

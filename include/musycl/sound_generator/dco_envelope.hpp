@@ -28,17 +28,17 @@ class dco_envelope
    public:
     param_detail(auto&&... args)
         : group { std::forward<decltype(args)>(args)... }
-        , dco { std::forward<decltype(args)>(args)... }
-        , env { std::forward<decltype(args)>(args)... } {
-      dco->add_as_sub_group_to(*this);
-      env->add_as_sub_group_to(*this);
+        , dco_param { std::forward<decltype(args)>(args)... }
+        , env_param { std::forward<decltype(args)>(args)... } {
+      dco_param->add_as_sub_group_to(*this);
+      env_param->add_as_sub_group_to(*this);
     }
 
     /// The DCO parameters
-    dco::param_t dco;
+    dco::param_t dco_param;
 
     /// The envelop parameters
-    envelope::param_t env;
+    envelope::param_t env_param;
   };
 
   // Shared parameter between all copies of this envelope generator
@@ -52,9 +52,9 @@ class dco_envelope
 
   /// Create a sound from its parameters
   dco_envelope(const param_t& p)
-      : dco { p->dco }
+      : dco { p->dco_param }
       , param { p }
-      , env { p->env } {}
+      , env { p->env_param } {}
 
   /** Start a note
 

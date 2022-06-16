@@ -58,7 +58,7 @@ class sound_generator {
     }
 
     // Get the controlling group of a sound parameter set
-    const group& group() const {
+    const group& get_group() const {
       return std::visit(
           // Need "class" here to avoid conflict with the member function
           // around.

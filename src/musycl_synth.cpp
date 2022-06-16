@@ -287,15 +287,15 @@ int main() {
 
   musycl::dco_envelope::param_t dcoe1 { ui, "DCO envelope 1", 0 };
   channel_assignment.assign(0, dcoe1);
-  dcoe1->env->attack_time = 0.1;
-  dcoe1->env->decay_time = 0.4;
-  dcoe1->env->sustain_level = 0.3;
-  dcoe1->env->release_time = 0.5;
+  dcoe1->env_param->attack_time = 0.1;
+  dcoe1->env_param->decay_time = 0.4;
+  dcoe1->env_param->sustain_level = 0.3;
+  dcoe1->env_param->release_time = 0.5;
 
   musycl::dco_envelope::param_t dcoe2 { ui, "DCO envelope 2", 1 };
   channel_assignment.assign(1, dcoe2);
-  dcoe2->env->decay_time = .1;
-  dcoe2->env->sustain_level = .1;
+  dcoe2->env_param->decay_time = .1;
+  dcoe2->env_param->sustain_level = .1;
 
   // Triangle wave
   musycl::dco::param_t dco3 { ui, "Triangle wave", 2 };
@@ -314,26 +314,26 @@ int main() {
                                                        "Triangle fast decay",
                                                        5 };
   channel_assignment.assign(5, triangle6_fast_decay);
-  triangle6_fast_decay->dco->square_volume = 0;
-  triangle6_fast_decay->dco->triangle_volume = 1;
-  triangle6_fast_decay->env->decay_time = .1;
-  triangle6_fast_decay->env->sustain_level = .1;
+  triangle6_fast_decay->dco_param->square_volume = 0;
+  triangle6_fast_decay->dco_param->triangle_volume = 1;
+  triangle6_fast_decay->env_param->decay_time = .1;
+  triangle6_fast_decay->env_param->sustain_level = .1;
 
   // Control the DCO 1 & 3 parameters
-  controller.attack_ch_1.connect(dcoe1->dco->square_volume);
+  controller.attack_ch_1.connect(dcoe1->dco_param->square_volume);
   controller.attack_ch_1.connect(dco3->square_volume);
-  controller.decay_ch_2.connect(dcoe1->dco->triangle_volume);
+  controller.decay_ch_2.connect(dcoe1->dco_param->triangle_volume);
   controller.decay_ch_2.connect(dco3->triangle_volume);
-  controller.sustain_ch_3.connect(dcoe1->dco->triangle_ratio);
+  controller.sustain_ch_3.connect(dcoe1->dco_param->triangle_ratio);
   controller.sustain_ch_3.connect(dco3->triangle_ratio);
-  controller.release_ch_4.connect(dcoe1->dco->triangle_fall_ratio);
+  controller.release_ch_4.connect(dcoe1->dco_param->triangle_fall_ratio);
   controller.release_ch_4.connect(dco3->triangle_fall_ratio);
 
   // Control the envelope of CH1 with Attack/CH5 to Release/CH8
-  controller.attack_ch_5.connect(dcoe1->env->attack_time);
-  controller.decay_ch_6.connect(dcoe1->env->decay_time);
-  controller.sustain_ch_7.connect(dcoe1->env->sustain_level);
-  controller.release_ch_8.connect(dcoe1->env->release_time);
+  controller.attack_ch_5.connect(dcoe1->env_param->attack_time);
+  controller.decay_ch_6.connect(dcoe1->env_param->decay_time);
+  controller.sustain_ch_7.connect(dcoe1->env_param->sustain_level);
+  controller.release_ch_8.connect(dcoe1->env_param->release_time);
 
   // Connect the sustain pedal to its MIDI event
   musycl::sustain sustain;
@@ -409,7 +409,7 @@ int main() {
                       std::to_string(
                           channel_assignment.current_selected_channel) +
                       " " + sound_param.name());
-                  ui.prioritize_layer(sound_param.group());
+                  ui.prioritize_layer(sound_param.get_group());
                 } else if (s.v == std::vector<std::uint8_t> {
                                       0x00, 0x20, 0x6b, 0x7f, 0x42, 0x02, 0x00,
                                       0x00, 0x19, 0x7f }) {
@@ -423,7 +423,7 @@ int main() {
                       std::to_string(
                           channel_assignment.current_selected_channel) +
                       " " + sound_param.name());
-                  ui.prioritize_layer(sound_param.group());
+                  ui.prioritize_layer(sound_param.get_group());
                 }
               },
               [&](auto&& other) {
