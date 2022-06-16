@@ -30,9 +30,11 @@ class delay {
   float delay_line_ratio = 0;
 
  private:
-  // The buffer implementing the delay line on the accelerator
+  /// The buffer implementing the delay line on the accelerator
   sycl::buffer<audio::sample_type> delay { delay_size };
 
+  /// A queue to the default device
+  sycl::queue q;
 
  public:
   /**  Process an audio frame
@@ -45,25 +47,69 @@ class delay {
     // Delay shift in term of sample number
     int shift = delay_line_time * sample_frequency;
     // Submit a command group to the default device
-    sycl::queue {}.submit([&](auto& cgh) {
+    q.submit([&](auto& cgh) {
       // Request a read-write access to the audio frame on the device
       sycl::accessor io { input_output, cgh };
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay, cgh };
       // The delay processing kernel to run on the device
       cgh.parallel_for(frame_size, [=](std::size_t i) {
-        // Shift the delay line by a frame towards the beginning,
-        // strip-mined by frame. \todo Use SYCL scoped parallelism or
-        // introduce algorithms with ad-hoc execution policy
-        for (int sample = 0; sample < delay_size - frame_size;
-             sample += frame_size)
-          d[sample + i] = d[sample + frame_size + i];
+#if 0
+        std::cout << "i = " << i << ", &io.rbegin()[i]= " << &io.rbegin()[i]
+                  << ", io.begin= " << &*io.begin()
+                  << ", io.end= " << &*io.end()
+                  << ", io.rbegin()= " << &*io.rbegin()
+                  << ", io.rend()= " << &*io.rend() << std::endl;
+#endif
+        // Shift the delay line by a frame towards the
+        // beginning, strip-mined by frame. \todo Use SYCL
+        // scoped parallelism or introduce algorithms with
+        // ad-hoc execution policy
+        // #if 0
+        for (int sample = i; sample < delay_size - frame_size;
+             sample += frame_size) {
+          d[sample] = d[sample + frame_size];
+          /*
+                  std::cout << "i = " << i << ", delay_size= " << delay_size
+                            << ", sample= " << sample
+                            << ", sample + frame_size= " << sample + frame_size
+                            << std::endl;
+*/
+          }
+        auto dri = io.rbegin()[i];
+        // d.rbegin()[i + frame_size] = d.rbegin()[i];
+        // d.rbegin()[i + frame_size] = { 2, 3 };
+        //  #endif
+        //          d[i - 2 * frame_size + delay_size] = d[i - frame_size +
+        //          delay_size];
+        // OK it is not the same i in reverse
+#if 0        
+        if (d.rbegin()[i].x() != d.rbegin()[i + frame_size].x()) {
+          std::cout << "i= " << i << ", d.rbegin()[i]= " << d.rbegin()[i].x()
+                    << ", " << d.rbegin()[i + frame_size].x() << ", " << dri.x()
+                    << std::endl;
+          exit(0);
+        }
+#endif
+      });
+    });
+    q.wait();
+    // exit(0);
+    q.submit([&](auto& cgh) {
+      // Request a read-write access to the audio frame on the device
+      sycl::accessor io { input_output, cgh };
+      // Request a read-write access to the delay buffer on the device
+      sycl::accessor d { delay, cgh };
+      // The delay processing kernel to run on the device
+      cgh.parallel_for(frame_size, [=](std::size_t i) {
         // Copy the audio frame to the end of the delay line
         d.rbegin()[i] = io.rbegin()[i];
         // Left channel
-        io.rbegin()[i].x() += d.rbegin()[shift + i].x() * delay_line_ratio;
+        // io.rbegin()[i].x() += d.rbegin()[shift + i].x() * delay_line_ratio;
         // Right channel with twice the delay
-        io.rbegin()[i].y() += d.rbegin()[2 * shift + i].y() * delay_line_ratio;
+        //        io.rbegin()[i].y() += d.rbegin()[2 * shift + i].y() *
+        //        delay_line_ratio;
+        io.rbegin()[i] = d.rbegin()[i + frame_size];
       });
     });
     /* The buffer destruction cause the data to be transferred from
