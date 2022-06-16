@@ -330,7 +330,7 @@ using namespace std::chrono_literals;
       static auto constexpr sysex_end = { '\xf7' };
 
       auto sysex_message = ranges::to<std::vector<std::uint8_t>>(
-          ranges::view::concat(sysex_start, sysex_id, dev_id, sub_dev_id,
+          ranges::views::concat(sysex_start, sysex_id, dev_id, sub_dev_id,
                                messages..., sysex_end));
       midi_out::write(sysex_message);
       return sysex_message;
@@ -341,8 +341,8 @@ using namespace std::chrono_literals;
 
     void button_light(std::int8_t button, std::int8_t level) {
       static auto constexpr sysex_button_light = { '\x2', '\0', '\x10' };
-      send_sysex(sysex_button_light, ranges::view::single(button),
-                 ranges::view::single(level));
+      send_sysex(sysex_button_light, ranges::views::single(button),
+                 ranges::views::single(level));
     }
 
     /// Store the last displayed message to refresh the display regularly
@@ -351,15 +351,15 @@ using namespace std::chrono_literals;
     /// Display a message on the LCD display
     void display(const std::string& message) {
       // Split the string in at most 2 lines of 16 characters max
-      auto r = ranges::view::all(message) | ranges::view::chunk(16) |
-               ranges::view::take(2) | ranges::view::enumerate |
-               ranges::view::transform([](auto&& enumeration) {
+      auto r = ranges::views::all(message) | ranges::views::chunk(16) |
+               ranges::views::take(2) | ranges::views::enumerate |
+               ranges::views::transform([](auto&& enumeration) {
                  auto [line_number, line_content] = enumeration;
-                 return ranges::view::concat(
-                     ranges::view::single(char(line_number + 1)), line_content,
-                     ranges::view::single('\0'));
+                 return ranges::views::concat(
+                     ranges::views::single(char(line_number + 1)), line_content,
+                     ranges::views::single('\0'));
                }) |
-               ranges::view::join;
+               ranges::views::join;
       static auto constexpr sysex_display_command = { '\x4', '\0', '\x60' };
       last_displayed_sysex_message = send_sysex(sysex_display_command, r);
     }
