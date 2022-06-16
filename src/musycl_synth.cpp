@@ -275,7 +275,7 @@ int main() {
       .set_variable(rectication_ratio);
 
   // A simple stereo delay implemented with std::ranges
-  musycl::effect::delay delay;
+  musycl::effect::range_delay delay;
   controller.param_3_pan_7.name("Delay line time")
       .add_action([&](musycl::midi::control_change::value_type v) {
         delay.delay_line_time = v * v / 127.f / 127 * 2;
