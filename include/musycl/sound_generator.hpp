@@ -24,6 +24,8 @@ class sound_generator {
   sound_generator_t sg;
 
  public:
+  using pointer = sound_generator*;
+
   ///  Parameter of the sound generators
   class param_t {
     /// \todo generate from sound_generator_t

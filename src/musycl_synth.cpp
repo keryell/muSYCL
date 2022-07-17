@@ -170,6 +170,38 @@ int main() {
         controller.display(" 4 bass arpeggiator running: " + std::to_string(v));
       });
 
+  musycl::arpeggiator arp_exp {
+    60, 127,
+    [&, start = false,
+     s = musycl::sound_generator::pointer {}](auto& self) mutable {
+      if (self.running && self.current_clock_time.midi_clock_index %
+                                  (musycl::midi::clock_per_quarter / 2) ==
+                              0) {
+        // Toggle between starting the note and stopping it
+        start = !start;
+        if (start) {
+          s = &sounds
+                   .insert_or_assign({ 0, 24 },
+                                     musycl::sound_generator {
+                                         channel_assignment.channels[1] })
+                   .first->second;
+          s->start({ 0, 24, 100 });
+          std::cout << "Insert arp exp" << std::endl;
+          self.stop_action = [&] {
+            if (s)
+              s->stop({ 0, 24, 100 });
+          };
+        } else
+          self.stop_action();
+      }
+    }
+  };
+  controller.pad_5.name("Arpeggiator exp Start/Stop")
+      .add_action([&](bool v) {
+        arp_exp.run(v);
+        controller.display(" Exp arpeggiator running: " + std::to_string(v));
+      });
+
   musycl::arpeggiator arp_jupiter_8 {
     60, 127,
     [&, start = false, index = 0,

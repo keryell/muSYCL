@@ -51,6 +51,9 @@ class arpeggiator : public clock::follow<arpeggiator> {
   /// User-provided arpeggiator procedure
   arpeggiator_engine_t arpeggiator_engine;
 
+  /// An action to call when the arpeggiator is stopped
+  std::function<void()> stop_action;
+
   /** Create an arpeggiator sensitive to notes between low and high inclusive
 
       \input[in] c is a callable implementing the arpeggiator or use a
@@ -105,6 +108,8 @@ class arpeggiator : public clock::follow<arpeggiator> {
       midi_in::insert(0, current_note->as_off());
       current_note.reset();
     }
+    if (stop_action)
+      stop_action();
   }
 
   /// This is notified on each MIDI clock by the clocking framework
