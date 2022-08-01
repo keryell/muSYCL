@@ -68,6 +68,13 @@ class dco {
       this, controller->attack_ch_1, "Square volume", { 0, 1, 1 }
     };
 
+    /**  PWM of the square signal
+
+         If 0, it is controlled by the modulation wheel
+    */
+    control::item<control::level<float>> square_pwm { "Square PWM",
+                                                      { 0, 1, 0 } };
+
     /// Level of triangle signal
     control::item<control::level<float>> triangle_volume {
       this, controller->decay_ch_2, "Triangle volume", { 0, 1, 0 }
@@ -163,8 +170,11 @@ class dco {
 
   /// Set once the square waveform parameters to speed up computation
   void set_square_waveform_parameter() {
-    /// Modulate the PWM with the modulation actuator starting from square
-    square_pwm = modulation_actuator::value() * 0.49f + 0.5f;
+    if (auto pwm = param->square_pwm; pwm == 0)
+      /// Modulate the PWM with the modulation actuator starting from square
+      square_pwm = modulation_actuator::value() * 0.49f + 0.5f;
+    else
+      square_pwm = pwm;
     // Generate a square waveform with an amplitude directly
     // proportional to the velocity
     final_square_volume = note.velocity_1() * volume * param->square_volume;
