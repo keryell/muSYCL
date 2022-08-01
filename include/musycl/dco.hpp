@@ -36,6 +36,10 @@ class dco {
   /// The phase increment per clock to generate the right frequency
   float dphase {};
 
+  /// Some fast random generator
+  static inline trisycl::vendor::trisycl::random::xorshift<> rng;
+
+ public:
   /// Amplitude factor for the square waveform: 1 for maximal volume, 0 muted
   float final_square_volume {};
 
@@ -54,10 +58,6 @@ class dco {
   // Tuning factor of the oscillator, 1 for equal temperament
   float tune = 1;
 
-  /// Some fast random generator
-  static inline trisycl::vendor::trisycl::random::xorshift<> rng;
-
- public:
   /// Parameters of the DCO sound
   class param_detail : public group {
    public:
