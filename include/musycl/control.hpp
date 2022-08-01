@@ -259,7 +259,7 @@ class control {
     // Make the implementation member directly accessible in this class
     using implementation_t::implementation;
 
-    param() = default;
+    param() : implementation_t { new param_detail } {}
 
     param(user_interface& ui, const std::string& n,
           std::optional<midi::channel_type> midi_channel = {})
