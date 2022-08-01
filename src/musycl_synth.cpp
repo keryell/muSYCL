@@ -11,7 +11,7 @@
 #include <variant>
 
 #include <sycl/sycl.hpp>
-#include <sycl/vendor/triSYCL/pipe/cout.hpp>
+#include <triSYCL/vendor/triSYCL/pipe/cout.hpp>
 #include <triSYCL/detail/overloaded.hpp>
 
 auto constexpr debug_midi_input = true;
@@ -24,7 +24,7 @@ auto constexpr debug_midi_input = true;
 
 auto constexpr application_name = "musycl_synth";
 
-namespace ts = sycl::vendor::trisycl;
+namespace ts = trisycl::vendor::trisycl;
 
 int main() {
   // The MIDI input interface
