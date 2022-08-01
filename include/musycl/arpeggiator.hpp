@@ -104,6 +104,7 @@ class arpeggiator : public clock::follow<arpeggiator> {
 
   /// Stop current note
   void stop_current_note() {
+    std::cerr << "STOP " << running << std::endl;
     if (current_note) {
       midi_in::insert(0, current_note->as_off());
       current_note.reset();

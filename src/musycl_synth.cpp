@@ -173,27 +173,44 @@ int main() {
   musycl::arpeggiator arp_exp {
     60, 127,
     [&, start = false,
-     s = musycl::sound_generator::pointer {}](auto& self) mutable {
+     p = musycl::dco_envelope::param_t {}](auto& self) mutable {
+      // Assign the sound to some unused channel to avoid conflict
+      constexpr auto free_channel = 99;
+      constexpr auto note = 24;
+      constexpr auto velocity = 100;
       if (self.running && self.current_clock_time.midi_clock_index %
                                   (musycl::midi::clock_per_quarter / 2) ==
                               0) {
         // Toggle between starting the note and stopping it
         start = !start;
         if (start) {
-          s = &sounds
-                   .insert_or_assign({ 0, 24 },
-                                     musycl::sound_generator {
-                                         channel_assignment.channels[1] })
-                   .first->second;
-          s->start({ 0, 24, 100 });
           std::cout << "Insert arp exp" << std::endl;
-          self.stop_action = [&] {
-            if (s)
-              s->stop({ 0, 24, 100 });
+          sounds
+              .insert_or_assign({ free_channel, note },
+                                musycl::sound_generator { p })
+              .first->second.start({ free_channel, note, velocity });
+          self.stop_action = [&] mutable {
+            /* Create this as l-value and make the lambda mutable so
+               the find can return a non-const iterator to be able to
+               call stop() on it */
+            musycl::midi::note_base_header n = { free_channel, note };
+            std::cout << "Stop arp" << std::endl;
+            /* Look-up again the sound instead of keeping a ref on it
+               from above to handle the case the sound was so short
+               that it ended before naturally */
+            if (auto iter = sounds.find(n);
+                iter != sounds.end()) {
+              std::cout << "Stop arp exp" << std::endl;
+              iter->second.stop({ free_channel, note, velocity });
+            }
           };
         } else
           self.stop_action();
       }
+      // Make variation to the PWM at MIDI clock speed
+      p->dco_param->square_pwm =
+          std::fmod(p->dco_param->square_pwm + 0.01f, 1.f);
+      std::cout << "PWM  arp exp " << p->dco_param->square_pwm << std::endl;
     }
   };
   controller.pad_5.name("Arpeggiator exp Start/Stop")

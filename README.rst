@@ -48,7 +48,7 @@ In the top directory of the repository::
   mkdir build
   # Configure the project with the triSYCL repository somewhere
   CXX=clang++-15 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=Debug
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
   # Build the project
   cmake --build . --parallel `nproc` --verbose
 
