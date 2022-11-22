@@ -41,7 +41,8 @@ class delay {
   */
   void process(audio::frame& audio) {
     // Make a buffer from the audio frame so it can processed from a SYCL kernel
-    sycl::buffer input_output { audio };
+    //sycl::buffer input_output { audio };
+    sycl::buffer<audio::sample_type> input_output { audio.data(), audio.size() };
     // Delay shift in term of sample number
     int shift = delay_line_time * sample_frequency;
     // Submit a command group to the default device
