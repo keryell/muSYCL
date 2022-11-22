@@ -42,7 +42,7 @@ public:
 
       In a stereo system, the element .x() or .s0() is the left voice
       and .y() or .s1() is the right voice */
-  using sample_type = sycl::vec<value_type, channel_number>;
+  using sample_type = sycl::marray<value_type, channel_number>;
 
   /// The type of an audio frame
   /// \todo Use a movable type?

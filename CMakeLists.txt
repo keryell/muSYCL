@@ -4,7 +4,8 @@ project(muSYCL
         VERSION 0.0.1
         LANGUAGES CXX)
 
-# set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+# To avoid refetching everything when no Internet
+#set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 
 include(FindtriSYCL)
 #find_package(TriSYCL MODULE REQUIRED)
