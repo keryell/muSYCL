@@ -16,14 +16,13 @@
 namespace musycl {
 
 class sound_generator {
-
+ public:
   /** A sound generator is a variant of types which can be used as sound
       generators */
   using sound_generator_t = std::variant<dco, dco_envelope, noise>;
 
   sound_generator_t sg;
 
- public:
   using pointer = sound_generator*;
 
   ///  Parameter of the sound generators

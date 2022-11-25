@@ -3,6 +3,7 @@
     Rely on some triSYCL extensions (kernel I/O) and muSYCL extensions
     (MIDI and audio input/output)
 */
+#include "musycl/dco.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -399,6 +400,31 @@ int main() {
     controller.display("Low pass filter: " + std::to_string(cut_off_freq) +
                        " Hz");
   });
+
+  // Assign on unused MIDI channel 17
+  musycl::dco::param_t random_note_dco_p { ui, "Random note DCO", 17 };
+  sounds.insert_or_assign(
+      { 17, 0 }, musycl::sound_generator { musycl::dco { random_note_dco_p } });
+  auto& random_note_dco = std::get<musycl::dco>(sounds[{ 17, 0 }].sg);
+  // Use the lowest note as a base, volume to 0
+  random_note_dco.start({ 17, 0, 20 }).volume = 0;
+  trisycl::vendor::trisycl::random::xorshift<> random_note_rng;
+  musycl::automate random_note_generator { [&](auto& self) mutable {
+    for (;;) {
+      // Wait for 6 MIDI ticks
+      self.pause(6);
+      // Use the tuning parameter to change the note frequency
+      random_note_dco.tune =
+          500. * random_note_rng() /
+          std::numeric_limits<decltype(random_note_rng)::value_type>::max();
+    }
+  } };
+  controller.pad_4.name("Random notes").add_action([&](bool v) {
+    // Just control the output volume for now
+    random_note_dco.volume = v;
+    controller.display("Random notes running: " + std::to_string(v));
+  });
+
   // The forever time loop
   for (;;) {
     /* Dispatch here all the potential incoming MIDI registered

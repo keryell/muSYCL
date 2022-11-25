@@ -4,6 +4,7 @@
 #include "config.hpp"
 
 #include "arpeggiator.hpp"
+#include "automate.hpp"
 #include "audio.hpp"
 #include "clock.hpp"
 #include "control.hpp"

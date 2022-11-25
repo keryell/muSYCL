@@ -30,7 +30,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_CPPCHECK "cppcheck")
 
 # Apply include-what-you-use to compilation (apt install iwyu)
-set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "include-what-you-use")
+# Does not work with C++2b and mdspan
+#set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "include-what-you-use")
 
 add_subdirectory(src)
 add_subdirectory(experiment)
