@@ -324,6 +324,27 @@ int main() {
   controller.param_2_pan_6.name("Rectification ratio")
       .set_variable(rectication_ratio);
 
+  bool enable_automatic_effects = false;
+  musycl::automate automatic_effects { [&](auto& self) mutable {
+    for (;;) {
+      if (enable_automatic_effects)
+        rectication_ratio = 0.3;
+      self.wait_for_beats(1);
+      if (enable_automatic_effects)
+        rectication_ratio = 0;
+      if (enable_automatic_effects)
+        rectication_ratio = 0.5;
+      self.wait_for_beats(1);
+      if (enable_automatic_effects)
+        rectication_ratio = 0;
+      self.wait_for_measures(2);
+    }
+  } };
+  controller.pad_3.name("Automatic effects").add_action([&](bool v) {
+    enable_automatic_effects = v;
+    controller.display("Automatic effects running: " + std::to_string(v));
+  });
+
   // A simple stereo delay implemented with std::ranges
   musycl::effect::range_delay delay;
   controller.param_3_pan_7.name("Delay line time")
