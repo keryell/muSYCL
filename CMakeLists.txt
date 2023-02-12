@@ -21,10 +21,10 @@ find_library(LIBRARY_RTMIDI NAMES rtmidi REQUIRED)
 find_package(Doxygen
              REQUIRED dot)
 
-#set_project_properties(muSYCL PROPERTIES CXX_STANDARD 20)
+#set_project_properties(muSYCL PROPERTIES CXX_STANDARD 23)
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 # Apply Cppcheck to compilation (apt install cppcheck)
 set(CMAKE_CXX_CPPCHECK "cppcheck")

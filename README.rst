@@ -4,7 +4,7 @@ muSYCL
 Experimental muSYCaL framework around SYCL 2020
 -----------------------------------------------
 
-This is a small music synthesizer to experiment with `C++20
+This is a small music synthesizer to experiment with `C++23
 <https://isocpp.org/>`_ programming, design patterns and acceleration
 on hardware accelerators like GPU, FPGA or CGRA with the `SYCL 2020
 <https://www.khronos.org/sycl/>`_ standard.
@@ -13,7 +13,7 @@ It starts as a clean room implementation of a synthesizer to have a
 clean modern core architecture which can then be accelerated. So
 low-level features like pointers, macros, raw loops, etc. are avoided
 in the code as much as possible. Just mostly high-level generic and
-functional programming with C++20 ranges, concepts...
+functional programming with C++ ranges, concepts...
 
 This can be seen as a small DSL to define synthesizers in a
 programmatic way on steroids comparable to modular synthesizers in an
@@ -26,7 +26,7 @@ a MIDI controller to have a playful experience...
 Running the examples
 --------------------
 
-This requires a modern C++20 compiler, the Range-v3 library and for
+This requires a modern C++ compiler, the Range-v3 library and for
 the musical side the RtMidi and AudioRt libraries, typically using
 JACK on Linux.
 
@@ -38,7 +38,7 @@ https://apt.llvm.org/
 
 To install these packages on Debian or Ubuntu, try::
 
-  sudo install clang-16 librange-v3-dev librtmidi-dev librtaudio-dev \
+  sudo install clang-17 librange-v3-dev librtmidi-dev librtaudio-dev \
   jackd2 qjackctl
 
 and clone triSYCL somewhere.
@@ -47,7 +47,7 @@ In the top directory of the repository::
 
   mkdir build
   # Configure the project with the triSYCL repository somewhere
-  CXX=clang++-16 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
+  CXX=clang++-17 cmake .. -DCMAKE_MODULE_PATH=<absolute_path>/triSYCL/cmake \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
   # Build the project
   cmake --build . --parallel `nproc` --verbose
