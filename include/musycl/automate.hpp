@@ -40,8 +40,8 @@ class automate  : public clock::follow<automate> {
     return *this;
   }
 
-  /// Wait for some amount of beats
-  auto& wait_for_beats(int beat_number) {
+  /// Wait for some amount of aligned beats
+  auto& wait_for_next_beats(int beat_number) {
     for (auto i = beat_number; i > 0; --i)
       do
         pause(1);
@@ -49,12 +49,18 @@ class automate  : public clock::follow<automate> {
     return *this;
   }
 
-  /// Wait for some amount of measures
-  auto& wait_for_measures(int measure_number) {
+  /// Wait for some amount of aligned measures
+  auto& wait_for_next_measures(int measure_number) {
     for (auto i = measure_number; i > 0; --i)
       do
-        wait_for_beats(1);
+        wait_for_next_beats(1);
       while (!clock_type->measure);
+    return *this;
+  }
+
+  /// Execute some action
+  auto& exec(auto&& action) {
+    action();
     return *this;
   }
 

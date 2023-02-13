@@ -326,18 +326,25 @@ int main() {
 
   bool enable_automatic_effects = false;
   musycl::automate automatic_effects { [&](auto& self) mutable {
+    auto set_rectification = [&](auto&& ratio) {
+      return [&, ratio]() {
+        rectication_ratio = enable_automatic_effects ? ratio : 0;
+      };
+    };
     for (;;) {
-      if (enable_automatic_effects)
-        rectication_ratio = 0.3;
-      self.wait_for_beats(1);
-      if (enable_automatic_effects)
-        rectication_ratio = 0;
-      if (enable_automatic_effects)
-        rectication_ratio = 0.5;
-      self.wait_for_beats(1);
-      if (enable_automatic_effects)
-        rectication_ratio = 0;
-      self.wait_for_measures(2);
+      self.exec(set_rectification(0.3))
+          .pause(6)
+          .exec(set_rectification(0.))
+          .pause(6)
+          .exec(set_rectification(0.5))
+          .pause(6)
+          .exec(set_rectification(0.))
+          .wait_for_next_beats(3)
+          .pause(18)
+          .exec(set_rectification(0.7))
+          .wait_for_next_measures(1)
+          .exec(set_rectification(0.))
+          .wait_for_next_measures(1);
     }
   } };
   controller.pad_3.name("Automatic effects").add_action([&](bool v) {
