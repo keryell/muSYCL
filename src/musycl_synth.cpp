@@ -267,6 +267,11 @@ int main() {
   // The low pass filters for the output channels
   std::array<musycl::low_pass_filter, musycl::audio::channel_number>
       low_pass_filter;
+  // Set the frequency for all the channels
+  auto set_low_pass_filter_freq = [&](auto&& cut_off_freq) {
+    for (auto& f : low_pass_filter)
+      f.set_cutoff_frequency(cut_off_freq);
+  };
 
   // The resonance filters for the output channels
   //std::array<musycl::resonance_filter, musycl::audio::channel_number>
@@ -326,13 +331,35 @@ int main() {
 
   bool enable_automatic_effects = false;
   musycl::automate automatic_effects { [&](auto& self) mutable {
+    // \todo save the previous settings
     auto set_rectification = [&](auto&& ratio) {
       return [&, ratio]() {
         rectication_ratio = enable_automatic_effects ? ratio : 0;
       };
     };
+    auto set_filter = [&](auto&& freq) {
+      return [&, freq]() {
+        set_low_pass_filter_freq(enable_automatic_effects ? freq : 10000);
+      };
+    };
     for (;;) {
-      self.exec(set_rectification(0.3))
+      self.pause(4)
+          .exec(set_filter(100))
+          .wait_for_next_beats(1)
+          .exec(set_filter(20000))
+          .pause(4)
+          .exec(set_filter(200))
+          .wait_for_next_beats(1)
+          .exec(set_filter(20000))
+          .pause(4)
+          .exec(set_filter(400))
+          .wait_for_next_beats(1)
+          .exec(set_filter(20000))
+          .pause(4)
+          .exec(set_filter(800))
+          .wait_for_next_measures(1)
+          .exec(set_filter(20000))
+          .exec(set_rectification(0.3))
           .pause(6)
           .exec(set_rectification(0.))
           .pause(6)
@@ -343,8 +370,7 @@ int main() {
           .pause(18)
           .exec(set_rectification(0.7))
           .wait_for_next_measures(1)
-          .exec(set_rectification(0.))
-          .wait_for_next_measures(1);
+          .exec(set_rectification(0.));
     }
   } };
   controller.pad_3.name("Automatic effects").add_action([&](bool v) {
@@ -423,8 +449,7 @@ int main() {
        sampling frequency */
     auto cut_off_freq =
         std::exp((a * std::log(0.5 * musycl::sample_frequency)));
-    for (auto& f : low_pass_filter)
-      f.set_cutoff_frequency(cut_off_freq);
+    set_low_pass_filter_freq(cut_off_freq);
     controller.display("Low pass filter: " + std::to_string(cut_off_freq) +
                        " Hz");
   });
