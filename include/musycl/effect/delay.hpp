@@ -29,6 +29,9 @@ class delay {
   /// No delay by default
   float delay_line_ratio = 0;
 
+  /// Feedback from the output into the input
+  float feedback_ratio = 0.25;
+
  private:
   // The buffer implementing the delay line on the accelerator
   sycl::buffer<audio::sample_type> delay { delay_size };
@@ -69,8 +72,9 @@ class delay {
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay, cgh };
       // The delay processing kernel to run on the device
-      cgh.parallel_for(frame_size, [=, delay_line_ratio =
-                                           delay_line_ratio](std::size_t i) {
+      cgh.parallel_for(frame_size, [=, delay_line_ratio = delay_line_ratio,
+                                    feedback_ratio =
+                                        feedback_ratio](std::size_t i) {
         // Copy the audio frame to the end of the delay line
         d.rbegin()[i] = io.rbegin()[i];
         /// \todo add a synchronization here
@@ -78,6 +82,8 @@ class delay {
         io.rbegin()[i][0] += d.rbegin()[shift + i][0] * delay_line_ratio;
         // Right channel with twice the delay
         io.rbegin()[i][1] += d.rbegin()[2 * shift + i][2] * delay_line_ratio;
+        // Re-inject some output into the input
+        d.rbegin()[i] += feedback_ratio * io.rbegin()[i];
       });
     });
     /* The buffer destruction cause the data to be transferred from
