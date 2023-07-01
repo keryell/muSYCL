@@ -41,14 +41,15 @@ class delay {
   */
   void process(audio::frame& audio) {
     // Make a buffer from the audio frame so it can processed from a SYCL kernel
-    //sycl::buffer input_output { audio };
-    sycl::buffer<audio::sample_type> input_output { audio.data(), audio.size() };
+    // sycl::buffer input_output { audio };
+    sycl::buffer<audio::sample_type> input_output { audio.data(),
+                                                    audio.size() };
     // Delay shift in term of sample number
     int shift = delay_line_time * sample_frequency;
+    // A queue to the default device
+    static sycl::queue q;
     // Submit a command group to the default device
-    sycl::queue {}.submit([&](auto& cgh) {
-      // Request a read-write access to the audio frame on the device
-      sycl::accessor io { input_output, cgh };
+    q.submit([&](auto& cgh) {
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay, cgh };
       // The delay processing kernel to run on the device
@@ -59,14 +60,24 @@ class delay {
         for (int sample = 0; sample < delay_size - frame_size;
              sample += frame_size)
           d[sample + i] = d[sample + frame_size + i];
-#if 0
+      });
+    });
+    // Then, use the delay buffer
+    q.submit([&](auto& cgh) {
+      // Request a read-write access to the audio frame on the device
+      sycl::accessor io { input_output, cgh };
+      // Request a read-write access to the delay buffer on the device
+      sycl::accessor d { delay, cgh };
+      // The delay processing kernel to run on the device
+      cgh.parallel_for(frame_size, [=, delay_line_ratio =
+                                           delay_line_ratio](std::size_t i) {
         // Copy the audio frame to the end of the delay line
         d.rbegin()[i] = io.rbegin()[i];
+        /// \todo add a synchronization here
         // Left channel
-        io.rbegin()[i].x() += d.rbegin()[shift + i].x() * delay_line_ratio;
+        io.rbegin()[i][0] += d.rbegin()[shift + i][0] * delay_line_ratio;
         // Right channel with twice the delay
-        io.rbegin()[i].y() += d.rbegin()[2 * shift + i].y() * delay_line_ratio;
-#endif
+        io.rbegin()[i][1] += d.rbegin()[2 * shift + i][2] * delay_line_ratio;
       });
     });
     /* The buffer destruction cause the data to be transferred from

@@ -379,8 +379,8 @@ int main() {
   });
 
   // A simple stereo delay implemented with std::ranges
-//  musycl::effect::delay delay;
-  musycl::effect::range_delay delay;
+  musycl::effect::delay delay;
+  //musycl::effect::range_delay delay;
   controller.param_3_pan_7.name("Delay line time")
       .add_action([&](musycl::midi::control_change::value_type v) {
         delay.delay_line_time = v * v / 127.f / 127 * 2;
@@ -414,7 +414,6 @@ int main() {
   musycl::dco::param_t dco5 { ui, "Plain DCO", 4 };
   channel_assignment.assign(4, dco5);
 
- 
   // Triangle wave with fast decay
   musycl::dco_envelope::param_t triangle6_fast_decay { ui,
                                                        "Triangle fast decay",
