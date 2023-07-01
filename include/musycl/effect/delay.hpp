@@ -52,19 +52,21 @@ class delay {
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay, cgh };
       // The delay processing kernel to run on the device
-      cgh.parallel_for(frame_size, [=, this](std::size_t i) {
+      cgh.parallel_for(frame_size, [=](std::size_t i) {
         // Shift the delay line by a frame towards the beginning,
         // strip-mined by frame. \todo Use SYCL scoped parallelism or
         // introduce algorithms with ad-hoc execution policy
         for (int sample = 0; sample < delay_size - frame_size;
              sample += frame_size)
           d[sample + i] = d[sample + frame_size + i];
+#if 0
         // Copy the audio frame to the end of the delay line
         d.rbegin()[i] = io.rbegin()[i];
         // Left channel
         io.rbegin()[i].x() += d.rbegin()[shift + i].x() * delay_line_ratio;
         // Right channel with twice the delay
         io.rbegin()[i].y() += d.rbegin()[2 * shift + i].y() * delay_line_ratio;
+#endif
       });
     });
     /* The buffer destruction cause the data to be transferred from

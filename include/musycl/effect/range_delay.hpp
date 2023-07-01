@@ -38,12 +38,12 @@ class range_delay {
     auto f =
         ranges::subrange(delay.end() - frame_size - shift, delay.end() - shift);
     for (auto&& [a, d] : ranges::views::zip(audio, f))
-      a.x() += d.x() * delay_line_ratio;
+      a[0] += d[0] * delay_line_ratio;
     // Right channel with twice the delay
     f = ranges::subrange(delay.end() - frame_size - 2 * shift,
                          delay.end() - 2 * shift);
     for (auto&& [a, d] : ranges::views::zip(audio, f))
-      a.y() += d.y() * delay_line_ratio;
+      a[1] += d[1] * delay_line_ratio;
   }
 };
 

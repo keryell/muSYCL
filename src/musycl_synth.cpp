@@ -379,6 +379,7 @@ int main() {
   });
 
   // A simple stereo delay implemented with std::ranges
+//  musycl::effect::delay delay;
   musycl::effect::range_delay delay;
   controller.param_3_pan_7.name("Delay line time")
       .add_action([&](musycl::midi::control_change::value_type v) {
@@ -413,6 +414,7 @@ int main() {
   musycl::dco::param_t dco5 { ui, "Plain DCO", 4 };
   channel_assignment.assign(4, dco5);
 
+ 
   // Triangle wave with fast decay
   musycl::dco_envelope::param_t triangle6_fast_decay { ui,
                                                        "Triangle fast decay",
@@ -583,7 +585,7 @@ int main() {
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
       // Insert a rectifier in the output
-      a = a*(1 - rectication_ratio) + rectication_ratio*sycl::abs(a);
+      a = a*(1 - rectication_ratio) + rectication_ratio*sycl::fabs(a);
       /// Dive into each (stereo) channel of the sample...
         // Insert a low pass filter in the output
       for (auto&& [s, f] : ranges::views::zip(a, low_pass_filter))
