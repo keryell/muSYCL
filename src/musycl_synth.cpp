@@ -79,7 +79,7 @@ int main() {
   // controller.play_pause.name("Arpeggiator Start/Stop")
   controller.pad_8.name("Arpeggiator Start/Stop").add_action([&](bool v) {
     arp.run(v);
-    controller.display("Arpeggiator running: " + std::to_string(v));
+    controller.display("Arpeggiator: " + std::to_string(v));
   });
   musycl::arpeggiator arp_bass {
     0, -1,
@@ -95,7 +95,7 @@ int main() {
   };
   controller.pad_7.name("Bass arpeggiator Start/Stop").add_action([&](bool v) {
     arp_bass.run(v);
-    controller.display("Bass arpeggiator running: " + std::to_string(v));
+    controller.display("Bass arpeggiator: " + std::to_string(v));
   });
   musycl::arpeggiator arp_low_high {
     60, 127,
@@ -126,7 +126,7 @@ int main() {
   controller.pad_1.name("Arpeggiator low & high Start/Stop")
       .add_action([&](bool v) {
         arp_low_high.run(v);
-        controller.display("Low & high arpeggiator running: " +
+        controller.display("Low & high arpeggiator: " +
                            std::to_string(v));
       });
 
@@ -168,7 +168,7 @@ int main() {
   controller.pad_6.name("Arpeggiator with 4 basses Start/Stop")
       .add_action([&](bool v) {
         arp_bass_4.run(v);
-        controller.display(" 4 bass arpeggiator running: " + std::to_string(v));
+        controller.display("4 bass arpeggiator: " + std::to_string(v));
       });
 
   musycl::arpeggiator arp_exp {
@@ -217,7 +217,7 @@ int main() {
   controller.pad_5.name("Arpeggiator exp Start/Stop")
       .add_action([&](bool v) {
         arp_exp.run(v);
-        controller.display(" Exp arpeggiator running: " + std::to_string(v));
+        controller.display("Exp arpeggiator: " + std::to_string(v));
       });
 
   musycl::arpeggiator arp_jupiter_8 {
@@ -250,7 +250,7 @@ int main() {
   controller.pad_2.name("Jupiter 8 Arpeggiator Start/Stop")
       .add_action([&](bool v) {
         arp_jupiter_8.run(v);
-        controller.display("Jupiter 8 arpeggiator running: " +
+        controller.display("Jupiter 8 arpeggiator: " +
                            std::to_string(v));
       });
 
@@ -375,7 +375,7 @@ int main() {
   } };
   controller.pad_3.name("Automatic effects").add_action([&](bool v) {
     enable_automatic_effects = v;
-    controller.display("Automatic effects running: " + std::to_string(v));
+    controller.display("Automatic effects: " + std::to_string(v));
   });
 
   // A simple stereo delay
@@ -479,7 +479,7 @@ int main() {
   controller.pad_4.name("Random notes").add_action([&](bool v) {
     // Just control the output volume for now
     random_note_dco.volume = v;
-    controller.display("Random notes running: " + std::to_string(v));
+    controller.display("Random notes: " + std::to_string(v));
   });
 
   // The forever time loop
