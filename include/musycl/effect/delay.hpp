@@ -46,8 +46,12 @@ class delay {
 
  public:
   delay() {
-    // This crashes DPC++ implementation
-    //ranges::fill(sycl::accessor { output }, audio::sample_type {});
+    q.submit([&](auto& cgh) {
+      // Initialize the delay line to 0
+      cgh.fill(
+          sycl::accessor { delay_line, cgh, sycl::write_only, sycl::no_init },
+          {});
+    });
   }
 
   /**  Process an audio frame
