@@ -390,6 +390,9 @@ int main() {
   controller.param_4_pan_8.name("Delay line ratio")
       .set_variable(delay.delay_line_ratio);
 
+  // A simple stereo flanger
+  musycl::effect::flanger flanger;
+
   musycl::dco_envelope::param_t dcoe1 { ui, "DCO envelope 1", 0 };
   channel_assignment.assign(0, dcoe1);
   dcoe1->env_param->attack_time = 0.1;
@@ -604,6 +607,8 @@ int main() {
 
     // Add some echo-like delay
     delay.process(audio);
+    // Some flanger effect
+    flanger.process(musycl::audio::buffer { &audio, 1 });
 
     // Then send the computed audio frame to the output
     musycl::audio::write(audio);

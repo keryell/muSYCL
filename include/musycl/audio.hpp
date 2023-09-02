@@ -48,6 +48,10 @@ public:
   /// \todo Use a movable type?
   using frame = std::array<sample_type, frame_size>;
 
+  /// An audio frame in a SYCL buffer can live between the host and
+  /// the accelerator
+  using buffer = sycl::buffer<frame>;
+
 private:
 
   /// Capacity of the MIDI message pipe
