@@ -378,7 +378,7 @@ int main() {
     controller.display("Automatic effects running: " + std::to_string(v));
   });
 
-  // A simple stereo delay implemented with std::ranges
+  // A simple stereo delay
   musycl::effect::delay delay;
   //musycl::effect::range_delay delay;
   controller.param_3_pan_7.name("Delay line time")

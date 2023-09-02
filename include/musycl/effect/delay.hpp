@@ -66,7 +66,7 @@ class delay {
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay_line, cgh };
       // Shift the delay line with a kernel on the device
-      cgh.parallel_for(frame_size, [=](std::size_t i) {
+      cgh.parallel_for(frame_size, [=](int i) {
         // Shift the delay line by a frame towards the beginning,
         // strip-mined by frame
         for (int sample = 0; sample < delay_size - frame_size;
@@ -83,14 +83,13 @@ class delay {
       // Request a read-write access to the delay buffer on the device
       sycl::accessor d { delay_line, cgh };
       // Capture explicitly \c feedback_ratio to avoid capture \c *this
-      cgh.parallel_for(frame_size,
-                       [=, feedback_ratio = feedback_ratio](std::size_t i) {
-                         // Copy the input frame to the end of the delay line
-                         d.rbegin()[i] = io.rbegin()[i];
-                         // Re-inject some output on-top of the input for the
-                         // feedback
-                         d.rbegin()[i] += feedback_ratio * out.rbegin()[i];
-                       });
+      cgh.parallel_for(frame_size, [=, feedback_ratio = feedback_ratio](int i) {
+        // Copy the input frame to the end of the delay line
+        d.rbegin()[i] = io.rbegin()[i];
+        // Re-inject some output on-top of the input for the
+        // feedback
+        d.rbegin()[i] += feedback_ratio * out.rbegin()[i];
+      });
     });
     // Then, use the delay buffer to compute the output
     q.submit([&](auto& cgh) {
@@ -102,8 +101,8 @@ class delay {
       sycl::accessor d { delay_line, cgh };
       // The delay processing kernel to run on the device.
       // Capture explicitly \c delay_line_ratio to avoid capture \c *this
-      cgh.parallel_for(frame_size, [=, delay_line_ratio = delay_line_ratio](
-                                       std::size_t i) {
+      cgh.parallel_for(frame_size, [=, delay_line_ratio =
+                                           delay_line_ratio](int i) {
         // The output is the input plus some ratio of the delayed signal.
         // Left channel
         out.rbegin()[i][0] =
