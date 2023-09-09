@@ -44,6 +44,12 @@ public:
       and .y() or .s1() is the right voice */
   using sample_type = sycl::marray<value_type, channel_number>;
 
+  // Left index in a stereo sample
+  static constexpr int left = 0;
+
+  // Right index in a stereo sample
+  static constexpr int right = 1;
+
   /// The type of an audio frame
   /// \todo Use a movable type?
   using frame = std::array<sample_type, frame_size>;

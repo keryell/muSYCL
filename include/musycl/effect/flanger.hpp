@@ -1,7 +1,8 @@
 #ifndef MUSYCL_EFFECT_FLANGER_HPP
 #define MUSYCL_EFFECT_FLANGER_HPP
 
-/// \file Simple flanger effect
+/// \file Simple stereo flanger effect with different parameters for
+/// the left and right voice
 
 /// #include <algorithm>
 #include <cmath>
@@ -25,7 +26,16 @@ class flanger {
  public:
   /// Flanger ratio by default, typically between -1 and 1.
   /// The sign has the effect of changing the comb filter pattern.
-  float delay_line_ratio = 0.8;
+  sycl::marray<float, audio::channel_number> delay_line_ratio { 0.9, -0.9 };
+
+  /// The phase in the waveform, between 0 and 1, at the start of the frame
+  sycl::marray<float, audio::channel_number> lfo_phase {};
+
+  /// The phase increment per clock to generate the right frequency,
+  /// 0.09 Hz & 0.13 Hz
+  sycl::marray<float, audio::channel_number> lfo_dphase {
+    0.09 / sample_frequency, 0.13 / sample_frequency
+  };
 
  private:
   /// Keep at most 50 milliseconds of delay
@@ -52,14 +62,8 @@ class flanger {
   // The buffer implementing the delay line on the accelerator
   sycl::buffer<audio::sample_type> delay_line { delay_size };
 
-  // The buffer used for debugging
-  sycl::buffer<double> debug_buffer { 10 };
-
-  /// The phase in the waveform, between 0 and 1, at the start of the frame
-  float lfo_phase = 0;
-
-  /// The phase increment per clock to generate the right frequency, 0.09 Hz
-  float lfo_dphase = 0.09 / sample_frequency;
+  // // The buffer used for debugging
+  // sycl::buffer<double> debug_buffer { 10 };
 
  public:
   flanger() {
@@ -108,15 +112,15 @@ class flanger {
       sycl::accessor io { input_output, cgh };
       // Request a read access to the delay buffer on the device
       sycl::accessor d { delay_line, cgh, sycl::read_only };
-      sycl::accessor debug { debug_buffer, cgh };
+      // sycl::accessor debug { debug_buffer, cgh };
       // Capture explicitly to avoid capturing \c *this
       cgh.parallel_for(frame_size, [=, delay_line_ratio = delay_line_ratio,
                                     lfo_phase = lfo_phase,
                                     lfo_dphase = lfo_dphase](int i) {
-        auto uniform_flanger = [&] {
+        auto single_voice_flanger = [&](int side) {
           // Consider a sinus LFO and take the absolute value for
           // now
-          auto lfo = sycl::sin((lfo_phase + i * lfo_dphase) * 2 *
+          auto lfo = sycl::sin((lfo_phase[side] + i * lfo_dphase[side]) * 2 *
                                std::numbers::pi_v<float>);
           // The delay in sample to consider for this sample
           auto delay_index =
@@ -128,30 +132,31 @@ class flanger {
           // amount of sample to consider at the next sample is
           // the fractional part of the delay
           auto delay_ratio_at_p1 = delay_index - sycl::floor(delay_index);
-          io[0][i] +=
-              delay_line_ratio *
-              (d.end()[-frame_size + i - delay_index - 1] * delay_ratio_at_p1 +
-               d.end()[-frame_size + i - delay_index] *
-                   (1 - delay_ratio_at_p1));
-          if (i == 255) {
-            debug[0] = lfo;
-            debug[1] = lfo_phase;
-            debug[2] = lfo_dphase;
-            debug[3] = delay_index;
-            debug[4] = delay_ratio_at_p1;
-          }
+          io[0][i][side] += delay_line_ratio[side] *
+                            (d.end()[-frame_size + i - delay_index - 1][side] *
+                                 delay_ratio_at_p1 +
+                             d.end()[-frame_size + i - delay_index][side] *
+                                 (1 - delay_ratio_at_p1));
+          // if (i == 255) {
+          //   debug[0] = lfo;
+          //   debug[1] = lfo_phase;
+          //   debug[2] = lfo_dphase;
+          //   debug[3] = delay_index;
+          //   debug[4] = delay_ratio_at_p1;
+          // }
         };
-        uniform_flanger();
+        single_voice_flanger(audio::left);
+        single_voice_flanger(audio::right);
       });
     });
-    sycl::host_accessor d { debug_buffer };
-    std::cout << " , " << d[0] << " , " << d[1] << " , " << d[2] << " , "
-              << d[3] << " , " << d[4] << std::endl;
+    // sycl::host_accessor d { debug_buffer };
+    // std::cout << " , " << d[0] << " , " << d[1] << " , " << d[2] << " , "
+    //           << d[3] << " , " << d[4] << std::endl;
     // Move forward the LFO phase for the whole frame to catch-up with
     // the time "spent" in the kernel
     lfo_phase += frame_size * lfo_dphase;
     /// Keep only the fractional of the phase to avoid big numbers
-    lfo_phase -= std::floor(lfo_phase);
+    lfo_phase -= sycl::floor(lfo_phase);
   }
 };
 
