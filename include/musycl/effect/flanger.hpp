@@ -110,40 +110,39 @@ class flanger {
       sycl::accessor d { delay_line, cgh, sycl::read_only };
       sycl::accessor debug { debug_buffer, cgh };
       // Capture explicitly to avoid capturing \c *this
-      cgh.parallel_for(frame_size,
-                       [=, delay_line_ratio = delay_line_ratio,
-                        lfo_phase = lfo_phase, lfo_dphase = lfo_dphase](int i) {
-                         // Consider a sinus LFO and take the absolute value for
-                         // now
-                         auto lfo = sycl::sin((lfo_phase + i * lfo_dphase) * 2 *
-                                              std::numbers::pi_v<float>);
-                         // The delay in sample to consider for this sample
-                         auto delay_index =
-                             ((lfo + 1) *
-                                  (delay_line_time - minimum_delay_line_time) /
-                                  2 +
-                              minimum_delay_line_time) *
-                             sample_frequency;
-                         // Since the delay is not an integer number of samples,
-                         // use a linear interpolation between 2 samples. The
-                         // amount of sample to consider at the next sample is
-                         // the fractional part of the delay
-                         auto delay_ratio_at_p1 =
-                             delay_index - sycl::floor(delay_index);
-                         io[0][i] +=
-                             delay_line_ratio *
-                             (d.end()[-frame_size + i - delay_index - 1] *
-                                  delay_ratio_at_p1 +
-                              d.end()[-frame_size + i - delay_index] *
-                                  (1 - delay_ratio_at_p1));
-                         if (i == 255) {
-                           debug[0] = lfo;
-                           debug[1] = lfo_phase;
-                           debug[2] = lfo_dphase;
-                           debug[3] = delay_index;
-                           debug[4] = delay_ratio_at_p1;
-        }
-                       });
+      cgh.parallel_for(frame_size, [=, delay_line_ratio = delay_line_ratio,
+                                    lfo_phase = lfo_phase,
+                                    lfo_dphase = lfo_dphase](int i) {
+        auto uniform_flanger = [&] {
+          // Consider a sinus LFO and take the absolute value for
+          // now
+          auto lfo = sycl::sin((lfo_phase + i * lfo_dphase) * 2 *
+                               std::numbers::pi_v<float>);
+          // The delay in sample to consider for this sample
+          auto delay_index =
+              ((lfo + 1) * (delay_line_time - minimum_delay_line_time) / 2 +
+               minimum_delay_line_time) *
+              sample_frequency;
+          // Since the delay is not an integer number of samples,
+          // use a linear interpolation between 2 samples. The
+          // amount of sample to consider at the next sample is
+          // the fractional part of the delay
+          auto delay_ratio_at_p1 = delay_index - sycl::floor(delay_index);
+          io[0][i] +=
+              delay_line_ratio *
+              (d.end()[-frame_size + i - delay_index - 1] * delay_ratio_at_p1 +
+               d.end()[-frame_size + i - delay_index] *
+                   (1 - delay_ratio_at_p1));
+          if (i == 255) {
+            debug[0] = lfo;
+            debug[1] = lfo_phase;
+            debug[2] = lfo_dphase;
+            debug[3] = delay_index;
+            debug[4] = delay_ratio_at_p1;
+          }
+        };
+        uniform_flanger();
+      });
     });
     sycl::host_accessor d { debug_buffer };
     std::cout << " , " << d[0] << " , " << d[1] << " , " << d[2] << " , "
