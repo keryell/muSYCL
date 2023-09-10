@@ -29,7 +29,7 @@ class flanger {
   audio::sample<float> delay_line_ratio { { .left = 0.9, .right = -0.9 } };
 
   /// The phase in the waveform, between 0 and 1, at the start of the frame
-  sycl::marray<float, audio::channel_number> lfo_phase {};
+  audio::sample<float> lfo_phase {};
 
   /// The phase increment per clock to generate the right frequency,
   /// 0.09 Hz & 0.13 Hz
@@ -59,7 +59,7 @@ class flanger {
   sycl::queue q;
 
   // The buffer implementing the delay line on the accelerator
-  sycl::buffer<audio::sample_type> delay_line { delay_size };
+  sycl::buffer<audio::sample<>> delay_line { delay_size };
 
   // // The buffer used for debugging
   // sycl::buffer<double> debug_buffer { 10 };

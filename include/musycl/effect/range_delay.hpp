@@ -26,7 +26,7 @@ class range_delay {
   float delay_line_ratio = 0;
 
  private:
-  std::array<audio::sample_type, frame_delay * frame_size> delay {};
+  std::array<audio::sample<>, frame_delay * frame_size> delay {};
 
  public:
   /// Process an audio frame

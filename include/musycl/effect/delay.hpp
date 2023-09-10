@@ -37,12 +37,12 @@ class delay {
   sycl::queue q;
 
   // The buffer implementing the delay line on the accelerator
-  sycl::buffer<audio::sample_type> delay_line { delay_size };
+  sycl::buffer<audio::sample<>> delay_line { delay_size };
 
   // Buffer used for the output but which is also used for the
   // feedback, so keep it alive across following frame computation
   // \todo need to be 0-initialized. Improve SYCL specification
-  sycl::buffer<audio::sample_type> output { frame_size };
+  sycl::buffer<audio::sample<>> output { frame_size };
 
  public:
   delay() {
@@ -60,8 +60,7 @@ class delay {
   */
   void process(audio::frame& audio) {
     // Make a buffer from the audio frame so it can processed from a SYCL kernel
-    sycl::buffer<audio::sample_type> input_output { audio.data(),
-                                                    audio.size() };
+    sycl::buffer<audio::sample<>> input_output { audio.data(), audio.size() };
     // Delay shift in term of sample number
     int shift = delay_line_time * sample_frequency;
 

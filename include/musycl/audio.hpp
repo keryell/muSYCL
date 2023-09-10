@@ -37,16 +37,11 @@ class audio {
   /// Stereo mode: use 2 channels
   static constexpr auto channel_number = 2;
 
-  /** Audio sample type
-
-      In a stereo system, the element .x() or .s0() is the left voice
-      and .y() or .s1() is the right voice */
-  using sample_type = sycl::marray<value_type, channel_number>;
-
-  /// Type suitable to store an audio sample
-  template <typename T>
+  /// Type suitable to store an audio sample of value_type by default
+  template <typename T = value_type>
     requires(channel_number >= 2)
   class sample : public sycl::marray<T, channel_number> {
+    using base = sycl::marray<T, channel_number>;
     /// Helper class allowing named initialization with 0 as default
     /// value
     struct initializer {
@@ -66,7 +61,24 @@ class audio {
 
     /// Allow construction like {{ .left = 3}}, {{ .right = 2}} or {{.right =
     /// .left = -1, 7}}
-    sample(const initializer i) { *this = { i.left, i.right }; }
+    sample(const initializer& i) { *this = { i.left, i.right }; }
+
+    /// Can implicitly construct a sample from a compatible \c sycl::marray
+    sample(const base& b)
+        : base::marray { b } {}
+
+    /// It is unclear why the broadcast constructor of \c sycl::marray
+    /// does not work directly
+    template <typename S>
+      requires(std::is_scalar_v<T> && std::is_arithmetic_v<T>)
+    sample(const S& b)
+        : base::marray { b } {}
+
+    sample() = default;
+
+    // A sample is also implicitly convertible to a compatible \c
+    // sycl::marray so the SYCL builtins can work with it
+    operator base&() { return static_cast<base&>(*this); }
   };
 
   // Left index in a stereo sample
@@ -77,7 +89,7 @@ class audio {
 
   /// The type of an audio frame
   /// \todo Use a movable type?
-  using frame = std::array<sample_type, frame_size>;
+  using frame = std::array<sample<>, frame_size>;
 
   /// An audio frame in a SYCL buffer can live between the host and
   /// the accelerator
@@ -90,7 +102,7 @@ class audio {
   /// The handler to control the audio input/output interface
   static inline std::optional<RtAudio> interface;
 
-  /// A FIFO used to implement the pipe of MIDI messages
+  /// A FIFO used to implement the queue of audio frame sent to output
   static inline boost::fibers::buffered_channel<frame> output_frames {
     pipe_min_capacity
   };
@@ -118,7 +130,7 @@ class audio {
            "frame_size needs to be the same as the one used by RtAudio");
     // Copy 1 ready frame to the output
     ranges::copy(output_frames.value_pop(),
-                 static_cast<sample_type*>(output_buffer));
+                 static_cast<sample<>*>(output_buffer));
     // 0 to continue mormal operation
     return 0;
   }
@@ -188,5 +200,21 @@ class audio {
 };
 
 } // namespace musycl
+
+
+/// Workaround DPC++ or SYCL spec bugs not considering SYCL built-in
+/// working also with types convertible to sycl::marray
+namespace sycl {
+inline namespace _V1 {
+namespace detail {
+template <typename T>
+struct is_marray<musycl::audio::sample<T>> : std::true_type {};
+
+template <typename T, typename... Ts>
+struct is_valid_elem_type<musycl::audio::sample<T>, Ts...>
+    : std::bool_constant<check_type_in_v<T, Ts...>> {};
+} // namespace detail
+} // namespace _V1
+} // namespace sycl
 
 #endif // MUSYCL_AUDIO_HPP
