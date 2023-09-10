@@ -26,16 +26,15 @@ class flanger {
  public:
   /// Flanger ratio by default, typically between -1 and 1.
   /// The sign has the effect of changing the comb filter pattern.
-  sycl::marray<float, audio::channel_number> delay_line_ratio { 0.9, -0.9 };
+  audio::sample<float> delay_line_ratio { { .left = 0.9, .right = -0.9 } };
 
   /// The phase in the waveform, between 0 and 1, at the start of the frame
   sycl::marray<float, audio::channel_number> lfo_phase {};
 
   /// The phase increment per clock to generate the right frequency,
   /// 0.09 Hz & 0.13 Hz
-  sycl::marray<float, audio::channel_number> lfo_dphase {
-    0.09 / sample_frequency, 0.13 / sample_frequency
-  };
+  audio::sample<float> lfo_dphase { { .left = 0.09 / sample_frequency,
+                                      .right = 0.13 / sample_frequency } };
 
  private:
   /// Keep at most 50 milliseconds of delay
