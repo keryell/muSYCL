@@ -3,7 +3,6 @@
     Rely on some triSYCL extensions (kernel I/O) and muSYCL extensions
     (MIDI and audio input/output)
 */
-#include "musycl/dco.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>

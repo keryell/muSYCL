@@ -26,23 +26,23 @@ class flanger {
  public:
   /// Flanger ratio by default, typically between -1 and 1.
   /// The sign has the effect of changing the comb filter pattern.
-  audio::sample<float> delay_line_ratio { { .left = 0.9, .right = -0.9 } };
+  audio::sample<float> delay_line_ratio { { .left = 0.7, .right = -0.7 } };
 
   /// The phase in the waveform, between 0 and 1, at the start of the frame
   audio::sample<float> lfo_phase {};
 
   /// The phase increment per clock to generate the right frequency,
-  /// 0.09 Hz & 0.13 Hz
-  audio::sample<float> lfo_dphase { { .left = 0.09 / sample_frequency,
+  /// 0.5 Hz & 0.13 Hz
+  audio::sample<float> lfo_dphase { { .left = 0.5 / sample_frequency,
                                       .right = 0.13 / sample_frequency } };
 
  private:
   /// Keep at most 50 milliseconds of delay
-  static constexpr float delay_line_time = 0.05;
+  static constexpr float delay_line_time = 0.005;
   // Minimum delay to insure to avoid audible beats when the delay get
   // close to 0, so the real-time delay will vary between
   // minimum_delay_line_time and delay_line_time.
-  static constexpr float minimum_delay_line_time = 0.02;
+  static constexpr float minimum_delay_line_time = 0.0;
 
   /// The delay line size, rounded up since we will interpolate the
   /// signal between 2 consecutive elements + 1 frame to store the
