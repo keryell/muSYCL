@@ -42,9 +42,7 @@ int main() {
             << "\nAPI availables:" << std::endl;
   std::vector<RtMidi::Api> apis;
   RtMidi::getCompiledApi(apis);
-  // Use some shared point because RtMidiIn is a broken type, it is
-  // neither copyable neither movable
-  std::vector<std::shared_ptr<RtMidiIn>> midi_ins;
+  std::vector<RtMidiIn> midi_ins;
   for (auto api : apis) {
     std::cout << "\tAPI name " << RtMidi::getApiName(api) << std::endl;
     std::cout << "\tAPI display name " << RtMidi::getApiName(api) << std::endl;
@@ -67,13 +65,13 @@ int main() {
         // Try to open this port
         try {
           auto m = check_error(
-              [&] { return std::make_shared<RtMidiIn>(api, full_name, 1000); });
+              [&] { return RtMidiIn(api, full_name, 1000); });
           check_error(
-              [&] { m->openPort(i, full_name + " " + std::to_string(i)); });
+              [&] { m.openPort(i, full_name + " " + std::to_string(i)); });
           // Don't ignore sysex, timing, or active sensing messages
-          m->ignoreTypes(false, false, false);
+          m.ignoreTypes(false, false, false);
           // Add it to the list of opened MIDI interface
-          midi_ins.push_back(m);
+          midi_ins.push_back(std::move(m));
         } catch (...) {
         }
       }
@@ -98,7 +96,7 @@ int main() {
   std::vector<std::uint8_t> message;
   while (!done) {
     for (auto& m : midi_ins) {
-      auto stamp = m->getMessage(&message);
+      auto stamp = m.getMessage(&message);
       if (!message.empty()) {
         std::cout << "Received from port " /* << i << */ " at stamp = " << stamp
                   << " seconds:" << std::endl
