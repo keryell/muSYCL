@@ -66,6 +66,7 @@ int main() {
       auto info = audio.getDeviceInfo(i);
       if (info.probed == true) {
         std::cout << "\tdevice " << i << ": \"" << info.name << '\"'
+                  << "\n\t\tprobed = " << info.probed
                   << "\n\t\tmaximum input channels = " << info.inputChannels
                   << "\n\t\tmaximum output channels = " << info.outputChannels
                   << "\n\t\tmaximum duplex channels = " << info.duplexChannels
