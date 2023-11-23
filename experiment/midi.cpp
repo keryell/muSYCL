@@ -1,13 +1,10 @@
 #include "rtmidi/RtMidi.h"
 
 #include <atomic>
-#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <thread>
 #include <vector>
 
 /// The configuration part to adapt to the context
@@ -15,9 +12,6 @@
 // auto constexpr midi_api = RtMidi::UNIX_JACK;
 // ALSA
 // auto constexpr midi_api = RtMidi::LINUX_ALSA;
-
-// To use time unit literals directly
-using namespace std::chrono_literals;
 
 namespace {
 
@@ -42,7 +36,11 @@ int main() {
             << "\nAPI availables:" << std::endl;
   std::vector<RtMidi::Api> apis;
   RtMidi::getCompiledApi(apis);
-  std::vector<RtMidiIn> midi_ins;
+  struct named_input {
+    RtMidiIn in;
+    std::string name;
+  };
+  std::vector<named_input> midi_ins;
   for (auto api : apis) {
     std::cout << "\tAPI name " << RtMidi::getApiName(api) << std::endl;
     std::cout << "\tAPI display name " << RtMidi::getApiName(api) << std::endl;
@@ -61,17 +59,16 @@ int main() {
       for (auto i = 0; i < n_in_ports; ++i) {
         auto port_name = check_error([&] { return midi_in.getPortName(i); });
         std::cout << "  Input Port #" << i << ": " << port_name << '\n';
-        auto full_name = "muSYCL_test_midi_in_" + port_name;
+        auto full_name =
+            "muSYCL_test_midi_in:" + std::to_string(i) + ":" + port_name;
         // Try to open this port
         try {
-          auto m = check_error(
-              [&] { return RtMidiIn(api, full_name, 1000); });
-          check_error(
-              [&] { m.openPort(i, full_name + " " + std::to_string(i)); });
+          auto m = check_error([&] { return RtMidiIn(api, full_name, 1000); });
+          check_error([&] { m.openPort(i); });
           // Don't ignore sysex, timing, or active sensing messages
           m.ignoreTypes(false, false, false);
           // Add it to the list of opened MIDI interface
-          midi_ins.push_back(std::move(m));
+          midi_ins.emplace_back(std::move(m), std::move(full_name));
         } catch (...) {
         }
       }
@@ -95,11 +92,11 @@ int main() {
   std::signal(SIGINT, [](int) { done = true; });
   std::vector<std::uint8_t> message;
   while (!done) {
-    for (auto& m : midi_ins) {
-      auto stamp = m.getMessage(&message);
+    for (auto& [in, port_name] : midi_ins) {
+      auto stamp = in.getMessage(&message);
       if (!message.empty()) {
-        std::cout << "Received from port " /* << i << */ " at stamp = " << stamp
-                  << " seconds:" << std::endl
+        std::cout << "Received from port '" << port_name
+                  << "' at stamp = " << stamp << " seconds:" << std::endl
                   << '\t';
         for (auto c : message)
           std::cout << std::hex << int { c } << ' ';
