@@ -21,10 +21,13 @@ class channel_assignment {
  public:
   std::map<int, musycl::sound_generator::param_t> channels;
 
+  /// \todo set but unused in musycl_synth.cpp by parsing
+  /// musycl::midi::sysex
+
   /** Typically selected channel in the UI
 
       -1 when there is no selected channel. Do not use iterator on the
-       std::map since it might becom invalid. */
+       std::map since it might become invalid. */
   int current_selected_channel = -1;
 
   /// Assign a sound parameter to a channel
@@ -32,6 +35,8 @@ class channel_assignment {
     std::cerr << "Assign channel " << channel << std::endl;
     channels[channel] = sound;
   }
+
+  /// \todo What is this code about ? What happens if there is no assignment ?
 
   /// Select the next channel if any, wrapping around to the first one
   void select_next_channel() {

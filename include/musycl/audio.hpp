@@ -72,7 +72,8 @@ class audio {
     template <typename S>
       requires(std::is_scalar_v<T> && std::is_arithmetic_v<T>)
     sample(const S& b)
-        : base::marray { b } {}
+        // Call the constructor explicitly to allow narrowing double → int
+        : base::marray(b) {}
 
     sample() = default;
 
