@@ -29,6 +29,8 @@ auto constexpr note_number = 128;
 /// Type for MIDI channel values
 using channel_type = std::int8_t;
 
+constexpr channel_type invalid_channel = -1;
+
 /// Type for MIDI note values
 using note_type = std::int8_t;
 
