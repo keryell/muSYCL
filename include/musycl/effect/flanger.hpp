@@ -84,8 +84,8 @@ class flanger {
     assert(lfo_phase >= 0 && lfo_phase < 1);
     // Delay shift in term of sample number
     int shift = delay_line_time * sample_frequency;
-    std::cout << "delay_size = " << delay_size
-              << " delay_line_time = " << delay_line_time << std::endl;
+    // std::cout << "delay_size = " << delay_size
+    //           << " delay_line_time = " << delay_line_time << std::endl;
     // Shift the delay line and insert the new audio sample at the end
     q.submit([&](auto& cgh) {
       // Request a read access to the audio frame on the device
@@ -117,8 +117,7 @@ class flanger {
                                     lfo_phase = lfo_phase,
                                     lfo_dphase = lfo_dphase](int i) {
         auto single_voice_flanger = [&](int side) {
-          // Consider a sinus LFO and take the absolute value for
-          // now
+          // Consider a sinus LFO
           auto lfo = sycl::sin((lfo_phase[side] + i * lfo_dphase[side]) * 2 *
                                std::numbers::pi_v<float>);
           // The delay in sample to consider for this sample
