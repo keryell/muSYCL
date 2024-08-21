@@ -78,8 +78,16 @@ class audio {
     sample() = default;
 
     // A sample is also implicitly convertible to a compatible \c
-    // sycl::marray so the SYCL builtins can work with it
+    // sycl::marray so the SYCL builtins can work with it.
     operator base&() { return static_cast<base&>(*this); }
+
+    // Element-wise floor since sycl::floor in DPC++ does not work on
+    // convertible to sycl::marray
+    sample floor() const { return sycl::floor(base{*this}); }
+
+    // Element-wise fabs since sycl::fabs in DPC++ does not work on
+    // convertible to sycl::marray
+    sample fabs() const { return sycl::fabs(base{*this}); }
   };
 
   // Left index in a stereo sample
@@ -201,21 +209,5 @@ class audio {
 };
 
 } // namespace musycl
-
-
-/// Workaround DPC++ or SYCL spec bugs not considering SYCL built-in
-/// working also with types convertible to sycl::marray
-namespace sycl {
-inline namespace _V1 {
-namespace detail {
-template <typename T>
-struct is_marray<musycl::audio::sample<T>> : std::true_type {};
-
-template <typename T, typename... Ts>
-struct is_valid_elem_type<musycl::audio::sample<T>, Ts...>
-    : std::bool_constant<check_type_in_v<T, Ts...>> {};
-} // namespace detail
-} // namespace _V1
-} // namespace sycl
 
 #endif // MUSYCL_AUDIO_HPP

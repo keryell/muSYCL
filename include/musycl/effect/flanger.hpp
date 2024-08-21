@@ -154,7 +154,7 @@ class flanger {
     // the time "spent" in the kernel
     lfo_phase += frame_size * lfo_dphase;
     /// Keep only the fractional of the phase to avoid big numbers
-    lfo_phase -= sycl::floor(lfo_phase);
+    lfo_phase -= lfo_phase.floor();
   }
 };
 

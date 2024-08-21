@@ -585,7 +585,7 @@ int main() {
     // Normalize the audio by number of playing voices to avoid saturation
     for (auto& a : audio) {
       // Insert a rectifier in the output
-      a = a*(1 - rectication_ratio) + rectication_ratio*sycl::fabs(a);
+      a = a*(1 - rectication_ratio) + rectication_ratio*a.fabs();
       /// Dive into each (stereo) channel of the sample...
         // Insert a low pass filter in the output
       for (auto&& [s, f] : ranges::views::zip(a, low_pass_filter))
