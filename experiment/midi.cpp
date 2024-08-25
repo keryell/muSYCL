@@ -32,7 +32,7 @@ auto check_error = [](auto&& function) {
 };
 
 int main() {
-  std::cout << "RtMidi version " << RtMidi::getVersion()
+  std::cout << "RtMidi version: " << RtMidi::getVersion()
             << "\nAPI availables:" << std::endl;
   std::vector<RtMidi::Api> apis;
   RtMidi::getCompiledApi(apis);
@@ -42,8 +42,8 @@ int main() {
   };
   std::vector<named_input> midi_ins;
   for (auto api : apis) {
-    std::cout << "\tAPI name " << RtMidi::getApiName(api) << std::endl;
-    std::cout << "\tAPI display name " << RtMidi::getApiName(api) << std::endl;
+    std::cout << "\tAPI name: " << RtMidi::getApiName(api) << std::endl;
+    std::cout << "\tAPI display name: " << RtMidi::getApiName(api) << std::endl;
 
     try {
       // Create a MIDI input using a fancy client name
@@ -53,12 +53,12 @@ int main() {
 
       // Check inputs
       auto n_in_ports = midi_in.getPortCount();
-      std::cout << "\tThere are " << n_in_ports
+      std::cout << "\t\tThere are " << n_in_ports
                 << " MIDI input sources available.\n";
 
       for (auto i = 0; i < n_in_ports; ++i) {
         auto port_name = check_error([&] { return midi_in.getPortName(i); });
-        std::cout << "  Input Port #" << i << ": " << port_name << '\n';
+        std::cout << "\t\t\tInput Port #" << i << ": " << port_name << '\n';
         auto full_name =
             "muSYCL_test_midi_in:" + std::to_string(i) + ":" + port_name;
         // Try to open this port
@@ -78,11 +78,11 @@ int main() {
 
       // Check outputs.
       auto n_out_ports = midi_out.getPortCount();
-      std::cout << "\nThere are " << n_out_ports
+      std::cout << "\n\t\tThere are " << n_out_ports
                 << " MIDI output ports available.\n";
       for (auto i = 0; i < n_out_ports; ++i) {
         auto port_name = check_error([&] { return midi_out.getPortName(i); });
-        std::cout << "  Output Port #" << i << ": " << port_name << std::endl;
+        std::cout << "\t\t\tOutput Port #" << i << ": " << port_name << std::endl;
       }
     } catch (...) {
     }
