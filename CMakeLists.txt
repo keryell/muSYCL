@@ -21,6 +21,16 @@ find_library(LIBRARY_RTMIDI NAMES rtmidi REQUIRED)
 find_package(Doxygen
              REQUIRED dot)
 
+# To get some content directly at the source
+include(FetchContent)
+
+FetchContent_Declare(libremidi
+    GIT_REPOSITORY https://github.com/jcelerier/libremidi.git
+    GIT_SHALLOW       TRUE
+    GIT_PROGRESS TRUE
+    GIT_TAG v4.5.0)
+FetchContent_MakeAvailable(libremidi)
+
 #set_project_properties(muSYCL PROPERTIES CXX_STANDARD 23)
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
